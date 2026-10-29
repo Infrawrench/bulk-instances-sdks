@@ -111,10 +111,11 @@ jobs:
           java-version: ${{ matrix.java }}
           distribution: temurin
           cache: maven
-      - name: Javadoc
+      # Compiled first: javadoc resolves the module from target/classes, and
+      # without it reports "named and unnamed modules" and fails.
+      - name: Build and javadoc
         working-directory: java
-        run: mvn -B --no-transfer-progress javadoc:javadoc
-      # Builds the jar with -Xlint:all -Werror on the way.
+        run: mvn -B --no-transfer-progress package javadoc:javadoc
       - name: Conformance
         run: conformance/run.sh java
 
