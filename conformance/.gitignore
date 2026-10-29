@@ -1,0 +1,9 @@
+dumps/java/classes/
+dumps/java/deps.cp
+dumps/csharp/bin/
+dumps/csharp/obj/
+dumps/rust/target/
+dumps/go/dump
+dumps/php/vendor/
+dumps/php/composer.lock
+__pycache__/

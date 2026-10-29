@@ -1,0 +1,40 @@
+{
+    "name": "infrawrench/bulk-instances",
+    "description": "AWS EC2 instance attributes and pricing, with full history, from Infrawrench.",
+    "version": "1.0.0",
+    "type": "library",
+    "keywords": [
+        "infrawrench",
+        "aws",
+        "ec2",
+        "pricing",
+        "instances",
+        "price-history"
+    ],
+    "homepage": "https://infrawrench.com",
+    "license": "MIT",
+    "support": {
+        "source": "https://github.com/Infrawrench/bulk-instances-sdks/tree/main/php",
+        "issues": "https://github.com/Infrawrench/bulk-instances-sdks/issues"
+    },
+    "authors": [
+        {
+            "name": "Infrawrench LLC",
+            "email": "astrid@infrawrench.com",
+            "homepage": "https://infrawrench.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "ext-curl": "*",
+        "ext-json": "*"
+    },
+    "suggest": {
+        "ext-xz": "Decompresses bundles in-process instead of piping them through the xz binary."
+    },
+    "autoload": {
+        "psr-4": {
+            "Infrawrench\\BulkInstances\\": "src/"
+        }
+    }
+}

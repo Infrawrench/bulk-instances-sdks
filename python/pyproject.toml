@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "infrawrench-bulk-instances"
+version = "1.0.0"
+description = "AWS EC2 instance attributes and pricing, with full history, from Infrawrench."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Infrawrench LLC", email = "astrid@infrawrench.com" }]
+keywords = ["infrawrench", "aws", "ec2", "pricing", "instances", "price-history"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Typing :: Typed",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://infrawrench.com"
+Source = "https://github.com/Infrawrench/bulk-instances-sdks/tree/main/python"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/infrawrench_bulk_instances"]

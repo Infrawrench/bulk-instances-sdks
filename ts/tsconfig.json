@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "erasableSyntaxOnly": true,
+    "declaration": true,
+    "outDir": "dist",
+    "skipLibCheck": true,
+    "stripInternal": true
+  },
+  "files": [
+    "index.ts"
+  ]
+}

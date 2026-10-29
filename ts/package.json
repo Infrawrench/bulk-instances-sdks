@@ -1,0 +1,55 @@
+{
+  "name": "@infrawrench/bulk-instances",
+  "version": "1.0.0",
+  "description": "AWS EC2 instance attributes and pricing, with full history, from Infrawrench.",
+  "keywords": [
+    "infrawrench",
+    "aws",
+    "ec2",
+    "pricing",
+    "instances",
+    "price-history"
+  ],
+  "license": "MIT",
+  "author": {
+    "name": "Infrawrench LLC",
+    "email": "astrid@infrawrench.com",
+    "url": "https://infrawrench.com"
+  },
+  "homepage": "https://infrawrench.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Infrawrench/bulk-instances-sdks.git",
+    "directory": "ts"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p .",
+    "typecheck": "tsc --noEmit -p .",
+    "prepack": "npm run build"
+  },
+  "dependencies": {
+    "xz-decompress": "^0.2.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "typescript": "^5.9.3"
+  }
+}

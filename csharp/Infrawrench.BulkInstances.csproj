@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <RootNamespace>Infrawrench.BulkInstances</RootNamespace>
+    <AssemblyName>Infrawrench.BulkInstances</AssemblyName>
+
+    <PackageId>Infrawrench.BulkInstances</PackageId>
+    <Version>1.0.0</Version>
+    <Description>AWS EC2 instance attributes and pricing, with full history, from Infrawrench.</Description>
+    <Authors>Infrawrench LLC</Authors>
+    <Company>Infrawrench LLC</Company>
+    <Copyright>Copyright (c) 2026 Infrawrench LLC</Copyright>
+    <PackageTags>infrawrench;aws;ec2;pricing;instances;price-history</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://infrawrench.com</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/Infrawrench/bulk-instances-sdks</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SharpCompress" Version="0.50.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+    <None Include="LICENSE" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+</Project>

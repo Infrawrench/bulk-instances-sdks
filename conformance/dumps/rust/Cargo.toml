@@ -1,0 +1,9 @@
+[package]
+name = "dump"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+infrawrench-bulk-instances = { path = "../../../rust" }
+serde_json = "1.0.154"

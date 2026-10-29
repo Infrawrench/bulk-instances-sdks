@@ -1,0 +1,12 @@
+{
+    "name": "infrawrench/bulk-instances-dump",
+    "description": "Harness dump program for the PHP port.",
+    "type": "project",
+    "license": "MIT",
+    "repositories": [
+        {"type": "path", "url": "../../../php", "options": {"symlink": true}}
+    ],
+    "require": {
+        "infrawrench/bulk-instances": "1.0.0"
+    }
+}

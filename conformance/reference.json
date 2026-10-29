@@ -1,0 +1,631 @@
+{
+ "snapshots": [
+  1700000000,
+  1710000000,
+  1720000000,
+  1730000000
+ ],
+ "regions": {
+  "US East (N. Virginia)": {
+   "regionCode": "us-east-1",
+   "locationType": "AWS Region"
+  },
+  "EU (Ireland)": {
+   "regionCode": "eu-west-1",
+   "locationType": "AWS Region"
+  },
+  "South America (São Paulo)": {
+   "regionCode": "sa-east-1",
+   "locationType": "AWS Region"
+  },
+  "Local Zone X": {
+   "locationType": "AWS Local Zone"
+  }
+ },
+ "keys": [
+  "m5.large",
+  "t2.micro",
+  "x1.weird"
+ ],
+ "has": {
+  "m5.large": true,
+  "nope": false
+ },
+ "getMissing": null,
+ "instances": {
+  "m5.large": {
+   "name": "m5.large",
+   "createdAt": 1700000000,
+   "deletedAt": null,
+   "attributes": {
+    "vcpu": "2",
+    "memory": "8.0 GiB",
+    "gpu": "0",
+    "family": "General Purpose",
+    "network": "10 Gigabit"
+   },
+   "attributesIn": {
+    "US East (N. Virginia)": {
+     "vcpu": "2",
+     "memory": "8.0 GiB",
+     "gpu": "0",
+     "family": "General Purpose",
+     "network": "Up to 10 Gigabit"
+    },
+    "EU (Ireland)": {
+     "memory": "8.0 GiB",
+     "gpu": "0",
+     "family": "General Purpose",
+     "network": "10 Gigabit"
+    },
+    "South America (São Paulo)": {
+     "vcpu": "2",
+     "memory": "8.0 GiB",
+     "gpu": "0",
+     "family": "General Purpose",
+     "network": "10 Gigabit",
+     "note": "café ☕"
+    },
+    "Local Zone X": {
+     "vcpu": "2",
+     "memory": "8.0 GiB",
+     "gpu": "0",
+     "family": "General Purpose",
+     "network": "10 Gigabit"
+    },
+    "Mystery": {
+     "vcpu": "2",
+     "memory": "8.0 GiB",
+     "gpu": "0",
+     "family": "General Purpose",
+     "network": "10 Gigabit"
+    },
+    "Nowhere": {
+     "vcpu": "2",
+     "memory": "8.0 GiB",
+     "gpu": "0",
+     "family": "General Purpose",
+     "network": "10 Gigabit"
+    }
+   },
+   "attributesHistory": [
+    {
+     "at": 1700000000,
+     "key": "vcpu",
+     "value": "2",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "memory",
+     "value": "8 GiB",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "family",
+     "value": "General purpose",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "gpu",
+     "value": "0",
+     "region": null
+    },
+    {
+     "at": 1710000000,
+     "key": "family",
+     "value": null,
+     "region": null
+    },
+    {
+     "at": 1710000000,
+     "key": "family",
+     "value": "General Purpose",
+     "region": null
+    },
+    {
+     "at": 1710000000,
+     "key": "network",
+     "value": "Up to 10 Gigabit",
+     "region": "US East (N. Virginia)"
+    },
+    {
+     "at": 1720000000,
+     "key": "memory",
+     "value": "8.0 GiB",
+     "region": null
+    },
+    {
+     "at": 1720000000,
+     "key": "network",
+     "value": "10 Gigabit",
+     "region": null
+    },
+    {
+     "at": 1720000000,
+     "key": "vcpu",
+     "value": null,
+     "region": "EU (Ireland)"
+    },
+    {
+     "at": 1730000000,
+     "key": "note",
+     "value": "café ☕",
+     "region": "South America (São Paulo)"
+    }
+   ],
+   "pricing": {
+    "onDemand": [
+     {
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "operatingSystem": "Linux",
+      "tenancy": "Shared",
+      "licenseModel": "No License required",
+      "preInstalledSw": "NA",
+      "capacitystatus": "Used",
+      "hourly": 0.1,
+      "since": 1720000000
+     },
+     {
+      "region": "EU (Ireland)",
+      "regionCode": "eu-west-1",
+      "operatingSystem": "Linux",
+      "tenancy": "Shared",
+      "licenseModel": "No License required",
+      "preInstalledSw": "NA",
+      "capacitystatus": "Used",
+      "hourly": 0.12,
+      "since": 1720000000
+     },
+     {
+      "region": "Mystery",
+      "operatingSystem": "Linux",
+      "tenancy": "Shared",
+      "licenseModel": "No License required",
+      "preInstalledSw": "NA",
+      "capacitystatus": "Used",
+      "hourly": 0.096,
+      "since": 1700000000,
+      "regionCode": null
+     },
+     {
+      "region": "Local Zone X",
+      "operatingSystem": "Linux",
+      "tenancy": "Dedicated",
+      "licenseModel": "No License required",
+      "preInstalledSw": "SQL Std",
+      "capacitystatus": "Used",
+      "hourly": 0.5,
+      "since": 1710000000,
+      "regionCode": null
+     },
+     {
+      "region": "South America (São Paulo)",
+      "regionCode": "sa-east-1",
+      "operatingSystem": "Linux",
+      "tenancy": "Shared",
+      "licenseModel": "No License required",
+      "preInstalledSw": "NA",
+      "capacitystatus": "Used",
+      "hourly": 1,
+      "since": 1710000000
+     }
+    ],
+    "reserved": [
+     {
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "operatingSystem": "Linux",
+      "tenancy": "Shared",
+      "licenseModel": "No License required",
+      "preInstalledSw": "NA",
+      "capacitystatus": "Used",
+      "leaseContractLength": "1yr",
+      "offeringClass": "standard",
+      "purchaseOption": "No Upfront",
+      "hourly": 0.055,
+      "upfront": 10,
+      "since": 1720000000
+     },
+     {
+      "region": "EU (Ireland)",
+      "regionCode": "eu-west-1",
+      "operatingSystem": "Linux",
+      "tenancy": "Shared",
+      "licenseModel": "No License required",
+      "preInstalledSw": "NA",
+      "capacitystatus": "Used",
+      "leaseContractLength": "1yr",
+      "offeringClass": "standard",
+      "purchaseOption": "No Upfront",
+      "hourly": 0.07,
+      "upfront": 0,
+      "since": 1710000000
+     },
+     {
+      "region": "Local Zone X",
+      "operatingSystem": "Linux",
+      "tenancy": "Dedicated",
+      "licenseModel": "No License required",
+      "preInstalledSw": "SQL Std",
+      "capacitystatus": "Used",
+      "leaseContractLength": "3yr",
+      "offeringClass": "convertible",
+      "purchaseOption": "All Upfront",
+      "hourly": 0.3,
+      "upfront": 0,
+      "since": 1710000000,
+      "regionCode": null
+     }
+    ]
+   },
+   "pricingHistory": {
+    "onDemand": [
+     {
+      "at": 1700000000,
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "operatingSystem": "Linux",
+      "tenancy": "Shared",
+      "licenseModel": "No License required",
+      "preInstalledSw": "NA",
+      "capacitystatus": "Used",
+      "hourly": 0.096
+     },
+     {
+      "at": 1700000000,
+      "region": "EU (Ireland)",
+      "regionCode": "eu-west-1",
+      "operatingSystem": "Linux",
+      "tenancy": "Shared",
+      "licenseModel": "No License required",
+      "preInstalledSw": "NA",
+      "capacitystatus": "Used",
+      "hourly": 0.107
+     },
+     {
+      "at": 1700000000,
+      "region": "Mystery",
+      "operatingSystem": "Linux",
+      "tenancy": "Shared",
+      "licenseModel": "No License required",
+      "preInstalledSw": "NA",
+      "capacitystatus": "Used",
+      "hourly": 0.096,
+      "regionCode": null
+     },
+     {
+      "at": 1710000000,
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "operatingSystem": "Windows",
+      "tenancy": "Shared",
+      "licenseModel": "License Included",
+      "preInstalledSw": "NA",
+      "capacitystatus": "Used",
+      "hourly": 0.188
+     },
+     {
+      "at": 1710000000,
+      "region": "Local Zone X",
+      "operatingSystem": "Linux",
+      "tenancy": "Dedicated",
+      "licenseModel": "No License required",
+      "preInstalledSw": "SQL Std",
+      "capacitystatus": "Used",
+      "hourly": 0.5,
+      "regionCode": null
+     },
+     {
+      "at": 1710000000,
+      "region": "South America (São Paulo)",
+      "regionCode": "sa-east-1",
+      "operatingSystem": "Linux",
+      "tenancy": "Shared",
+      "licenseModel": "No License required",
+      "preInstalledSw": "NA",
+      "capacitystatus": "Used",
+      "hourly": 1
+     },
+     {
+      "at": 1720000000,
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "operatingSystem": "Linux",
+      "tenancy": "Shared",
+      "licenseModel": "No License required",
+      "preInstalledSw": "NA",
+      "capacitystatus": "Used",
+      "hourly": 0.1
+     },
+     {
+      "at": 1720000000,
+      "region": "EU (Ireland)",
+      "regionCode": "eu-west-1",
+      "operatingSystem": "Linux",
+      "tenancy": "Shared",
+      "licenseModel": "No License required",
+      "preInstalledSw": "NA",
+      "capacitystatus": "Used",
+      "hourly": 0.11
+     },
+     {
+      "at": 1720000000,
+      "region": "EU (Ireland)",
+      "regionCode": "eu-west-1",
+      "operatingSystem": "Linux",
+      "tenancy": "Shared",
+      "licenseModel": "No License required",
+      "preInstalledSw": "NA",
+      "capacitystatus": "Used",
+      "hourly": 0.12
+     },
+     {
+      "at": 1730000000,
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "operatingSystem": "Windows",
+      "tenancy": "Shared",
+      "licenseModel": "License Included",
+      "preInstalledSw": "NA",
+      "capacitystatus": "Used",
+      "hourly": null
+     }
+    ],
+    "reserved": [
+     {
+      "at": 1700000000,
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "operatingSystem": "Linux",
+      "tenancy": "Shared",
+      "licenseModel": "No License required",
+      "preInstalledSw": "NA",
+      "capacitystatus": "Used",
+      "leaseContractLength": "1yr",
+      "offeringClass": "standard",
+      "purchaseOption": "No Upfront",
+      "hourly": 0.06,
+      "upfront": 0
+     },
+     {
+      "at": 1700000000,
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "operatingSystem": "Linux",
+      "tenancy": "Shared",
+      "licenseModel": "No License required",
+      "preInstalledSw": "NA",
+      "capacitystatus": "Used",
+      "leaseContractLength": "3yr",
+      "offeringClass": "convertible",
+      "purchaseOption": "All Upfront",
+      "hourly": 0,
+      "upfront": 1500.5
+     },
+     {
+      "at": 1710000000,
+      "region": "EU (Ireland)",
+      "regionCode": "eu-west-1",
+      "operatingSystem": "Linux",
+      "tenancy": "Shared",
+      "licenseModel": "No License required",
+      "preInstalledSw": "NA",
+      "capacitystatus": "Used",
+      "leaseContractLength": "1yr",
+      "offeringClass": "standard",
+      "purchaseOption": "No Upfront",
+      "hourly": 0.07,
+      "upfront": 0
+     },
+     {
+      "at": 1710000000,
+      "region": "Local Zone X",
+      "operatingSystem": "Linux",
+      "tenancy": "Dedicated",
+      "licenseModel": "No License required",
+      "preInstalledSw": "SQL Std",
+      "capacitystatus": "Used",
+      "leaseContractLength": "3yr",
+      "offeringClass": "convertible",
+      "purchaseOption": "All Upfront",
+      "hourly": 0.3,
+      "upfront": 0,
+      "regionCode": null
+     },
+     {
+      "at": 1720000000,
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "operatingSystem": "Linux",
+      "tenancy": "Shared",
+      "licenseModel": "No License required",
+      "preInstalledSw": "NA",
+      "capacitystatus": "Used",
+      "leaseContractLength": "1yr",
+      "offeringClass": "standard",
+      "purchaseOption": "No Upfront",
+      "hourly": 0.055,
+      "upfront": 10
+     },
+     {
+      "at": 1730000000,
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "operatingSystem": "Linux",
+      "tenancy": "Shared",
+      "licenseModel": "No License required",
+      "preInstalledSw": "NA",
+      "capacitystatus": "Used",
+      "leaseContractLength": "3yr",
+      "offeringClass": "convertible",
+      "purchaseOption": "All Upfront",
+      "hourly": null,
+      "upfront": null
+     }
+    ]
+   }
+  },
+  "t2.micro": {
+   "name": "t2.micro",
+   "createdAt": 1700000000,
+   "deletedAt": 1720000000,
+   "attributes": {
+    "vcpu": "1",
+    "memory": "1 GiB"
+   },
+   "attributesIn": {
+    "US East (N. Virginia)": {
+     "vcpu": "1",
+     "memory": "1 GiB"
+    },
+    "EU (Ireland)": {
+     "vcpu": "1",
+     "memory": "1 GiB"
+    },
+    "South America (São Paulo)": {
+     "vcpu": "1",
+     "memory": "1 GiB"
+    },
+    "Local Zone X": {
+     "vcpu": "1",
+     "memory": "1 GiB"
+    },
+    "Mystery": {
+     "vcpu": "1",
+     "memory": "1 GiB"
+    },
+    "Nowhere": {
+     "vcpu": "1",
+     "memory": "1 GiB"
+    }
+   },
+   "attributesHistory": [
+    {
+     "at": 1700000000,
+     "key": "vcpu",
+     "value": "1",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "memory",
+     "value": "1 GiB",
+     "region": null
+    }
+   ],
+   "pricing": {
+    "onDemand": [],
+    "reserved": []
+   },
+   "pricingHistory": {
+    "onDemand": [
+     {
+      "at": 1700000000,
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "operatingSystem": "Linux",
+      "tenancy": "Shared",
+      "licenseModel": "No License required",
+      "preInstalledSw": "NA",
+      "capacitystatus": "Used",
+      "hourly": 0.0116
+     },
+     {
+      "at": 1720000000,
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "operatingSystem": "Linux",
+      "tenancy": "Shared",
+      "licenseModel": "No License required",
+      "preInstalledSw": "NA",
+      "capacitystatus": "Used",
+      "hourly": null
+     }
+    ],
+    "reserved": [
+     {
+      "at": 1700000000,
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "operatingSystem": "Linux",
+      "tenancy": "Shared",
+      "licenseModel": "No License required",
+      "preInstalledSw": "NA",
+      "capacitystatus": "Used",
+      "leaseContractLength": "1yr",
+      "offeringClass": "standard",
+      "purchaseOption": "No Upfront",
+      "hourly": 0.007,
+      "upfront": 0
+     },
+     {
+      "at": 1720000000,
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "operatingSystem": "Linux",
+      "tenancy": "Shared",
+      "licenseModel": "No License required",
+      "preInstalledSw": "NA",
+      "capacitystatus": "Used",
+      "leaseContractLength": "1yr",
+      "offeringClass": "standard",
+      "purchaseOption": "No Upfront",
+      "hourly": null,
+      "upfront": null
+     }
+    ]
+   }
+  },
+  "x1.weird": {
+   "name": "x1.weird",
+   "createdAt": 1710000000,
+   "deletedAt": null,
+   "attributes": {},
+   "attributesIn": {
+    "US East (N. Virginia)": {},
+    "EU (Ireland)": {},
+    "South America (São Paulo)": {},
+    "Local Zone X": {},
+    "Mystery": {},
+    "Nowhere": {}
+   },
+   "attributesHistory": [],
+   "pricing": {
+    "onDemand": [
+     {
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "operatingSystem": "Linux",
+      "tenancy": "Shared",
+      "licenseModel": "No License required",
+      "preInstalledSw": "NA",
+      "capacitystatus": "Used",
+      "hourly": 2,
+      "since": 1710000000
+     }
+    ],
+    "reserved": []
+   },
+   "pricingHistory": {
+    "onDemand": [
+     {
+      "at": 1710000000,
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "operatingSystem": "Linux",
+      "tenancy": "Shared",
+      "licenseModel": "No License required",
+      "preInstalledSw": "NA",
+      "capacitystatus": "Used",
+      "hourly": 2
+     }
+    ],
+    "reserved": []
+   }
+  }
+ }
+}

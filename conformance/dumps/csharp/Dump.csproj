@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- run.sh sets DumpTfm to pick which of the library's targets this runs against. -->
+    <DumpTfm Condition="'$(DumpTfm)' == ''">net10.0</DumpTfm>
+    <TargetFramework>$(DumpTfm)</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../csharp/Infrawrench.BulkInstances.csproj" />
+  </ItemGroup>
+</Project>
