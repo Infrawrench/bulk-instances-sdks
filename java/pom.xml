@@ -91,7 +91,9 @@
         <artifactId>maven-javadoc-plugin</artifactId>
         <version>3.12.0</version>
         <configuration>
-          <doclint>all</doclint>
+          <!-- Not "missing": JDK 17's javadoc wants @param tags repeated on compact
+               record constructors, where later JDKs take them from the record. -->
+          <doclint>all,-missing</doclint>
           <failOnWarnings>true</failOnWarnings>
         </configuration>
       </plugin>
