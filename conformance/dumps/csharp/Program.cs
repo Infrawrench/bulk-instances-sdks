@@ -5,6 +5,13 @@ using Infrawrench.BulkInstances;
 
 var (baseUrl, cachePath, token, cache) = (args[0], args[1], args[2], args[3]);
 var platform = args.Length > 4 ? args[4] : null;
+var instanceType = args.Length > 5 ? args[5] : null;
+var json = new JsonSerializerOptions { WriteIndented = true, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
+static int Error(AwsPricingDataException e)
+{
+    Console.WriteLine(new JsonObject { ["error"] = new JsonObject { ["status"] = e.Status, ["message"] = e.Message } }.ToJsonString());
+    return 3;
+}
 static JsonNode? Ts(DateTimeOffset? d) => d is { } v ? v.ToUnixTimeSeconds() : null;
 static JsonObject Dict(IReadOnlyDictionary<string, string> d) => new(d.Select(kv => KeyValuePair.Create(kv.Key, (JsonNode?)kv.Value)));
 static JsonObject Loc(string region, string? regionCode) => new() { ["region"] = region, ["regionCode"] = regionCode };
@@ -22,6 +29,24 @@ static JsonObject Term(JsonObject o, string lease, string offering, string purch
 }
 static JsonArray Arr<T>(IEnumerable<T> xs, Func<T, JsonNode?> f) => new(xs.Select(f).ToArray());
 
+if (instanceType is not null)
+{
+    AwsInstance? one;
+    try
+    {
+        one = await BulkInstances.FetchAwsInstanceAsync(
+            platform!, instanceType, new AwsInstanceOptions { BaseUrl = baseUrl, Token = token == "-" ? null : token });
+    }
+    catch (AwsPricingDataException e)
+    {
+        return Error(e);
+    }
+    // The regions its attributes are overridden in; every other one is the same as `attributes`.
+    var overridden = one?.AttributesHistory.Select(c => c.Region).OfType<string>().Distinct().Order(StringComparer.Ordinal);
+    Console.WriteLine(new JsonObject { ["instance"] = one is null ? null : Instance(one, overridden!) }.ToJsonString(json));
+    return 0;
+}
+
 AwsPricingData data;
 try
 {
@@ -38,8 +63,7 @@ try
 }
 catch (AwsPricingDataException e)
 {
-    Console.WriteLine(new JsonObject { ["error"] = new JsonObject { ["status"] = e.Status, ["message"] = e.Message } }.ToJsonString());
-    return 3;
+    return Error(e);
 }
 
 var regions = new JsonObject(data.Regions.Select(kv => KeyValuePair.Create(kv.Key, (JsonNode?)Dict(kv.Value))));
@@ -55,14 +79,17 @@ var output = new JsonObject
     ["getMissing"] = data.Get("nope") is null ? null : "present",
     ["instances"] = instances,
 };
-foreach (var k in data.Keys)
+foreach (var k in data.Keys) instances[k] = Instance(data.Get(k)!, data.Regions.Keys);
+Console.WriteLine(output.ToJsonString(json));
+return 0;
+
+static JsonObject Instance(AwsInstance i, IEnumerable<string> regionNames)
 {
-    var i = data.Get(k)!;
     var p = i.Pricing;
     var h = i.PricingHistory;
     var attributesIn = new JsonObject();
-    foreach (var r in data.Regions.Keys.Append("Mystery").Append("Nowhere")) attributesIn[r] = Dict(i.AttributesIn(r));
-    instances[k] = new JsonObject
+    foreach (var r in regionNames.Append("Mystery").Append("Nowhere")) attributesIn[r] = Dict(i.AttributesIn(r));
+    return new JsonObject
     {
         ["name"] = i.Name,
         ["createdAt"] = Ts(i.CreatedAt),
@@ -107,5 +134,3 @@ foreach (var k in data.Keys)
         },
     };
 }
-Console.WriteLine(output.ToJsonString(new JsonSerializerOptions { WriteIndented = true, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
-return 0;

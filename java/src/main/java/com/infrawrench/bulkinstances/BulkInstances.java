@@ -179,7 +179,84 @@ public final class BulkInstances {
         }
     }
 
-    /** GETs {@code url}, retrying the 503 the bundles Worker answers when it cannot reach the Infrawrench API. */
+    /**
+     * Fetches one instance from the Infrawrench API with the default options.
+     *
+     * @param platform e.g. {@code ec2}; see {@link #AWS_PLATFORMS}
+     * @param instanceType e.g. {@code m5.large}
+     * @return the instance, or empty if the platform has no instance with that name
+     * @throws AWSPricingDataException if {@code platform} is not a platform name, {@code instanceType} is empty, or
+     *     the instance cannot be fetched
+     * @throws IOException if the response is not an instance
+     * @see #fetchAwsInstance(String, String, AWSInstanceOptions)
+     */
+    public static Optional<AWSInstance> fetchAwsInstance(String platform, String instanceType) throws IOException {
+        return fetchAwsInstance(platform, instanceType, AWSInstanceOptions.builder().build());
+    }
+
+    /**
+     * Fetches one instance from the Infrawrench API, without downloading the platform's bundle. Nothing is cached.
+     *
+     * <p>The result is the same as {@code downloadAwsPricingData(platform).get(instanceType)}, from whichever bundle
+     * the API last synced, which can trail the newest bundle by up to half an hour.
+     *
+     * @param platform e.g. {@code ec2}; see {@link #AWS_PLATFORMS}. Any lowercase letters and digits are accepted.
+     * @param instanceType e.g. {@code m5.large}
+     * @param options the options
+     * @return the instance, or empty if the platform has no instance with that name
+     * @throws AWSPricingDataException if {@code platform} is not a platform name, {@code instanceType} is empty, or
+     *     the instance cannot be fetched
+     * @throws IOException if the response is not an instance ({@link InterruptedIOException} if the thread is
+     *     interrupted)
+     */
+    public static Optional<AWSInstance> fetchAwsInstance(
+            String platform, String instanceType, AWSInstanceOptions options) throws IOException {
+        if (!PLATFORM.matcher(platform).matches()) {
+            throw new AWSPricingDataException("\"" + platform + "\" is not a platform name.");
+        }
+        if (instanceType.isEmpty()) {
+            throw new AWSPricingDataException("The instance type is empty.");
+        }
+        String token = options.token().orElseGet(() -> System.getenv("INFRAWRENCH_API_KEY"));
+        if (token == null || token.isEmpty()) {
+            throw new AWSPricingDataException("No Infrawrench API token: pass `token` or set INFRAWRENCH_API_KEY.");
+        }
+        String baseUrl = options.baseUrl().replaceFirst("/+$", "");
+        String url = baseUrl + "/api/v1/aws-bulk-pricing/" + platform + "/" + encodeURIComponent(instanceType);
+        HttpResponse<InputStream> res;
+        try {
+            res = download(url, token);
+        } catch (AWSPricingDataException e) {
+            if (e.status().orElse(0) == 404) return Optional.empty();
+            throw e;
+        }
+        try (InputStream in = new Transport(res.body(), url)) {
+            AWSPricingData data = BundleParser.parseInstance(in);
+            return data.get(data.keys().get(0));
+        }
+    }
+
+    /** Percent-encodes {@code s} as JavaScript's {@code encodeURIComponent} does (a space is {@code %20}, not {@code +}). */
+    private static String encodeURIComponent(String s) {
+        StringBuilder out = new StringBuilder();
+        for (byte b : s.getBytes(StandardCharsets.UTF_8)) {
+            char c = (char) (b & 0xff);
+            boolean unreserved = (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')
+                    || "-_.!~*'()".indexOf(c) >= 0;
+            if (unreserved) {
+                out.append(c);
+            } else {
+                out.append('%').append(Character.toUpperCase(Character.forDigit(c >> 4, 16)))
+                        .append(Character.toUpperCase(Character.forDigit(c & 0xf, 16)));
+            }
+        }
+        return out.toString();
+    }
+
+    /**
+     * GETs {@code url}, retrying the 503 the bundles Worker answers when it cannot reach the Infrawrench API (and the
+     * API answers when it cannot reach its store).
+     */
     private static HttpResponse<InputStream> download(String url, String token) throws IOException {
         HttpRequest request;
         try {

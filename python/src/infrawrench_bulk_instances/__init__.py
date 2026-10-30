@@ -15,7 +15,13 @@ from ._data import (
     ReservedTerm,
     Variant,
 )
-from ._download import AWS_PLATFORMS, AWSPricingDataError, download_aws_ec2_pricing_data, download_aws_pricing_data
+from ._download import (
+    AWS_PLATFORMS,
+    AWSPricingDataError,
+    download_aws_ec2_pricing_data,
+    download_aws_pricing_data,
+    fetch_aws_instance,
+)
 
 __all__ = [
     "AWS_PLATFORMS",
@@ -35,4 +41,5 @@ __all__ = [
     "Variant",
     "download_aws_ec2_pricing_data",
     "download_aws_pricing_data",
+    "fetch_aws_instance",
 ]

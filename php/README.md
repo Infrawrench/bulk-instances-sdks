@@ -77,6 +77,21 @@ foreach ($rds->get('db.m5.large')->pricing()->onDemand as $p) {
 variant fields. On other platforms they are `''`, unless the platform has a field with that name
 (RDS has `licenseModel`).
 
+## One instance
+
+`BulkInstances::fetchAwsInstance($platform, $instanceType, ...)` fetches a single instance from the
+Infrawrench API instead of downloading the platform's whole bundle. It returns the same
+`AWSInstance` that `get()` does, or `null` if the platform has no instance with that name:
+
+```php
+$m5 = BulkInstances::fetchAwsInstance('ec2', 'm5.large');
+count($m5?->pricing()->onDemand ?? []);
+```
+
+It takes `token` like the bundle download, and `baseUrl` for where the API is served from
+(`https://app.infrawrench.com` by default). Nothing is cached. The API syncs each new bundle within
+about half an hour of it being published, so it can briefly trail `downloadAwsPricingData()`.
+
 ## Caching
 
 The bundle is downloaded xz-compressed (about 20 MB) and kept decompressed (about

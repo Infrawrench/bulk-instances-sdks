@@ -39,8 +39,21 @@ type Options struct {
 	HTTPClient *http.Client
 }
 
+// AWSInstanceOptions configures [FetchAWSInstance]. The zero value uses every default.
+type AWSInstanceOptions struct {
+	// Token is your Infrawrench API token. Defaults to the INFRAWRENCH_API_KEY environment variable.
+	Token string
+
+	// BaseURL is where the Infrawrench API is served from. Defaults to https://app.infrawrench.com.
+	BaseURL string
+
+	// HTTPClient makes the requests. Defaults to http.DefaultClient.
+	HTTPClient *http.Client
+}
+
 const (
 	defaultBaseURL = "https://instances-bundles.infrawrench.com"
+	defaultAPIURL  = "https://app.infrawrench.com"
 	userAgent      = "infrawrench/bulk-instances, go, 1.0"
 )
 
@@ -102,7 +115,7 @@ func get(ctx context.Context, client *http.Client, rawURL, token string) (*http.
 }
 
 // download GETs rawURL, retrying the 503 the bundles Worker answers when it cannot
-// reach the Infrawrench API.
+// reach the Infrawrench API (and the API answers when it cannot reach its store).
 func download(ctx context.Context, client *http.Client, rawURL, token string) (*http.Response, error) {
 	for attempt := 1; ; attempt++ {
 		res, err := get(ctx, client, rawURL, token)
@@ -186,12 +199,9 @@ func DownloadAWSPricingData(ctx context.Context, platform string, opts Options) 
 	if platform != "ec2" {
 		prefix = platform + "-"
 	}
-	token := opts.Token
-	if token == "" {
-		token = os.Getenv("INFRAWRENCH_API_KEY")
-	}
-	if token == "" {
-		return nil, &Error{Message: "No Infrawrench API token: pass Options.Token or set INFRAWRENCH_API_KEY."}
+	token, err := tokenOrEnv(opts.Token, "Options.Token")
+	if err != nil {
+		return nil, err
 	}
 	baseURL := opts.BaseURL
 	if baseURL == "" {
@@ -331,4 +341,64 @@ func store(cachePath, prefix, name string, json []byte) error {
 		}
 	}
 	return nil
+}
+
+// tokenOrEnv returns token, or INFRAWRENCH_API_KEY if it is empty. field names the
+// option for the error when both are.
+func tokenOrEnv(token, field string) (string, error) {
+	if token == "" {
+		token = os.Getenv("INFRAWRENCH_API_KEY")
+	}
+	if token == "" {
+		return "", &Error{Message: "No Infrawrench API token: pass " + field + " or set INFRAWRENCH_API_KEY."}
+	}
+	return token, nil
+}
+
+// FetchAWSInstance fetches one instance from the Infrawrench API, without
+// downloading the platform's bundle. Nothing is cached. It returns nil and no
+// error if the platform has no instance with that name.
+//
+// The result is the same as DownloadAWSPricingData(ctx, platform, opts) then
+// Get(instanceType), from whichever bundle the API last synced, which can trail
+// the newest bundle by up to half an hour.
+//
+// Request failures, malformed platform names and an empty instance type are
+// returned as an [*Error]; parsing failures are returned as they are.
+func FetchAWSInstance(ctx context.Context, platform, instanceType string, opts AWSInstanceOptions) (*AWSInstance, error) {
+	if !platformName.MatchString(platform) {
+		return nil, &Error{Message: fmt.Sprintf("%q is not a platform name.", platform)}
+	}
+	if instanceType == "" {
+		return nil, &Error{Message: "The instance type is empty."}
+	}
+	token, err := tokenOrEnv(opts.Token, "AWSInstanceOptions.Token")
+	if err != nil {
+		return nil, err
+	}
+	baseURL := opts.BaseURL
+	if baseURL == "" {
+		baseURL = defaultAPIURL
+	}
+	baseURL = strings.TrimRight(baseURL, "/")
+	client := opts.HTTPClient
+	if client == nil {
+		client = http.DefaultClient
+	}
+
+	rawURL := baseURL + "/api/v1/aws-bulk-pricing/" + platform + "/" + url.PathEscape(instanceType)
+	res, err := download(ctx, client, rawURL, token)
+	if err != nil {
+		var e *Error
+		if errors.As(err, &e) && e.Status == http.StatusNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, transportError(rawURL, err)
+	}
+	return parseInstance(body)
 }

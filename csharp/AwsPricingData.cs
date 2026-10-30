@@ -40,8 +40,15 @@ public sealed class AwsPricingData
     private VariantFields[]? _variants;
     private ReservedTerm[]? _terms;
 
+    private static readonly JsonElement EmptyArray = JsonDocument.Parse("[]").RootElement;
+
     /// <summary>Parses a bundle as instances-bundler writes it; every string is an index into <c>compression_table</c>.</summary>
-    internal AwsPricingData(byte[] utf8Json)
+    /// <param name="utf8Json">The bundle.</param>
+    /// <param name="oneInstance">
+    /// Whether it is one instance as the Infrawrench API serves it instead: the bundle's tables cut down to what it
+    /// uses, with <c>name</c> and <c>instance</c> in place of <c>instances</c>.
+    /// </param>
+    internal AwsPricingData(byte[] utf8Json, bool oneInstance = false)
     {
         _utf8 = utf8Json;
         string[]? table = null, variantKeys = null;
@@ -49,6 +56,8 @@ public sealed class AwsPricingData
         JsonElement? snapshots = null, regions = null, variants = null, terms = null;
         Dictionary<string, (int, int)>? instances = null;
         var keys = new List<string>();
+        string? name = null;
+        (int, int)? instance = null;
 
         var reader = new Utf8JsonReader(utf8Json);
         Expect(ref reader, JsonTokenType.StartObject);
@@ -79,8 +88,16 @@ public sealed class AwsPricingData
                 case "reserved_terms":
                     terms = JsonElement.ParseValue(ref reader);
                     break;
-                case "instances":
+                case "instances" when !oneInstance:
                     instances = ReadRanges(ref reader, keys);
+                    break;
+                case "name" when oneInstance:
+                    name = reader.GetString();
+                    break;
+                case "instance" when oneInstance:
+                    var start = (int)reader.TokenStartIndex;
+                    reader.Skip();
+                    instance = (start, (int)reader.BytesConsumed - start);
                     break;
                 default:
                     reader.Skip();
@@ -89,6 +106,13 @@ public sealed class AwsPricingData
         }
         // Validates that nothing follows the bundle.
         reader.Read();
+        if (oneInstance)
+        {
+            if (name is null || instance is null) throw new JsonException("The instance has no name or rows.");
+            instances = new Dictionary<string, (int, int)>(StringComparer.Ordinal) { [name] = instance.Value };
+            keys.Add(name);
+            snapshots ??= EmptyArray;
+        }
 
         _table = table ?? throw Missing("compression_table");
         _snapshotsRaw = snapshots ?? throw Missing("snapshots");

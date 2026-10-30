@@ -1,7 +1,8 @@
 """Writes small bundles that exercise every decoding rule.
 
 fixture/bundle-<NAME>.json(.xz) and fixture/latest are an EC2 bundle. fixture/rds-bundle-<NAME>.json(.xz) and
-fixture/rds-latest are an RDS one, which names its own variant keys.
+fixture/rds-latest are an RDS one, which names its own variant keys. fixture/api/<platform>/<instance>.json is each
+instance as the Infrawrench API serves it from `/api/v1/aws-bulk-pricing/<platform>/<instance>`.
 """
 import json, lzma, os, sys
 
@@ -97,7 +98,84 @@ def write(prefix, bundle):
     with open(os.path.join(out, f"{prefix}latest"), "w") as f:
         f.write(NAME + "\n")
 
+
+class Counter:
+    """Counts index uses, then renumbers them most used first (ties keep their old order)."""
+    def __init__(self):
+        self.counts = {}
+    def add(self, *indices):
+        for i in indices:
+            self.counts[i] = self.counts.get(i, 0) + 1
+    def order(self):
+        return sorted(self.counts, key=lambda i: (-self.counts[i], i))
+    def renumber(self):
+        return {old: new for new, old in enumerate(self.order())}
+
+def reduce_instance(bundle, platform, offer, variant_keys, name):
+    """One instance with the bundle's tables cut down to what it uses, as the Infrawrench API's sync
+    (app/packages/web/src/aws-bulk-pricing/format.ts in Infrawrench) writes it."""
+    attrs, changes, base, od, rs, created, deleted = bundle["instances"][name]
+    strings, variants, terms, locations = Counter(), Counter(), Counter(), set()
+    for k, v in attrs:
+        strings.add(k, v)
+    # The bundler always writes [ts, key, value|null(, region)]; the fixture also has the shorter forms decoders accept.
+    changes = [[c[0], c[1], c[2] if len(c) > 2 else None] + ([c[3]] if len(c) > 3 and c[3] is not None else []) for c in changes]
+    for c in changes:
+        strings.add(c[1])
+        if c[2] is not None:
+            strings.add(c[2])
+        if len(c) > 3:
+            strings.add(c[3])
+            locations.add(c[3])
+    for r in od:
+        strings.add(r[1])
+        locations.add(r[1])
+        variants.add(r[2])
+    for r in rs:
+        strings.add(r[1])
+        locations.add(r[1])
+        variants.add(r[2])
+        terms.add(r[3])
+    for v in variants.counts:
+        strings.add(*bundle["variants"][v])
+    for t in terms.counts:
+        strings.add(*bundle["reserved_terms"][t])
+    regions = [r for r in bundle["regions"] if r[0] in locations]
+    for _, pairs in regions:
+        for k, v in pairs:
+            strings.add(k, v)
+    S, V, T = strings.renumber(), variants.renumber(), terms.renumber()
+    return {
+        "compression_table": [bundle["compression_table"][i] for i in strings.order()],
+        "platform": platform,
+        "offer": offer,
+        "name": name,
+        "variant_keys": variant_keys,
+        "regions": [[S[loc], [[S[k], S[v]] for k, v in pairs]] for loc, pairs in regions],
+        "variants": [[S[i] for i in bundle["variants"][v]] for v in variants.order()],
+        "reserved_terms": [[S[i] for i in bundle["reserved_terms"][t]] for t in terms.order()],
+        "instance": [
+            [[S[k], S[v]] for k, v in attrs],
+            [[c[0], S[c[1]], None if c[2] is None else S[c[2]]] + [S[i] for i in c[3:]] for c in changes],
+            base,
+            [[r[0], S[r[1]], V[r[2]], *r[3:]] for r in od],
+            [[r[0], S[r[1]], V[r[2]], T[r[3]], *r[4:]] for r in rs],
+            created,
+            deleted,
+        ],
+    }
+
+def write_api(platform, bundle):
+    offer = bundle.get("offer", "AmazonEC2")
+    variant_keys = bundle.get("variant_keys", ["operatingSystem", "tenancy", "licenseModel", "preInstalledSw", "capacitystatus"])
+    os.makedirs(os.path.join(out, "api", platform), exist_ok=True)
+    for name in bundle["instances"]:
+        value = reduce_instance(bundle, platform, offer, variant_keys, name)
+        with open(os.path.join(out, "api", platform, f"{name}.json"), "w", encoding="utf-8") as f:
+            f.write(json.dumps(value, ensure_ascii=False, separators=(",", ":")))
+
 write("", bundle)
+write_api("ec2", bundle)
 
 # RDS: variants are named by variant_keys, and several share a region, so prices must be told apart
 # by every variant field. licenseModel is also one of EC2's fields.
@@ -145,4 +223,5 @@ rds = {
     },
 }
 write("rds-", rds)
+write_api("rds", rds)
 print(out)

@@ -15,6 +15,7 @@ namespace Infrawrench.BulkInstances;
 public static class BulkInstances
 {
     private const string DefaultBaseUrl = "https://instances-bundles.infrawrench.com";
+    private const string DefaultApiUrl = "https://app.infrawrench.com";
     private const string UserAgent = "infrawrench/bulk-instances, csharp, 1.0";
 
     private static readonly HttpClient Http = new(new SocketsHttpHandler
@@ -154,6 +155,57 @@ public static class BulkInstances
         return new AwsPricingData(json);
     }
 
+    /// <summary>
+    /// Fetches one instance from the Infrawrench API, without downloading the platform's bundle. Nothing is cached.
+    /// </summary>
+    /// <remarks>
+    /// The result is the same as <c>(await DownloadAwsPricingDataAsync(platform)).Get(instanceType)</c>, from whichever
+    /// bundle the API last synced, which can trail the newest bundle by up to half an hour.
+    /// </remarks>
+    /// <param name="platform">e.g. <c>ec2</c> or <c>rds</c>; see <see cref="AwsPlatforms"/>.</param>
+    /// <param name="instanceType">e.g. <c>m5.large</c>.</param>
+    /// <param name="options">Token and server options; all optional.</param>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    /// <returns>The instance, or <c>null</c> if the platform has no instance with that name.</returns>
+    /// <exception cref="AwsPricingDataException">
+    /// The platform is not a lowercase name, the instance type is empty, the token is missing or rejected, or the
+    /// instance cannot be fetched.
+    /// </exception>
+    public static async Task<AwsInstance?> FetchAwsInstanceAsync(
+        string platform, string instanceType, AwsInstanceOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(platform);
+        ArgumentNullException.ThrowIfNull(instanceType);
+        if (!PlatformPattern.IsMatch(platform))
+        {
+            throw new AwsPricingDataException($"\"{platform}\" is not a platform name.");
+        }
+        if (instanceType.Length == 0)
+        {
+            throw new AwsPricingDataException("The instance type is empty.");
+        }
+        options ??= new AwsInstanceOptions();
+        var token = options.Token ?? Environment.GetEnvironmentVariable("INFRAWRENCH_API_KEY");
+        if (string.IsNullOrEmpty(token))
+        {
+            throw new AwsPricingDataException("No Infrawrench API token: pass `Token` or set INFRAWRENCH_API_KEY.");
+        }
+        var baseUrl = (options.BaseUrl ?? DefaultApiUrl).TrimEnd('/');
+        var url = $"{baseUrl}/api/v1/aws-bulk-pricing/{platform}/{Uri.EscapeDataString(instanceType)}";
+        byte[] json;
+        try
+        {
+            using var res = await DownloadAsync(url, token, cancellationToken).ConfigureAwait(false);
+            json = await ReadBodyAsync(res, url, r => r.Content.ReadAsByteArrayAsync(cancellationToken)).ConfigureAwait(false);
+        }
+        catch (AwsPricingDataException e) when (e.Status == 404)
+        {
+            return null;
+        }
+        var data = new AwsPricingData(json, oneInstance: true);
+        return data.Get(data.Keys[0]);
+    }
+
     private static byte[] Decompress(byte[] compressed)
     {
         using var xz = new XZStream(new MemoryStream(compressed, writable: false));
@@ -194,7 +246,10 @@ public static class BulkInstances
         // HttpClient reports its own timeouts as cancellations.
         || (e is OperationCanceledException && !cancellationToken.IsCancellationRequested);
 
-    /// <summary>GETs <paramref name="url"/>, retrying the 503 the bundles Worker answers when it cannot reach the Infrawrench API.</summary>
+    /// <summary>
+    /// GETs <paramref name="url"/>, retrying the 503 the bundles Worker answers when it cannot reach the Infrawrench API
+    /// (and the API answers when it cannot reach its store).
+    /// </summary>
     private static async Task<HttpResponseMessage> DownloadAsync(string url, string token, CancellationToken cancellationToken)
     {
         for (var attempt = 1; ; attempt++)

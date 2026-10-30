@@ -100,6 +100,28 @@ for _, p := range db.Pricing().OnDemand {
 variant fields. On other platforms they are `""`, unless the platform has a field with that name
 (RDS has `licenseModel`).
 
+## One instance
+
+`FetchAWSInstance(ctx, platform, instanceType, opts)` fetches a single instance from the
+Infrawrench API instead of downloading the platform's whole bundle. It returns the same
+`*AWSInstance` that `Get` does, or `nil` with no error if the platform has no instance with
+that name:
+
+```go
+m5, err := bulkinstances.FetchAWSInstance(ctx, "ec2", "m5.large", bulkinstances.AWSInstanceOptions{})
+if err != nil {
+	return err
+}
+if m5 != nil {
+	_ = len(m5.Pricing().OnDemand)
+}
+```
+
+`AWSInstanceOptions` takes `Token` and `HTTPClient` like the bundle download, and `BaseURL` for
+where the API is served from (`https://app.infrawrench.com` by default). Nothing is cached. The
+API syncs each new bundle within about half an hour of it being published, so it can briefly
+trail `DownloadAWSPricingData`.
+
 ## Caching
 
 The bundle is downloaded xz-compressed (about 20 MB) and kept decompressed (about

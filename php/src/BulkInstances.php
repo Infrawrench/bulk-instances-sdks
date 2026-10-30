@@ -7,6 +7,7 @@ namespace Infrawrench\BulkInstances;
 final class BulkInstances
 {
     private const DEFAULT_BASE_URL = 'https://instances-bundles.infrawrench.com';
+    private const DEFAULT_API_URL = 'https://app.infrawrench.com';
     private const USER_AGENT = 'infrawrench/bulk-instances, php, 1.0';
 
     /**
@@ -117,7 +118,71 @@ final class BulkInstances
         return AWSPricingData::fromJson($json);
     }
 
-    /** GETs `url`, retrying the 503 the bundles Worker answers when it cannot reach the Infrawrench API. */
+    /**
+     * Fetches one instance from the Infrawrench API, without downloading the platform's bundle.
+     * Nothing is cached.
+     *
+     * The result is the same as `downloadAwsPricingData($platform)->get($instanceType)`, from
+     * whichever bundle the API last synced, which can trail the newest bundle by up to half an hour.
+     *
+     * @param string $platform One of {@see AWS_PLATFORMS}, e.g. `rds`, or any other lowercase name.
+     * @param string $instanceType The instance type, e.g. `m5.large`.
+     * @param string|null $token Defines your Infrawrench API token. Defaults to the `INFRAWRENCH_API_KEY` environment variable.
+     * @param string|null $baseUrl Where the Infrawrench API is served from. Defaults to https://app.infrawrench.com
+     *
+     * @return AWSInstance|null `null` if the platform has no instance with that name.
+     *
+     * @throws AWSPricingDataException
+     * @throws \JsonException if the response is not valid JSON
+     */
+    public static function fetchAwsInstance(
+        string $platform,
+        string $instanceType,
+        ?string $token = null,
+        ?string $baseUrl = null,
+    ): ?AWSInstance {
+        if (preg_match('/^[a-z0-9]+$/D', $platform) !== 1) {
+            throw new AWSPricingDataException("\"$platform\" is not a platform name.");
+        }
+        if ($instanceType === '') {
+            throw new AWSPricingDataException('The instance type is empty.');
+        }
+        $token ??= getenv('INFRAWRENCH_API_KEY') ?: null;
+        if ($token === null || $token === '') {
+            throw new AWSPricingDataException('No Infrawrench API token: pass `$token` or set INFRAWRENCH_API_KEY.');
+        }
+        $baseUrl = rtrim($baseUrl ?? self::DEFAULT_API_URL, '/');
+
+        try {
+            $json = self::download("$baseUrl/api/v1/aws-bulk-pricing/$platform/" . rawurlencode($instanceType), $token);
+        } catch (AWSPricingDataException $err) {
+            if ($err->status === 404) {
+                return null;
+            }
+            throw $err;
+        }
+
+        // The bundle's tables cut down to what this instance uses, and its row renumbered to match.
+        /** @var array{offer: string, compression_table: list<string>, regions: list<array{int, list<array{int, int}>}>, variant_keys: list<string>, variants: list<list<int>>, reserved_terms: list<list<int>>, name: string, instance: mixed} $value */
+        $value = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        /** @var AWSPricingData::BundleFile $raw */
+        $raw = [
+            'offer' => $value['offer'],
+            'compression_table' => $value['compression_table'],
+            'snapshots' => [],
+            'regions' => $value['regions'],
+            'variant_keys' => $value['variant_keys'],
+            'variants' => $value['variants'],
+            'reserved_terms' => $value['reserved_terms'],
+            'instances' => [$value['name'] => $value['instance']],
+        ];
+        return (new AWSPricingData($raw))->get($value['name']);
+    }
+
+    /**
+     * GETs `url`, retrying the 503 the bundles Worker answers when it cannot reach the Infrawrench API
+     * (and the API answers when it cannot reach its store).
+     */
     private static function download(string $url, string $token): string
     {
         for ($attempt = 1; ; $attempt++) {

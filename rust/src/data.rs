@@ -286,6 +286,12 @@ impl AwsPricingData {
         Ok(Self { shared, instances })
     }
 
+    /// The instance with this type, owned, consuming the data.
+    pub(crate) fn into_instance(self, instance_type: &str) -> Option<AwsInstance> {
+        let &index = self.shared.raw.instances.index.get(instance_type)?;
+        Some(AwsInstance::new(self.shared, index))
+    }
+
     /// The AWS offer code, e.g. `AmazonEC2` or `AmazonRDS`.
     pub fn offer(&self) -> &str {
         self.shared.raw.offer.as_deref().unwrap_or("AmazonEC2")

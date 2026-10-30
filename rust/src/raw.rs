@@ -23,6 +23,41 @@ pub(crate) struct BundleFile {
     pub instances: Instances,
 }
 
+/// One instance as `GET /api/v1/aws-bulk-pricing/<platform>/<instance>` returns it: the bundle's
+/// tables cut down to what this instance uses, and its row renumbered to match.
+#[derive(Deserialize)]
+pub(crate) struct InstanceFile {
+    #[serde(default)]
+    pub offer: Option<String>,
+    pub compression_table: Vec<String>,
+    pub regions: Vec<(u32, Vec<[u32; 2]>)>,
+    #[serde(default)]
+    pub variant_keys: Option<Vec<String>>,
+    pub variants: Vec<Vec<u32>>,
+    pub reserved_terms: Vec<[u32; 3]>,
+    pub name: String,
+    pub instance: RawInstance,
+}
+
+impl From<InstanceFile> for BundleFile {
+    /// A bundle holding just this instance.
+    fn from(file: InstanceFile) -> Self {
+        BundleFile {
+            offer: file.offer,
+            compression_table: file.compression_table,
+            snapshots: Vec::new(),
+            regions: file.regions,
+            variant_keys: file.variant_keys,
+            variants: file.variants,
+            reserved_terms: file.reserved_terms,
+            instances: Instances {
+                index: HashMap::from([(file.name.clone(), 0)]),
+                rows: vec![(file.name, file.instance)],
+            },
+        }
+    }
+}
+
 /// The instances in bundle order; a repeated key keeps its first position and its last value.
 pub(crate) struct Instances {
     pub rows: Vec<(String, RawInstance)>,

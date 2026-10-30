@@ -1,7 +1,9 @@
+use std::collections::BTreeSet;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use infrawrench_bulk_instances::{
-    Options, ReservedTerm, Variant, download_aws_ec2_pricing_data, download_aws_pricing_data,
+    AwsInstance, AwsInstanceOptions, Error, Options, ReservedTerm, Variant,
+    download_aws_ec2_pricing_data, download_aws_pricing_data, fetch_aws_instance,
 };
 use serde_json::{Map, Value, json};
 
@@ -35,15 +37,109 @@ fn extend(mut m: Map<String, Value>, extra: Value) -> Value {
     Value::Object(m)
 }
 
+fn error(e: Error) -> ! {
+    println!(
+        "{}",
+        json!({ "error": { "status": e.status(), "message": e.to_string() } })
+    );
+    std::process::exit(3);
+}
+
+fn dump_instance<'a>(i: &AwsInstance, region_names: impl Iterator<Item = &'a str>) -> Value {
+    let (p, h) = (i.pricing(), i.pricing_history());
+    let mut attributes_in = Map::new();
+    for r in region_names.chain(["Mystery", "Nowhere"]) {
+        attributes_in.insert(r.into(), json!(i.attributes_in(r)));
+    }
+    let history: Vec<Value> = i
+        .attributes_history()
+        .iter()
+        .map(|c| json!({ "at": ts(c.at), "key": c.key, "value": c.value, "region": c.region }))
+        .collect();
+    let on_demand: Vec<Value> = p
+        .on_demand
+        .iter()
+        .map(|r| {
+            extend(
+                base(&r.region, &r.region_code, &r.variant),
+                json!({ "hourly": r.hourly, "since": ts(r.since) }),
+            )
+        })
+        .collect();
+    let reserved: Vec<Value> = p
+        .reserved
+        .iter()
+        .map(|r| {
+            extend(
+                with_term(base(&r.region, &r.region_code, &r.variant), &r.term),
+                json!({ "hourly": r.hourly, "upfront": r.upfront, "since": ts(r.since) }),
+            )
+        })
+        .collect();
+    let od_history: Vec<Value> = h
+        .on_demand
+        .iter()
+        .map(|r| {
+            extend(
+                base(&r.region, &r.region_code, &r.variant),
+                json!({ "at": ts(r.at), "hourly": r.hourly }),
+            )
+        })
+        .collect();
+    let rs_history: Vec<Value> = h
+        .reserved
+        .iter()
+        .map(|r| {
+            extend(
+                with_term(base(&r.region, &r.region_code, &r.variant), &r.term),
+                json!({ "at": ts(r.at), "hourly": r.hourly, "upfront": r.upfront }),
+            )
+        })
+        .collect();
+    json!({
+        "name": i.name(), "createdAt": ts(i.created_at()), "deletedAt": i.deleted_at().map(ts),
+        "attributes": i.attributes(),
+        "attributesIn": attributes_in,
+        "attributesHistory": history,
+        "pricing": { "onDemand": on_demand, "reserved": reserved },
+        "pricingHistory": { "onDemand": od_history, "reserved": rs_history },
+    })
+}
+
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
-    let (base_url, cache_path, token, cache, platform) = match &args[..] {
-        [b, p, t, c] => (b, p, t, c, None),
-        [b, p, t, c, platform] => (b, p, t, c, Some(platform)),
-        _ => panic!("usage: dump <baseUrl> <cacheDir> <token|-> <1|0> [platform]"),
+    let (base_url, cache_path, token, cache, platform, instance) = match &args[..] {
+        [b, p, t, c] => (b, p, t, c, None, None),
+        [b, p, t, c, platform] => (b, p, t, c, Some(platform), None),
+        [b, p, t, c, platform, instance] => (b, p, t, c, Some(platform), Some(instance)),
+        _ => panic!("usage: dump <baseUrl> <cacheDir> <token|-> <1|0> [platform [instance]]"),
     };
+    let token = (token != "-").then(|| token.clone());
+
+    if let (Some(platform), Some(instance)) = (platform, instance) {
+        let options = AwsInstanceOptions {
+            token,
+            base_url: Some(base_url.clone()),
+        };
+        let i = fetch_aws_instance(platform, instance, &options).unwrap_or_else(|e| error(e));
+        let dumped = i.map(|i| {
+            // The regions its attributes are overridden in; every other one is the same as `attributes`.
+            let regions: BTreeSet<&str> = i
+                .attributes_history()
+                .iter()
+                .filter_map(|c| c.region.as_deref())
+                .collect();
+            dump_instance(&i, regions.into_iter())
+        });
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&json!({ "instance": dumped })).unwrap()
+        );
+        return;
+    }
+
     let options = Options {
-        token: (token != "-").then(|| token.clone()),
+        token,
         cache_pricing_data: cache == "1",
         cache_path: Some(cache_path.into()),
         base_url: Some(base_url.clone()),
@@ -52,16 +148,7 @@ fn main() {
         None => download_aws_ec2_pricing_data(&options),
         Some(platform) => download_aws_pricing_data(platform, &options),
     };
-    let data = match result {
-        Ok(d) => d,
-        Err(e) => {
-            println!(
-                "{}",
-                json!({ "error": { "status": e.status(), "message": e.to_string() } })
-            );
-            std::process::exit(3);
-        }
-    };
+    let data = result.unwrap_or_else(|e| error(e));
 
     let regions = data.regions();
     let mut keys: Vec<&str> = data.keys().collect();
@@ -69,68 +156,10 @@ fn main() {
     let mut instances = Map::new();
     for k in data.keys() {
         let i = data.get(k).unwrap();
-        let (p, h) = (i.pricing(), i.pricing_history());
-        let mut attributes_in = Map::new();
-        for r in regions
-            .keys()
-            .map(String::as_str)
-            .chain(["Mystery", "Nowhere"])
-        {
-            attributes_in.insert(r.into(), json!(i.attributes_in(r)));
-        }
-        let history: Vec<Value> = i
-            .attributes_history()
-            .iter()
-            .map(|c| json!({ "at": ts(c.at), "key": c.key, "value": c.value, "region": c.region }))
-            .collect();
-        let on_demand: Vec<Value> = p
-            .on_demand
-            .iter()
-            .map(|r| {
-                extend(
-                    base(&r.region, &r.region_code, &r.variant),
-                    json!({ "hourly": r.hourly, "since": ts(r.since) }),
-                )
-            })
-            .collect();
-        let reserved: Vec<Value> = p
-            .reserved
-            .iter()
-            .map(|r| {
-                extend(
-                    with_term(base(&r.region, &r.region_code, &r.variant), &r.term),
-                    json!({ "hourly": r.hourly, "upfront": r.upfront, "since": ts(r.since) }),
-                )
-            })
-            .collect();
-        let od_history: Vec<Value> = h
-            .on_demand
-            .iter()
-            .map(|r| {
-                extend(
-                    base(&r.region, &r.region_code, &r.variant),
-                    json!({ "at": ts(r.at), "hourly": r.hourly }),
-                )
-            })
-            .collect();
-        let rs_history: Vec<Value> = h
-            .reserved
-            .iter()
-            .map(|r| {
-                extend(
-                    with_term(base(&r.region, &r.region_code, &r.variant), &r.term),
-                    json!({ "at": ts(r.at), "hourly": r.hourly, "upfront": r.upfront }),
-                )
-            })
-            .collect();
-        instances.insert(k.into(), json!({
-            "name": i.name(), "createdAt": ts(i.created_at()), "deletedAt": i.deleted_at().map(ts),
-            "attributes": i.attributes(),
-            "attributesIn": attributes_in,
-            "attributesHistory": history,
-            "pricing": { "onDemand": on_demand, "reserved": reserved },
-            "pricingHistory": { "onDemand": od_history, "reserved": rs_history },
-        }));
+        instances.insert(
+            k.into(),
+            dump_instance(i, regions.keys().map(String::as_str)),
+        );
     }
     let out = json!({
         "offer": data.offer(),

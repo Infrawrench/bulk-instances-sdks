@@ -69,6 +69,22 @@ var multiAz = rds.Get("db.m5.large")!.Pricing.OnDemand.FirstOrDefault(
 variant fields. On other platforms they are `""`, unless the platform has a field with that name
 (RDS has `licenseModel`).
 
+## One instance
+
+`BulkInstances.FetchAwsInstanceAsync(platform, instanceType, options, cancellationToken)` fetches a
+single instance from the Infrawrench API instead of downloading the platform's whole bundle. It
+returns the same `AwsInstance` that `Get` does, or `null` if the platform has no instance with that
+name:
+
+```csharp
+var m5 = await BulkInstances.FetchAwsInstanceAsync("ec2", "m5.large");
+var count = m5?.Pricing.OnDemand.Count;
+```
+
+Its options are an `AwsInstanceOptions`: `Token`, and `BaseUrl` for where the API is served from
+(`https://app.infrawrench.com` by default). Nothing is cached. The API syncs each new bundle within
+about half an hour of it being published, so it can briefly trail `DownloadAwsPricingDataAsync`.
+
 ## Caching
 
 The bundle is downloaded xz-compressed (about 20 MB) and kept decompressed (about
