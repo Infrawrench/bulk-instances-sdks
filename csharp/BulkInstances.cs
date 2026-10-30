@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -10,7 +11,7 @@ using SharpCompress.Compressors.Xz;
 
 namespace Infrawrench.BulkInstances;
 
-/// <summary>Downloads the Infrawrench AWS EC2 pricing bundle.</summary>
+/// <summary>Downloads the Infrawrench AWS pricing bundles: EC2 and the other AWS platforms.</summary>
 public static class BulkInstances
 {
     private const string DefaultBaseUrl = "https://instances-bundles.infrawrench.com";
@@ -25,24 +26,60 @@ public static class BulkInstances
         Timeout = Timeout.InfiniteTimeSpan,
     };
 
+    private static readonly Regex PlatformPattern = new(@"^[a-z0-9]+\z", RegexOptions.CultureInvariant);
     private static readonly Regex LatestPattern = new(@"^[A-Za-z0-9._-]+\z", RegexOptions.CultureInvariant);
     private static readonly Regex BundlePattern = new(@"^bundle-.+\.json\z", RegexOptions.CultureInvariant);
     private static readonly Regex StalePattern = new(@"^bundle-.+\.json(\.xz)?\z", RegexOptions.CultureInvariant);
 
     /// <summary>
-    /// Downloads the AWS EC2 pricing data compressed blob and decompresses it.
+    /// The AWS platforms Infrawrench publishes a bundle for. Any other lowercase name is
+    /// requested as is, so a platform added later works without a new SDK.
     /// </summary>
-    /// <remarks>
-    /// The bucket's <c>latest</c> object names the newest bundle. With caching on, a bundle
-    /// is only downloaded when <c>latest</c> names one that is not in the cache yet, and if
-    /// <c>latest</c> cannot be fetched at all (offline, outage) the newest cached bundle is used.
-    /// </remarks>
+    public static IReadOnlyList<string> AwsPlatforms { get; } = Array.AsReadOnly(new[]
+    {
+        "ec2", "rds", "elasticache", "opensearch", "redshift", "docdb", "neptune", "memorydb", "dax", "sagemaker", "emr", "gamelift",
+    });
+
+    /// <summary>The variant keys of EC2 bundles, which don't list their own.</summary>
+    public static IReadOnlyList<string> Ec2VariantKeys { get; } = Array.AsReadOnly(new[]
+    {
+        "operatingSystem", "tenancy", "licenseModel", "preInstalledSw", "capacitystatus",
+    });
+
+    /// <summary>
+    /// Downloads the AWS EC2 pricing data. The same as <c>DownloadAwsPricingDataAsync("ec2", options, cancellationToken)</c>.
+    /// </summary>
     /// <param name="options">Token, caching and server options; all optional.</param>
     /// <param name="cancellationToken">Cancels the download.</param>
     /// <exception cref="AwsPricingDataException">The token is missing or rejected, or the bundle cannot be downloaded.</exception>
-    public static async Task<AwsPricingData> DownloadAwsEc2PricingDataAsync(
-        AwsPricingDataOptions? options = null, CancellationToken cancellationToken = default)
+    public static Task<AwsPricingData> DownloadAwsEc2PricingDataAsync(
+        AwsPricingDataOptions? options = null, CancellationToken cancellationToken = default) =>
+        DownloadAwsPricingDataAsync("ec2", options, cancellationToken);
+
+    /// <summary>
+    /// Downloads one AWS platform's pricing data compressed blob and decompresses it.
+    /// </summary>
+    /// <remarks>
+    /// The bucket's <c>&lt;platform&gt;-latest</c> object (<c>latest</c> for EC2) names the newest bundle. With
+    /// caching on, a bundle is only downloaded when that names one that is not in the cache yet,
+    /// and if it cannot be fetched at all (offline, outage) the newest cached bundle is used.
+    /// </remarks>
+    /// <param name="platform">e.g. <c>ec2</c> or <c>rds</c>; see <see cref="AwsPlatforms"/>.</param>
+    /// <param name="options">Token, caching and server options; all optional.</param>
+    /// <param name="cancellationToken">Cancels the download.</param>
+    /// <exception cref="AwsPricingDataException">
+    /// The platform is not a lowercase name, the token is missing or rejected, or the bundle cannot be downloaded.
+    /// </exception>
+    public static async Task<AwsPricingData> DownloadAwsPricingDataAsync(
+        string platform, AwsPricingDataOptions? options = null, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(platform);
+        if (!PlatformPattern.IsMatch(platform))
+        {
+            throw new AwsPricingDataException($"\"{platform}\" is not a platform name.");
+        }
+        // EC2's keys have no prefix because they were published before the other platforms.
+        var prefix = platform == "ec2" ? "" : $"{platform}-";
         options ??= new AwsPricingDataOptions();
         var token = options.Token ?? Environment.GetEnvironmentVariable("INFRAWRENCH_API_KEY");
         if (string.IsNullOrEmpty(token))
@@ -58,20 +95,21 @@ public static class BulkInstances
         try
         {
             string latest;
-            using (var res = await DownloadAsync($"{baseUrl}/latest", token, cancellationToken).ConfigureAwait(false))
+            var latestUrl = $"{baseUrl}/{prefix}latest";
+            using (var res = await DownloadAsync(latestUrl, token, cancellationToken).ConfigureAwait(false))
             {
-                latest = (await ReadBodyAsync(res, $"{baseUrl}/latest", r => r.Content.ReadAsStringAsync(cancellationToken)).ConfigureAwait(false)).Trim();
+                latest = (await ReadBodyAsync(res, latestUrl, r => r.Content.ReadAsStringAsync(cancellationToken)).ConfigureAwait(false)).Trim();
             }
             if (!LatestPattern.IsMatch(latest))
             {
-                throw new AwsPricingDataException($"latest holds \"{latest}\", which is not a timestamp.");
+                throw new AwsPricingDataException($"{prefix}latest holds \"{latest}\", which is not a timestamp.");
             }
-            name = $"bundle-{latest}.json";
+            name = $"{prefix}bundle-{latest}.json";
         }
         catch (Exception err) when (!(err is OperationCanceledException && cancellationToken.IsCancellationRequested))
         {
             // A rejected token is a real answer; anything else falls back to what we already have.
-            var cached = cache && !(err is AwsPricingDataException { Status: 401 }) ? NewestCached(cachePath) : null;
+            var cached = cache && !(err is AwsPricingDataException { Status: 401 }) ? NewestCached(cachePath, prefix) : null;
             if (cached is null) throw;
             name = cached;
         }
@@ -105,10 +143,10 @@ public static class BulkInstances
                 var tmp = Path.Combine(cachePath, $"{name}.{Environment.ProcessId}.tmp");
                 await File.WriteAllBytesAsync(tmp, json, cancellationToken).ConfigureAwait(false);
                 File.Move(tmp, path, overwrite: true);
-                // Older bundles, including compressed ones cached by earlier versions of this SDK.
+                // This platform's older bundles, including compressed ones cached by earlier versions of this SDK.
                 foreach (var f in Directory.GetFileSystemEntries(cachePath).Select(p => Path.GetFileName(p)))
                 {
-                    if (f != name && StalePattern.IsMatch(f)) File.Delete(Path.Combine(cachePath, f));
+                    if (f != name && IsPlatformFile(f, prefix, StalePattern)) File.Delete(Path.Combine(cachePath, f));
                 }
             }
         }
@@ -190,14 +228,18 @@ public static class BulkInstances
         return 5;
     }
 
-    /// <summary>The newest bundle already in the cache directory, if any.</summary>
-    private static string? NewestCached(string cachePath)
+    /// <summary>Whether <paramref name="file"/> is this platform's: its prefix followed by a name <paramref name="pattern"/> matches.</summary>
+    private static bool IsPlatformFile(string file, string prefix, Regex pattern) =>
+        file.StartsWith(prefix, StringComparison.Ordinal) && pattern.IsMatch(file.AsSpan(prefix.Length));
+
+    /// <summary>The newest bundle for a platform already in the cache directory, if any.</summary>
+    private static string? NewestCached(string cachePath, string prefix)
     {
         try
         {
             return Directory.EnumerateFileSystemEntries(cachePath)
                 .Select(p => Path.GetFileName(p))
-                .Where(f => BundlePattern.IsMatch(f))
+                .Where(f => IsPlatformFile(f, prefix, BundlePattern))
                 .OrderBy(f => f, StringComparer.Ordinal)
                 .LastOrDefault();
         }

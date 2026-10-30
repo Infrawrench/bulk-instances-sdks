@@ -8,9 +8,13 @@ use Infrawrench\BulkInstances\AWSPricingDataException;
 use Infrawrench\BulkInstances\BulkInstances;
 
 [, $baseUrl, $cachePath, $token, $cache] = $argv;
+$platform = $argv[5] ?? null;
 $ts = static fn (?DateTimeImmutable $d) => $d?->getTimestamp();
 $row = static function (object $r) use ($ts): array {
     $out = get_object_vars($r);
+    if (array_key_exists('variant', $out)) {
+        $out['variant'] = (object) $out['variant'];
+    }
     foreach (['at', 'since'] as $k) {
         if (array_key_exists($k, $out)) {
             $out[$k] = $ts($out[$k]);
@@ -20,12 +24,10 @@ $row = static function (object $r) use ($ts): array {
 };
 
 try {
-    $data = BulkInstances::downloadAwsEc2PricingData(
-        token: $token === '-' ? null : $token,
-        cachePricingData: $cache === '1',
-        cachePath: $cachePath,
-        baseUrl: $baseUrl,
-    );
+    $options = ['token' => $token === '-' ? null : $token, 'cachePricingData' => $cache === '1', 'cachePath' => $cachePath, 'baseUrl' => $baseUrl];
+    $data = $platform === null
+        ? BulkInstances::downloadAwsEc2PricingData(...$options)
+        : BulkInstances::downloadAwsPricingData($platform, ...$options);
 } catch (AWSPricingDataException $e) {
     echo json_encode(['error' => ['status' => $e->status, 'message' => $e->getMessage()]]), "\n";
     exit(3);
@@ -36,6 +38,8 @@ $regions = array_map($obj, $data->regions());
 $keys = $data->keys();
 sort($keys, SORT_STRING);
 $out = [
+    'offer' => $data->offer(),
+    'variantKeys' => $data->variantKeys(),
     'snapshots' => array_map($ts, $data->snapshots()),
     'regions' => (object) $regions,
     'keys' => $keys,

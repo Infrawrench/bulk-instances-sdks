@@ -1,16 +1,14 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from functools import cached_property
 from types import MappingProxyType
-from typing import Any, TypedDict
+from typing import Any, Final, TypedDict
 
 
-class BundleFile(TypedDict):
-    """The bundle as instances-bundler writes it; every string is an index into ``compression_table``."""
-
+class _BundleFileFields(TypedDict):
     compression_table: list[str]
     snapshots: list[int]
     regions: list[tuple[int, list[tuple[int, int]]]]
@@ -20,11 +18,30 @@ class BundleFile(TypedDict):
     instances: dict[str, list[Any]]
 
 
+class BundleFile(_BundleFileFields, total=False):
+    """The bundle as instances-bundler writes it; every string is an index into ``compression_table``."""
+
+    offer: str
+    """The AWS offer code. EC2 bundles leave it out."""
+    variant_keys: list[str]
+    """The names of each variant's fields. EC2 bundles leave it out (see :data:`EC2_VARIANT_KEYS`)."""
+
+
+EC2_VARIANT_KEYS: Final[tuple[str, ...]] = (
+    "operatingSystem", "tenancy", "licenseModel", "preInstalledSw", "capacitystatus",
+)
+"""The variant keys of EC2 bundles, which don't list their own."""
+
+
 @dataclass(frozen=True, slots=True, kw_only=True)
 class Variant:
     """The product fields that pick a price."""
 
+    variant: Mapping[str, str] = field(hash=False)
+    """Every field that picks the price, keyed by name, in :attr:`AWSPricingData.variant_keys` order:
+    for RDS, ``databaseEngine``, ``deploymentOption`` and so on."""
     operating_system: str
+    """EC2's variant fields. For other platforms these are ``""`` unless the platform shares the field."""
     tenancy: str
     license_model: str
     pre_installed_sw: str
@@ -44,7 +61,10 @@ class OnDemandPrice:
     """The AWS location name, e.g. ``US East (N. Virginia)``."""
     region_code: str | None
     """e.g. ``us-east-1``. ``None`` for locations the price list never gave a code."""
+    variant: Mapping[str, str] = field(hash=False)
+    """Every field that picks the price, keyed by name, in :attr:`AWSPricingData.variant_keys` order."""
     operating_system: str
+    """EC2's variant fields. For other platforms these are ``""`` unless the platform shares the field."""
     tenancy: str
     license_model: str
     pre_installed_sw: str
@@ -61,7 +81,10 @@ class ReservedPrice:
     """The AWS location name, e.g. ``US East (N. Virginia)``."""
     region_code: str | None
     """e.g. ``us-east-1``. ``None`` for locations the price list never gave a code."""
+    variant: Mapping[str, str] = field(hash=False)
+    """Every field that picks the price, keyed by name, in :attr:`AWSPricingData.variant_keys` order."""
     operating_system: str
+    """EC2's variant fields. For other platforms these are ``""`` unless the platform shares the field."""
     tenancy: str
     license_model: str
     pre_installed_sw: str
@@ -89,7 +112,10 @@ class OnDemandPriceChange:
     """The AWS location name, e.g. ``US East (N. Virginia)``."""
     region_code: str | None
     """e.g. ``us-east-1``. ``None`` for locations the price list never gave a code."""
+    variant: Mapping[str, str] = field(hash=False)
+    """Every field that picks the price, keyed by name, in :attr:`AWSPricingData.variant_keys` order."""
     operating_system: str
+    """EC2's variant fields. For other platforms these are ``""`` unless the platform shares the field."""
     tenancy: str
     license_model: str
     pre_installed_sw: str
@@ -105,7 +131,10 @@ class ReservedPriceChange:
     """The AWS location name, e.g. ``US East (N. Virginia)``."""
     region_code: str | None
     """e.g. ``us-east-1``. ``None`` for locations the price list never gave a code."""
+    variant: Mapping[str, str] = field(hash=False)
+    """Every field that picks the price, keyed by name, in :attr:`AWSPricingData.variant_keys` order."""
     operating_system: str
+    """EC2's variant fields. For other platforms these are ``""`` unless the platform shares the field."""
     tenancy: str
     license_model: str
     pre_installed_sw: str
@@ -151,7 +180,7 @@ def _price(x: float | None) -> float | None:
 
 
 class AWSPricingData:
-    """The AWS EC2 pricing data, keyed by instance type.
+    """One AWS platform's pricing data, keyed by instance type.
 
     Nothing is decoded until it is asked for: :meth:`get` wraps the raw rows, and each
     property on the returned :class:`AWSInstance` decodes its part on first access
@@ -185,6 +214,18 @@ class AWSPricingData:
         return inst
 
     @property
+    def offer(self) -> str:
+        """The AWS offer code, e.g. ``AmazonEC2`` or ``AmazonRDS``."""
+        offer: str | None = self._raw.get("offer")
+        return "AmazonEC2" if offer is None else offer
+
+    @cached_property
+    def variant_keys(self) -> tuple[str, ...]:
+        """The names of the fields that pick a price, which every price's ``variant`` is keyed by."""
+        keys: list[str] | None = self._raw.get("variant_keys")
+        return EC2_VARIANT_KEYS if keys is None else tuple(keys)
+
+    @property
     def snapshots(self) -> list[datetime]:
         """The publication date of every AWS price list in the bundle, oldest first."""
         return [_date(ts) for ts in self._raw["snapshots"]]
@@ -210,16 +251,21 @@ class AWSPricingData:
 
     @cached_property
     def _variants(self) -> list[Variant]:
-        return [
-            Variant(
-                operating_system=self._str(system),
-                tenancy=self._str(tenancy),
-                license_model=self._str(lic),
-                pre_installed_sw=self._str(sw),
-                capacitystatus=self._str(capacity),
-            )
-            for system, tenancy, lic, sw, capacity in self._raw["variants"]
-        ]
+        keys = self.variant_keys
+        out: list[Variant] = []
+        for fields in self._raw["variants"]:
+            if len(fields) != len(keys):
+                raise ValueError(f"variant has {len(fields)} fields, expected {len(keys)}")
+            variant = {k: self._str(i) for k, i in zip(keys, fields)}
+            out.append(Variant(
+                variant=MappingProxyType(variant),
+                operating_system=variant.get("operatingSystem", ""),
+                tenancy=variant.get("tenancy", ""),
+                license_model=variant.get("licenseModel", ""),
+                pre_installed_sw=variant.get("preInstalledSw", ""),
+                capacitystatus=variant.get("capacitystatus", ""),
+            ))
+        return out
 
     @cached_property
     def _terms(self) -> list[ReservedTerm]:
@@ -323,6 +369,7 @@ class AWSInstance:
                 OnDemandPrice(
                     region=r.region,
                     region_code=r.region_code,
+                    variant=r.variant,
                     operating_system=r.operating_system,
                     tenancy=r.tenancy,
                     license_model=r.license_model,
@@ -338,6 +385,7 @@ class AWSInstance:
                 ReservedPrice(
                     region=r.region,
                     region_code=r.region_code,
+                    variant=r.variant,
                     operating_system=r.operating_system,
                     tenancy=r.tenancy,
                     license_model=r.license_model,
@@ -370,6 +418,7 @@ class AWSInstance:
                 at=_date(ts),
                 region=name,
                 region_code=code,
+                variant=v.variant,
                 operating_system=v.operating_system,
                 tenancy=v.tenancy,
                 license_model=v.license_model,
@@ -390,6 +439,7 @@ class AWSInstance:
                 at=_date(ts),
                 region=name,
                 region_code=code,
+                variant=v.variant,
                 operating_system=v.operating_system,
                 tenancy=v.tenancy,
                 license_model=v.license_model,
@@ -409,4 +459,4 @@ class AWSInstance:
 
 
 def _od_key(r: OnDemandPriceChange | ReservedPriceChange) -> tuple[str, ...]:
-    return (r.region, r.operating_system, r.tenancy, r.license_model, r.pre_installed_sw, r.capacitystatus)
+    return (r.region, *r.variant.values())

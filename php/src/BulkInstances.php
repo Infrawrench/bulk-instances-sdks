@@ -9,16 +9,23 @@ final class BulkInstances
     private const DEFAULT_BASE_URL = 'https://instances-bundles.infrawrench.com';
     private const USER_AGENT = 'infrawrench/bulk-instances, php, 1.0';
 
+    /**
+     * The AWS platforms Infrawrench publishes a bundle for. Any other lowercase name is
+     * requested as is, so a platform added later works without a new SDK.
+     */
+    public const AWS_PLATFORMS = [
+        'ec2', 'rds', 'elasticache', 'opensearch', 'redshift', 'docdb', 'neptune', 'memorydb', 'dax', 'sagemaker', 'emr', 'gamelift',
+    ];
+
+    /** The variant keys of EC2 bundles, which don't list their own. */
+    public const EC2_VARIANT_KEYS = ['operatingSystem', 'tenancy', 'licenseModel', 'preInstalledSw', 'capacitystatus'];
+
     private function __construct()
     {
     }
 
     /**
-     * Downloads the AWS EC2 pricing data compressed blob and decompresses it.
-     *
-     * The bucket's `latest` object names the newest bundle. With caching on, a bundle
-     * is only downloaded when `latest` names one that is not in the cache yet, and if
-     * `latest` cannot be fetched at all (offline, outage) the newest cached bundle is used.
+     * Downloads the AWS EC2 pricing data. The same as `downloadAwsPricingData('ec2', ...)`.
      *
      * @param string|null $token Defines your Infrawrench API token. Defaults to the `INFRAWRENCH_API_KEY` environment variable.
      * @param bool $cachePricingData Whether to cache the pricing data. Defaults to true.
@@ -35,6 +42,38 @@ final class BulkInstances
         ?string $cachePath = null,
         ?string $baseUrl = null,
     ): AWSPricingData {
+        return self::downloadAwsPricingData('ec2', $token, $cachePricingData, $cachePath, $baseUrl);
+    }
+
+    /**
+     * Downloads one AWS platform's pricing data compressed blob and decompresses it.
+     *
+     * The bucket's `<platform>-latest` object (`latest` for EC2) names the newest bundle. With
+     * caching on, a bundle is only downloaded when that names one that is not in the cache yet,
+     * and if it cannot be fetched at all (offline, outage) the newest cached bundle is used.
+     *
+     * @param string $platform One of {@see AWS_PLATFORMS}, e.g. `rds`, or any other lowercase name.
+     * @param string|null $token Defines your Infrawrench API token. Defaults to the `INFRAWRENCH_API_KEY` environment variable.
+     * @param bool $cachePricingData Whether to cache the pricing data. Defaults to true.
+     * @param string|null $cachePath The cache path. Defaults to ~/.infrawrench/aws_pricing_data
+     * @param string|null $baseUrl Where the bundles are served from. Defaults to https://instances-bundles.infrawrench.com
+     *
+     * @throws AWSPricingDataException
+     * @throws \JsonException if the bundle is not valid
+     * @throws \RuntimeException if the cache directory cannot be written
+     */
+    public static function downloadAwsPricingData(
+        string $platform,
+        ?string $token = null,
+        bool $cachePricingData = true,
+        ?string $cachePath = null,
+        ?string $baseUrl = null,
+    ): AWSPricingData {
+        if (preg_match('/^[a-z0-9]+$/D', $platform) !== 1) {
+            throw new AWSPricingDataException("\"$platform\" is not a platform name.");
+        }
+        // EC2's keys have no prefix because they were published before the other platforms.
+        $prefix = $platform === 'ec2' ? '' : "$platform-";
         $token ??= getenv('INFRAWRENCH_API_KEY') ?: null;
         if ($token === null || $token === '') {
             throw new AWSPricingDataException('No Infrawrench API token: pass `$token` or set INFRAWRENCH_API_KEY.');
@@ -44,15 +83,15 @@ final class BulkInstances
         $cachePath ??= self::homeDir() . DIRECTORY_SEPARATOR . '.infrawrench' . DIRECTORY_SEPARATOR . 'aws_pricing_data';
 
         try {
-            $latest = trim(self::download("$baseUrl/latest", $token), " \t\n\r\v\f");
+            $latest = trim(self::download("$baseUrl/{$prefix}latest", $token), " \t\n\r\v\f");
             if (preg_match('/^[A-Za-z0-9._-]+$/D', $latest) !== 1) {
-                throw new AWSPricingDataException("latest holds \"$latest\", which is not a timestamp.");
+                throw new AWSPricingDataException("{$prefix}latest holds \"$latest\", which is not a timestamp.");
             }
-            $name = "bundle-$latest.json";
+            $name = "{$prefix}bundle-$latest.json";
         } catch (\Exception $err) {
             // A rejected token is a real answer; anything else falls back to what we already have.
             $rejected = $err instanceof AWSPricingDataException && $err->status === 401;
-            $cached = $cache && !$rejected ? self::newestCached($cachePath) : null;
+            $cached = $cache && !$rejected ? self::newestCached($cachePath, $prefix) : null;
             if ($cached === null) {
                 throw $err;
             }
@@ -71,7 +110,7 @@ final class BulkInstances
         if ($json === null) {
             $json = self::xzDecompress(self::download("$baseUrl/$name.xz", $token));
             if ($cache) {
-                self::writeCache($cachePath, $name, $json);
+                self::writeCache($cachePath, $prefix, $name, $json);
             }
         }
 
@@ -131,18 +170,18 @@ final class BulkInstances
         return [curl_getinfo($ch, CURLINFO_RESPONSE_CODE), $body, $retryAfter];
     }
 
-    /** The newest bundle already in the cache directory, if any. */
-    private static function newestCached(string $cachePath): ?string
+    /** The newest bundle for a platform already in the cache directory, if any. */
+    private static function newestCached(string $cachePath, string $prefix): ?string
     {
         $files = array_values(array_filter(
             @scandir($cachePath) ?: [],
-            static fn (string $f) => preg_match('/^bundle-.+\.json$/D', $f) === 1,
+            static fn (string $f) => self::isBundle($f, $prefix, '/^bundle-.+\.json$/D'),
         ));
         sort($files, SORT_STRING);
         return $files === [] ? null : $files[count($files) - 1];
     }
 
-    private static function writeCache(string $cachePath, string $name, string $json): void
+    private static function writeCache(string $cachePath, string $prefix, string $name, string $json): void
     {
         if (!is_dir($cachePath) && !@mkdir($cachePath, 0777, true) && !is_dir($cachePath)) {
             throw new \RuntimeException("Cannot create the cache directory $cachePath: " . self::lastError());
@@ -154,15 +193,21 @@ final class BulkInstances
             @unlink($tmp);
             throw new \RuntimeException("Cannot write $name to the cache directory $cachePath: $error");
         }
-        // Older bundles, including compressed ones cached by earlier versions of this SDK.
+        // This platform's older bundles, including compressed ones cached by earlier versions of this SDK.
         foreach (@scandir($cachePath) ?: [] as $f) {
-            if ($f !== $name && preg_match('/^bundle-.+\.json(\.xz)?$/D', $f) === 1) {
+            if ($f !== $name && self::isBundle($f, $prefix, '/^bundle-.+\.json(\.xz)?$/D')) {
                 $path = $cachePath . DIRECTORY_SEPARATOR . $f;
                 if (!@unlink($path) && file_exists($path)) {
                     throw new \RuntimeException("Cannot delete $path: " . self::lastError());
                 }
             }
         }
+    }
+
+    /** Whether `$f` is `$prefix` followed by a name matching `$pattern`. */
+    private static function isBundle(string $f, string $prefix, string $pattern): bool
+    {
+        return str_starts_with($f, $prefix) && preg_match($pattern, substr($f, strlen($prefix))) === 1;
     }
 
     /**

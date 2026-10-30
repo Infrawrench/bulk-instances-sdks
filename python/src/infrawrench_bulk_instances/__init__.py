@@ -1,6 +1,7 @@
-"""AWS EC2 instance attributes and prices, with their full history, from Infrawrench."""
+"""AWS instance attributes and prices, with their full history, from Infrawrench."""
 
 from ._data import (
+    EC2_VARIANT_KEYS,
     AttributeChange,
     AWSInstance,
     AWSPricingData,
@@ -14,14 +15,16 @@ from ._data import (
     ReservedTerm,
     Variant,
 )
-from ._download import AWSPricingDataError, download_aws_ec2_pricing_data
+from ._download import AWS_PLATFORMS, AWSPricingDataError, download_aws_ec2_pricing_data, download_aws_pricing_data
 
 __all__ = [
+    "AWS_PLATFORMS",
     "AWSInstance",
     "AWSPricingData",
     "AWSPricingDataError",
     "AttributeChange",
     "BundleFile",
+    "EC2_VARIANT_KEYS",
     "OnDemandPrice",
     "OnDemandPriceChange",
     "Pricing",
@@ -31,4 +34,5 @@ __all__ = [
     "ReservedTerm",
     "Variant",
     "download_aws_ec2_pricing_data",
+    "download_aws_pricing_data",
 ]

@@ -32,27 +32,61 @@ final class BundleParser {
         try (JsonParser p = FACTORY.createParser(in)) {
             p.nextToken();
             Rows.expect(p, START_OBJECT);
+            String offer = null;
             String[] table = new String[0];
             double[] snapshots = new double[0];
             List<RawRegion> regions = List.of();
-            Rows variants = Rows.EMPTY;
+            List<String> variantKeys = null;
+            List<double[]> variants = List.of();
             Rows terms = Rows.EMPTY;
             Map<String, RawInstance> instances = new LinkedHashMap<>();
             for (String field; (field = p.nextFieldName()) != null; ) {
                 p.nextToken();
                 switch (field) {
+                    case "offer" -> offer = p.currentToken() == JsonToken.VALUE_NULL ? null : string(p);
                     case "compression_table" -> table = strings(p);
                     case "snapshots" -> snapshots = numbers(p);
                     case "regions" -> regions = regions(p);
-                    case "variants" -> variants = Rows.parse(p, 5);
+                    case "variant_keys" -> variantKeys = p.currentToken() == JsonToken.VALUE_NULL ? null : keys(p);
+                    case "variants" -> variants = variants(p);
                     case "reserved_terms" -> terms = Rows.parse(p, 3);
                     case "instances" -> instances = instances(p);
                     default -> p.skipChildren();
                 }
             }
             if (p.nextToken() != null) throw new JsonParseException(p, "Unexpected content after the bundle");
-            return new AWSPricingData(table, snapshots, regions, variants, terms, instances);
+            if (offer == null) offer = "AmazonEC2";
+            if (variantKeys == null) variantKeys = BulkInstances.EC2_VARIANT_KEYS;
+            for (double[] v : variants) {
+                if (v.length != variantKeys.size()) {
+                    throw new IOException("variant has " + v.length + " fields, expected " + variantKeys.size());
+                }
+            }
+            return new AWSPricingData(offer, table, snapshots, regions, variantKeys, variants, terms, instances);
         }
+    }
+
+    private static String string(JsonParser p) throws IOException {
+        if (p.currentToken() != JsonToken.VALUE_STRING) {
+            throw new JsonParseException(p, "Expected a string, got " + p.currentToken());
+        }
+        return p.getText();
+    }
+
+    /** {@code variant_keys}: strings, unlike {@code compression_table}, never {@code null}. */
+    private static List<String> keys(JsonParser p) throws IOException {
+        Rows.expect(p, START_ARRAY);
+        List<String> out = new ArrayList<>();
+        while (p.nextToken() != END_ARRAY) out.add(string(p));
+        return List.copyOf(out);
+    }
+
+    /** {@code variants}: rows as long as {@code variant_keys}, which may come after them. */
+    private static List<double[]> variants(JsonParser p) throws IOException {
+        Rows.expect(p, START_ARRAY);
+        List<double[]> out = new ArrayList<>();
+        while (p.nextToken() != END_ARRAY) out.add(numbers(p));
+        return out;
     }
 
     private static String[] strings(JsonParser p) throws IOException {

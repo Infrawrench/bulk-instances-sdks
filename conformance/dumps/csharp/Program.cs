@@ -4,11 +4,13 @@ using System.Text.Json.Nodes;
 using Infrawrench.BulkInstances;
 
 var (baseUrl, cachePath, token, cache) = (args[0], args[1], args[2], args[3]);
+var platform = args.Length > 4 ? args[4] : null;
 static JsonNode? Ts(DateTimeOffset? d) => d is { } v ? v.ToUnixTimeSeconds() : null;
 static JsonObject Dict(IReadOnlyDictionary<string, string> d) => new(d.Select(kv => KeyValuePair.Create(kv.Key, (JsonNode?)kv.Value)));
 static JsonObject Loc(string region, string? regionCode) => new() { ["region"] = region, ["regionCode"] = regionCode };
-static JsonObject Variant(JsonObject o, string os, string tenancy, string license, string sw, string capacity)
+static JsonObject Variant(JsonObject o, IReadOnlyDictionary<string, string> variant, string os, string tenancy, string license, string sw, string capacity)
 {
+    o["variant"] = Dict(variant);
     o["operatingSystem"] = os; o["tenancy"] = tenancy; o["licenseModel"] = license;
     o["preInstalledSw"] = sw; o["capacitystatus"] = capacity;
     return o;
@@ -23,13 +25,16 @@ static JsonArray Arr<T>(IEnumerable<T> xs, Func<T, JsonNode?> f) => new(xs.Selec
 AwsPricingData data;
 try
 {
-    data = await BulkInstances.DownloadAwsEc2PricingDataAsync(new AwsPricingDataOptions
+    var options = new AwsPricingDataOptions
     {
         BaseUrl = baseUrl,
         CachePath = cachePath,
         CachePricingData = cache == "1",
         Token = token == "-" ? null : token,
-    });
+    };
+    data = platform is null
+        ? await BulkInstances.DownloadAwsEc2PricingDataAsync(options)
+        : await BulkInstances.DownloadAwsPricingDataAsync(platform, options);
 }
 catch (AwsPricingDataException e)
 {
@@ -41,6 +46,8 @@ var regions = new JsonObject(data.Regions.Select(kv => KeyValuePair.Create(kv.Ke
 var instances = new JsonObject();
 var output = new JsonObject
 {
+    ["offer"] = data.Offer,
+    ["variantKeys"] = Arr(data.VariantKeys, k => k),
     ["snapshots"] = Arr(data.Snapshots, d => Ts(d)),
     ["regions"] = regions,
     ["keys"] = Arr(data.Keys.Order(StringComparer.Ordinal), k => k),
@@ -70,13 +77,13 @@ foreach (var k in data.Keys)
         {
             ["onDemand"] = Arr(p.OnDemand, r =>
             {
-                var o = Variant(Loc(r.Region, r.RegionCode), r.OperatingSystem, r.Tenancy, r.LicenseModel, r.PreInstalledSw, r.Capacitystatus);
+                var o = Variant(Loc(r.Region, r.RegionCode), r.Variant, r.OperatingSystem, r.Tenancy, r.LicenseModel, r.PreInstalledSw, r.Capacitystatus);
                 o["hourly"] = r.Hourly; o["since"] = Ts(r.Since);
                 return o;
             }),
             ["reserved"] = Arr(p.Reserved, r =>
             {
-                var o = Term(Variant(Loc(r.Region, r.RegionCode), r.OperatingSystem, r.Tenancy, r.LicenseModel, r.PreInstalledSw, r.Capacitystatus),
+                var o = Term(Variant(Loc(r.Region, r.RegionCode), r.Variant, r.OperatingSystem, r.Tenancy, r.LicenseModel, r.PreInstalledSw, r.Capacitystatus),
                     r.LeaseContractLength, r.OfferingClass, r.PurchaseOption);
                 o["hourly"] = r.Hourly; o["upfront"] = r.Upfront; o["since"] = Ts(r.Since);
                 return o;
@@ -86,13 +93,13 @@ foreach (var k in data.Keys)
         {
             ["onDemand"] = Arr(h.OnDemand, r =>
             {
-                var o = Variant(Loc(r.Region, r.RegionCode), r.OperatingSystem, r.Tenancy, r.LicenseModel, r.PreInstalledSw, r.Capacitystatus);
+                var o = Variant(Loc(r.Region, r.RegionCode), r.Variant, r.OperatingSystem, r.Tenancy, r.LicenseModel, r.PreInstalledSw, r.Capacitystatus);
                 o["at"] = Ts(r.At); o["hourly"] = r.Hourly;
                 return o;
             }),
             ["reserved"] = Arr(h.Reserved, r =>
             {
-                var o = Term(Variant(Loc(r.Region, r.RegionCode), r.OperatingSystem, r.Tenancy, r.LicenseModel, r.PreInstalledSw, r.Capacitystatus),
+                var o = Term(Variant(Loc(r.Region, r.RegionCode), r.Variant, r.OperatingSystem, r.Tenancy, r.LicenseModel, r.PreInstalledSw, r.Capacitystatus),
                     r.LeaseContractLength, r.OfferingClass, r.PurchaseOption);
                 o["at"] = Ts(r.At); o["hourly"] = r.Hourly; o["upfront"] = r.Upfront;
                 return o;

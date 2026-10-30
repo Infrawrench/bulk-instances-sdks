@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Infrawrench.BulkInstances;
 
-/// <summary>The current on-demand price of one product (location and the product fields that pick a price).</summary>
+/// <summary>The current on-demand price of one product (location and the product fields that pick a price, its variant).</summary>
 public sealed record OnDemandPrice
 {
     /// <summary>The AWS location name, e.g. <c>US East (N. Virginia)</c>.</summary>
@@ -12,19 +13,25 @@ public sealed record OnDemandPrice
     /// <summary>e.g. <c>us-east-1</c>. <c>null</c> for locations the price list never gave a code.</summary>
     public string? RegionCode { get; init; }
 
-    /// <summary>e.g. <c>Linux</c>.</summary>
+    /// <summary>
+    /// Every field that picks the price, keyed by name, in <see cref="AwsPricingData.VariantKeys"/> order:
+    /// for RDS, <c>databaseEngine</c>, <c>deploymentOption</c> and so on.
+    /// </summary>
+    public IReadOnlyDictionary<string, string> Variant { get; init; } = ReadOnlyDictionary<string, string>.Empty;
+
+    /// <summary>EC2's operating system, e.g. <c>Linux</c>. <c>""</c> on platforms without this field.</summary>
     public required string OperatingSystem { get; init; }
 
-    /// <summary>e.g. <c>Shared</c>.</summary>
+    /// <summary>EC2's tenancy, e.g. <c>Shared</c>. <c>""</c> on platforms without this field.</summary>
     public required string Tenancy { get; init; }
 
-    /// <summary>e.g. <c>No License required</c>.</summary>
+    /// <summary>EC2's license model, e.g. <c>No License required</c>. <c>""</c> on platforms without this field.</summary>
     public required string LicenseModel { get; init; }
 
-    /// <summary>e.g. <c>NA</c>.</summary>
+    /// <summary>EC2's pre-installed software, e.g. <c>NA</c>. <c>""</c> on platforms without this field.</summary>
     public required string PreInstalledSw { get; init; }
 
-    /// <summary>e.g. <c>Used</c>.</summary>
+    /// <summary>EC2's capacity status, e.g. <c>Used</c>. <c>""</c> on platforms without this field.</summary>
     public required string Capacitystatus { get; init; }
 
     /// <summary>USD per hour.</summary>
@@ -43,19 +50,25 @@ public sealed record ReservedPrice
     /// <summary>e.g. <c>us-east-1</c>. <c>null</c> for locations the price list never gave a code.</summary>
     public string? RegionCode { get; init; }
 
-    /// <summary>e.g. <c>Linux</c>.</summary>
+    /// <summary>
+    /// Every field that picks the price, keyed by name, in <see cref="AwsPricingData.VariantKeys"/> order:
+    /// for RDS, <c>databaseEngine</c>, <c>deploymentOption</c> and so on.
+    /// </summary>
+    public IReadOnlyDictionary<string, string> Variant { get; init; } = ReadOnlyDictionary<string, string>.Empty;
+
+    /// <summary>EC2's operating system, e.g. <c>Linux</c>. <c>""</c> on platforms without this field.</summary>
     public required string OperatingSystem { get; init; }
 
-    /// <summary>e.g. <c>Shared</c>.</summary>
+    /// <summary>EC2's tenancy, e.g. <c>Shared</c>. <c>""</c> on platforms without this field.</summary>
     public required string Tenancy { get; init; }
 
-    /// <summary>e.g. <c>No License required</c>.</summary>
+    /// <summary>EC2's license model, e.g. <c>No License required</c>. <c>""</c> on platforms without this field.</summary>
     public required string LicenseModel { get; init; }
 
-    /// <summary>e.g. <c>NA</c>.</summary>
+    /// <summary>EC2's pre-installed software, e.g. <c>NA</c>. <c>""</c> on platforms without this field.</summary>
     public required string PreInstalledSw { get; init; }
 
-    /// <summary>e.g. <c>Used</c>.</summary>
+    /// <summary>EC2's capacity status, e.g. <c>Used</c>. <c>""</c> on platforms without this field.</summary>
     public required string Capacitystatus { get; init; }
 
     /// <summary>e.g. <c>1yr</c>.</summary>
@@ -94,19 +107,25 @@ public sealed record OnDemandPriceChange
     /// <summary>e.g. <c>us-east-1</c>. <c>null</c> for locations the price list never gave a code.</summary>
     public string? RegionCode { get; init; }
 
-    /// <summary>e.g. <c>Linux</c>.</summary>
+    /// <summary>
+    /// Every field that picks the price, keyed by name, in <see cref="AwsPricingData.VariantKeys"/> order:
+    /// for RDS, <c>databaseEngine</c>, <c>deploymentOption</c> and so on.
+    /// </summary>
+    public IReadOnlyDictionary<string, string> Variant { get; init; } = ReadOnlyDictionary<string, string>.Empty;
+
+    /// <summary>EC2's operating system, e.g. <c>Linux</c>. <c>""</c> on platforms without this field.</summary>
     public required string OperatingSystem { get; init; }
 
-    /// <summary>e.g. <c>Shared</c>.</summary>
+    /// <summary>EC2's tenancy, e.g. <c>Shared</c>. <c>""</c> on platforms without this field.</summary>
     public required string Tenancy { get; init; }
 
-    /// <summary>e.g. <c>No License required</c>.</summary>
+    /// <summary>EC2's license model, e.g. <c>No License required</c>. <c>""</c> on platforms without this field.</summary>
     public required string LicenseModel { get; init; }
 
-    /// <summary>e.g. <c>NA</c>.</summary>
+    /// <summary>EC2's pre-installed software, e.g. <c>NA</c>. <c>""</c> on platforms without this field.</summary>
     public required string PreInstalledSw { get; init; }
 
-    /// <summary>e.g. <c>Used</c>.</summary>
+    /// <summary>EC2's capacity status, e.g. <c>Used</c>. <c>""</c> on platforms without this field.</summary>
     public required string Capacitystatus { get; init; }
 
     /// <summary><c>null</c> means no longer offered from <see cref="At"/> on.</summary>
@@ -125,19 +144,25 @@ public sealed record ReservedPriceChange
     /// <summary>e.g. <c>us-east-1</c>. <c>null</c> for locations the price list never gave a code.</summary>
     public string? RegionCode { get; init; }
 
-    /// <summary>e.g. <c>Linux</c>.</summary>
+    /// <summary>
+    /// Every field that picks the price, keyed by name, in <see cref="AwsPricingData.VariantKeys"/> order:
+    /// for RDS, <c>databaseEngine</c>, <c>deploymentOption</c> and so on.
+    /// </summary>
+    public IReadOnlyDictionary<string, string> Variant { get; init; } = ReadOnlyDictionary<string, string>.Empty;
+
+    /// <summary>EC2's operating system, e.g. <c>Linux</c>. <c>""</c> on platforms without this field.</summary>
     public required string OperatingSystem { get; init; }
 
-    /// <summary>e.g. <c>Shared</c>.</summary>
+    /// <summary>EC2's tenancy, e.g. <c>Shared</c>. <c>""</c> on platforms without this field.</summary>
     public required string Tenancy { get; init; }
 
-    /// <summary>e.g. <c>No License required</c>.</summary>
+    /// <summary>EC2's license model, e.g. <c>No License required</c>. <c>""</c> on platforms without this field.</summary>
     public required string LicenseModel { get; init; }
 
-    /// <summary>e.g. <c>NA</c>.</summary>
+    /// <summary>EC2's pre-installed software, e.g. <c>NA</c>. <c>""</c> on platforms without this field.</summary>
     public required string PreInstalledSw { get; init; }
 
-    /// <summary>e.g. <c>Used</c>.</summary>
+    /// <summary>EC2's capacity status, e.g. <c>Used</c>. <c>""</c> on platforms without this field.</summary>
     public required string Capacitystatus { get; init; }
 
     /// <summary>e.g. <c>1yr</c>.</summary>
@@ -168,7 +193,8 @@ public sealed record PricingHistory(IReadOnlyList<OnDemandPriceChange> OnDemand,
 /// <param name="Region">The AWS location this change applies to, or <c>null</c> for every region.</param>
 public sealed record AttributeChange(DateTimeOffset At, string Key, string? Value, string? Region);
 
-/// <summary>The product fields that pick a price.</summary>
-internal sealed record Variant(string OperatingSystem, string Tenancy, string LicenseModel, string PreInstalledSw, string Capacitystatus);
+/// <summary>The product fields that pick a price: all of them, and EC2's five by name.</summary>
+internal sealed record VariantFields(
+    IReadOnlyDictionary<string, string> Fields, string OperatingSystem, string Tenancy, string LicenseModel, string PreInstalledSw, string Capacitystatus);
 
 internal sealed record ReservedTerm(string LeaseContractLength, string OfferingClass, string PurchaseOption);

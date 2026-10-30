@@ -1,7 +1,7 @@
 # infrawrench/bulk-instances
 
-AWS EC2 instance attributes and prices, with their full history, from the bundle
-Infrawrench publishes at `instances-bundles.infrawrench.com`.
+AWS instance attributes and prices (EC2, RDS, ElastiCache and more), with their full
+history, from the bundles Infrawrench publishes at `instances-bundles.infrawrench.com`.
 
 ```sh
 composer require infrawrench/bulk-instances
@@ -36,14 +36,56 @@ credential or a WorkOS access token). It defaults to `INFRAWRENCH_API_KEY`. When
 the data cannot be downloaded, `AWSPricingDataException` is thrown; its `status`
 is the HTTP status, if there was a response.
 
+## Other AWS platforms
+
+`BulkInstances::downloadAwsPricingData($platform, ...)` loads any platform's bundle;
+`BulkInstances::downloadAwsEc2PricingData(...)` is the same as `downloadAwsPricingData('ec2', ...)`.
+`BulkInstances::AWS_PLATFORMS` lists the platforms:
+
+| Platform | AWS service |
+| --- | --- |
+| `ec2` | EC2 |
+| `rds` | RDS |
+| `elasticache` | ElastiCache |
+| `opensearch` | OpenSearch Service |
+| `redshift` | Redshift |
+| `docdb` | DocumentDB |
+| `neptune` | Neptune |
+| `memorydb` | MemoryDB |
+| `dax` | DynamoDB Accelerator |
+| `sagemaker` | SageMaker |
+| `emr` | EMR |
+| `gamelift` | GameLift |
+
+The fields that pick a price differ by platform. `$data->variantKeys()` names them, and every
+price has a `$variant` array keyed by them:
+
+```php
+use Infrawrench\BulkInstances\BulkInstances;
+
+$rds = BulkInstances::downloadAwsPricingData('rds');
+$rds->variantKeys(); // ['databaseEngine', 'databaseEdition', 'licenseModel', 'deploymentOption', ...]
+foreach ($rds->get('db.m5.large')->pricing()->onDemand as $p) {
+    if ($p->regionCode === 'us-east-1' && $p->variant['databaseEngine'] === 'MySQL'
+        && $p->variant['deploymentOption'] === 'Multi-AZ') {
+        echo $p->hourly;
+    }
+}
+```
+
+`operatingSystem`, `tenancy`, `licenseModel`, `preInstalledSw` and `capacitystatus` are EC2's
+variant fields. On other platforms they are `''`, unless the platform has a field with that name
+(RDS has `licenseModel`).
+
 ## Caching
 
 The bundle is downloaded xz-compressed (about 20 MB) and kept decompressed (about
 210 MB) in `~/.infrawrench/aws_pricing_data` (`cachePath`), so a cached load skips
 decompression. Each load asks the server which bundle is latest and downloads it
 only if it is not cached, deleting the older one. If the server cannot be
-reached, the newest cached bundle is used instead. Pass `cachePricingData: false`
-to always download and never touch the disk. The cache is shared with the other
+reached, the newest cached bundle is used instead. Each platform's bundle is cached
+under its own name (`rds-bundle-…json`), so loading one never evicts another. Pass
+`cachePricingData: false` to always download and never touch the disk. The cache is shared with the other
 Infrawrench SDKs.
 
 Decompression uses the [xz PECL extension](https://pecl.php.net/package/xz) when it

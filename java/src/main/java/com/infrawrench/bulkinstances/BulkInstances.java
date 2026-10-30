@@ -16,13 +16,27 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import org.tukaani.xz.XZInputStream;
 
-/** Downloads the AWS EC2 pricing data. */
+/** Downloads AWS pricing data: EC2's, or any other platform's. */
 public final class BulkInstances {
+    /**
+     * The AWS platforms Infrawrench publishes a bundle for. Any other lowercase name is requested as is, so a
+     * platform added later works without a new SDK.
+     */
+    public static final List<String> AWS_PLATFORMS = List.of(
+            "ec2", "rds", "elasticache", "opensearch", "redshift", "docdb", "neptune", "memorydb", "dax", "sagemaker",
+            "emr", "gamelift");
+
+    /** The variant keys of EC2 bundles, which don't list their own. */
+    public static final List<String> EC2_VARIANT_KEYS =
+            List.of("operatingSystem", "tenancy", "licenseModel", "preInstalledSw", "capacitystatus");
+
     private static final String USER_AGENT = "infrawrench/bulk-instances, java, 1.0";
+    private static final Pattern PLATFORM = Pattern.compile("[a-z0-9]+");
     private static final Pattern LATEST = Pattern.compile("[A-Za-z0-9._-]+");
     private static final Pattern BUNDLE = Pattern.compile("bundle-.+\\.json");
     private static final Pattern OLD_BUNDLE = Pattern.compile("bundle-.+\\.json(\\.xz)?");
@@ -51,19 +65,55 @@ public final class BulkInstances {
     }
 
     /**
-     * Downloads the AWS EC2 pricing data compressed blob and decompresses it.
-     *
-     * <p>The bucket's {@code latest} object names the newest bundle. With caching on, a bundle is only downloaded
-     * when {@code latest} names one that is not in the cache yet, and if {@code latest} cannot be fetched at all
-     * (offline, outage) the newest cached bundle is used.
+     * Downloads the AWS EC2 pricing data. The same as {@code downloadAwsPricingData("ec2", options)}.
      *
      * @param options the options
      * @return the pricing data
      * @throws AWSPricingDataException if the pricing data cannot be downloaded
      * @throws IOException if the cache cannot be read or written, or the bundle is corrupt
      *     ({@link InterruptedIOException} if the thread is interrupted)
+     * @see #downloadAwsPricingData(String, AWSPricingDataOptions)
      */
     public static AWSPricingData downloadAwsEc2PricingData(AWSPricingDataOptions options) throws IOException {
+        return downloadAwsPricingData("ec2", options);
+    }
+
+    /**
+     * Downloads one AWS platform's pricing data with the default options.
+     *
+     * @param platform e.g. {@code rds}; see {@link #AWS_PLATFORMS}
+     * @return the pricing data
+     * @throws AWSPricingDataException if {@code platform} is not a platform name, or the pricing data cannot be
+     *     downloaded
+     * @throws IOException if the cache cannot be read or written, or the bundle is corrupt
+     * @see #downloadAwsPricingData(String, AWSPricingDataOptions)
+     */
+    public static AWSPricingData downloadAwsPricingData(String platform) throws IOException {
+        return downloadAwsPricingData(platform, AWSPricingDataOptions.builder().build());
+    }
+
+    /**
+     * Downloads one AWS platform's pricing data compressed blob and decompresses it.
+     *
+     * <p>The bucket's {@code <platform>-latest} object ({@code latest} for EC2) names the newest bundle. With caching
+     * on, a bundle is only downloaded when that names one that is not in the cache yet, and if it cannot be fetched
+     * at all (offline, outage) the newest cached bundle of the same platform is used.
+     *
+     * @param platform e.g. {@code rds}; see {@link #AWS_PLATFORMS}. Any lowercase letters and digits are accepted.
+     * @param options the options
+     * @return the pricing data
+     * @throws AWSPricingDataException if {@code platform} is not a platform name, or the pricing data cannot be
+     *     downloaded
+     * @throws IOException if the cache cannot be read or written, or the bundle is corrupt
+     *     ({@link InterruptedIOException} if the thread is interrupted)
+     */
+    public static AWSPricingData downloadAwsPricingData(String platform, AWSPricingDataOptions options)
+            throws IOException {
+        if (!PLATFORM.matcher(platform).matches()) {
+            throw new AWSPricingDataException("\"" + platform + "\" is not a platform name.");
+        }
+        // EC2's keys have no prefix because they were published before the other platforms.
+        String prefix = platform.equals("ec2") ? "" : platform + "-";
         String token = options.token().orElseGet(() -> System.getenv("INFRAWRENCH_API_KEY"));
         if (token == null || token.isEmpty()) {
             throw new AWSPricingDataException("No Infrawrench API token: pass `token` or set INFRAWRENCH_API_KEY.");
@@ -74,17 +124,18 @@ public final class BulkInstances {
 
         String name;
         try {
-            String latest = jsTrim(text(baseUrl + "/latest", token));
+            String latest = jsTrim(text(baseUrl + "/" + prefix + "latest", token));
             if (!LATEST.matcher(latest).matches()) {
-                throw new AWSPricingDataException("latest holds \"" + latest + "\", which is not a timestamp.");
+                throw new AWSPricingDataException(
+                        prefix + "latest holds \"" + latest + "\", which is not a timestamp.");
             }
-            name = "bundle-" + latest + ".json";
+            name = prefix + "bundle-" + latest + ".json";
         } catch (InterruptedIOException e) {
             throw e;
         } catch (IOException e) {
             // A rejected token is a real answer; anything else falls back to what we already have.
             boolean rejected = e instanceof AWSPricingDataException a && a.status().orElse(0) == 401;
-            Optional<String> cached = cache && !rejected ? newestCached(cachePath) : Optional.empty();
+            Optional<String> cached = cache && !rejected ? newestCached(cachePath, prefix) : Optional.empty();
             if (cached.isEmpty()) throw e;
             name = cached.get();
         }
@@ -114,11 +165,11 @@ public final class BulkInstances {
             }
             Files.move(tmp, file, StandardCopyOption.ATOMIC_MOVE);
         }
-        // Older bundles, including compressed ones cached by earlier versions of this SDK.
+        // This platform's older bundles, including compressed ones cached by earlier versions of this SDK.
         try (DirectoryStream<Path> dir = Files.newDirectoryStream(cachePath)) {
             for (Path f : dir) {
                 String n = f.getFileName().toString();
-                if (!n.equals(name) && OLD_BUNDLE.matcher(n).matches()) Files.deleteIfExists(f);
+                if (!n.equals(name) && isBundle(n, prefix, OLD_BUNDLE)) Files.deleteIfExists(f);
             }
         } catch (DirectoryIteratorException e) {
             throw e.getCause();
@@ -202,13 +253,18 @@ public final class BulkInstances {
         return out;
     }
 
-    /** The newest bundle already in the cache directory, if any. */
-    private static Optional<String> newestCached(Path cachePath) {
+    /** Whether {@code name} is a bundle file of the platform with this prefix. */
+    private static boolean isBundle(String name, String prefix, Pattern bundle) {
+        return name.startsWith(prefix) && bundle.matcher(name.substring(prefix.length())).matches();
+    }
+
+    /** The newest bundle for a platform already in the cache directory, if any. */
+    private static Optional<String> newestCached(Path cachePath, String prefix) {
         String newest = null;
         try (DirectoryStream<Path> dir = Files.newDirectoryStream(cachePath)) {
             for (Path f : dir) {
                 String n = f.getFileName().toString();
-                if (BUNDLE.matcher(n).matches() && (newest == null || n.compareTo(newest) > 0)) newest = n;
+                if (isBundle(n, prefix, BUNDLE) && (newest == null || n.compareTo(newest) > 0)) newest = n;
             }
         } catch (IOException | DirectoryIteratorException e) {
             return Optional.empty();

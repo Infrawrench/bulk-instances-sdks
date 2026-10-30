@@ -25,13 +25,16 @@ import java.util.OptionalDouble;
 public final class Dump {
     public static void main(String[] args) throws IOException {
         String baseUrl = args[0], cachePath = args[1], token = args[2], cache = args[3];
+        String platform = args.length > 4 ? args[4] : null;
         JsonGenerator g = new JsonFactory().createGenerator(System.out);
         AWSPricingData data;
         try {
             AWSPricingDataOptions.Builder b = AWSPricingDataOptions.builder()
                     .baseUrl(baseUrl).cachePath(Path.of(cachePath)).cachePricingData(cache.equals("1"));
             if (!token.equals("-")) b.token(token);
-            data = BulkInstances.downloadAwsEc2PricingData(b.build());
+            data = platform == null
+                    ? BulkInstances.downloadAwsEc2PricingData(b.build())
+                    : BulkInstances.downloadAwsPricingData(platform, b.build());
         } catch (AWSPricingDataException e) {
             g.writeStartObject();
             g.writeObjectFieldStart("error");
@@ -47,6 +50,10 @@ public final class Dump {
         }
 
         g.writeStartObject();
+        g.writeStringField("offer", data.offer());
+        g.writeArrayFieldStart("variantKeys");
+        for (String k : data.variantKeys()) g.writeString(k);
+        g.writeEndArray();
         g.writeArrayFieldStart("snapshots");
         for (Instant s : data.snapshots()) g.writeNumber(s.getEpochSecond());
         g.writeEndArray();
@@ -167,6 +174,8 @@ public final class Dump {
     static void head(JsonGenerator g, Location l, Variant v, ReservedTerm t) throws IOException {
         g.writeStringField("region", l.region());
         g.writeStringField("regionCode", l.regionCode().orElse(null));
+        g.writeFieldName("variant");
+        map(g, v.fields());
         g.writeStringField("operatingSystem", v.operatingSystem());
         g.writeStringField("tenancy", v.tenancy());
         g.writeStringField("licenseModel", v.licenseModel());

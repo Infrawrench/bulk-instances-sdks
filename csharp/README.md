@@ -1,7 +1,7 @@
 # Infrawrench.BulkInstances
 
-AWS EC2 instance attributes and prices, with their full history, from the bundle
-Infrawrench publishes at `instances-bundles.infrawrench.com`.
+AWS instance attributes and prices (EC2, RDS, ElastiCache and more), with their full
+history, from the bundles Infrawrench publishes at `instances-bundles.infrawrench.com`.
 
 ```sh
 dotnet add package Infrawrench.BulkInstances
@@ -33,13 +33,50 @@ credential or a WorkOS access token). It defaults to `INFRAWRENCH_API_KEY`.
 Failures to download throw `AwsPricingDataException`, whose `Status` is the HTTP
 status if there was a response.
 
+## Other AWS platforms
+
+`BulkInstances.DownloadAwsPricingDataAsync(platform, options)` loads any platform's bundle;
+`DownloadAwsEc2PricingDataAsync(options)` is the same as `DownloadAwsPricingDataAsync("ec2", options)`.
+`BulkInstances.AwsPlatforms` lists the platforms:
+
+| Platform | AWS service |
+| --- | --- |
+| `ec2` | EC2 |
+| `rds` | RDS |
+| `elasticache` | ElastiCache |
+| `opensearch` | OpenSearch Service |
+| `redshift` | Redshift |
+| `docdb` | DocumentDB |
+| `neptune` | Neptune |
+| `memorydb` | MemoryDB |
+| `dax` | DynamoDB Accelerator |
+| `sagemaker` | SageMaker |
+| `emr` | EMR |
+| `gamelift` | GameLift |
+
+The fields that pick a price differ by platform. `data.VariantKeys` names them, and every
+price has a `Variant` dictionary keyed by them, in that order:
+
+```csharp
+var rds = await BulkInstances.DownloadAwsPricingDataAsync("rds");
+var variantKeys = rds.VariantKeys; // ["databaseEngine", "databaseEdition", "licenseModel", "deploymentOption", ...]
+var multiAz = rds.Get("db.m5.large")!.Pricing.OnDemand.FirstOrDefault(
+    p => p.RegionCode == "us-east-1" && p.Variant["databaseEngine"] == "MySQL" &&
+        p.Variant["deploymentOption"] == "Multi-AZ")?.Hourly;
+```
+
+`OperatingSystem`, `Tenancy`, `LicenseModel`, `PreInstalledSw` and `Capacitystatus` are EC2's
+variant fields. On other platforms they are `""`, unless the platform has a field with that name
+(RDS has `licenseModel`).
+
 ## Caching
 
 The bundle is downloaded xz-compressed (about 20 MB) and kept decompressed (about
 210 MB) in `~/.infrawrench/aws_pricing_data` (`CachePath`), so a cached load skips
 decompression. Each load asks the server which bundle is latest and downloads it
 only if it is not cached, deleting the older one. If the server cannot be
-reached, the newest cached bundle is used instead. Set `CachePricingData = false`
+reached, the newest cached bundle is used instead. Each platform's bundle is cached
+under its own name (`rds-bundle-…json`), so loading one never evicts another. Set `CachePricingData = false`
 to always download and never touch the disk. The cache is shared with the other
 Infrawrench bulk-instances SDKs.
 

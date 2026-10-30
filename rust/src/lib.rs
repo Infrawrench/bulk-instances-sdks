@@ -13,15 +13,33 @@ use ureq::http::Response;
 use ureq::{Agent, Body};
 
 pub use crate::data::{
-    AttributeChange, AwsInstance, AwsPricingData, OnDemandPrice, OnDemandPriceChange, Pricing,
-    PricingHistory, Regions, ReservedPrice, ReservedPriceChange, ReservedTerm, Variant,
+    AttributeChange, AwsInstance, AwsPricingData, EC2_VARIANT_KEYS, OnDemandPrice,
+    OnDemandPriceChange, Pricing, PricingHistory, Regions, ReservedPrice, ReservedPriceChange,
+    ReservedTerm, Variant,
 };
 pub use crate::error::Error;
 
 const DEFAULT_BASE_URL: &str = "https://instances-bundles.infrawrench.com";
 const USER_AGENT: &str = "infrawrench/bulk-instances, rust, 1.0";
 
-/// Options for [`download_aws_ec2_pricing_data`].
+/// The AWS platforms Infrawrench publishes a bundle for. Any other lowercase name is
+/// requested as is, so a platform added later works without a new SDK.
+pub const AWS_PLATFORMS: &[&str] = &[
+    "ec2",
+    "rds",
+    "elasticache",
+    "opensearch",
+    "redshift",
+    "docdb",
+    "neptune",
+    "memorydb",
+    "dax",
+    "sagemaker",
+    "emr",
+    "gamelift",
+];
+
+/// Options for [`download_aws_pricing_data`] and [`download_aws_ec2_pricing_data`].
 ///
 /// ```
 /// let options = infrawrench_bulk_instances::Options {
@@ -108,9 +126,13 @@ fn download(agent: &Agent, url: &str, token: &str) -> Result<Response<Body>, Err
     }
 }
 
-/// Whether `f` is a cached bundle (`bundle-<latest>.json`, or with `.xz` if `xz`).
-fn is_bundle(f: &str, xz: bool) -> bool {
-    let Some(rest) = f.strip_prefix("bundle-") else {
+/// Whether `f` is a cached bundle of the platform with this prefix (`<prefix>bundle-<latest>.json`,
+/// or with `.xz` if `xz`).
+fn is_bundle(f: &str, prefix: &str, xz: bool) -> bool {
+    let Some(rest) = f
+        .strip_prefix(prefix)
+        .and_then(|f| f.strip_prefix("bundle-"))
+    else {
         return false;
     };
     let stem = rest
@@ -119,20 +141,20 @@ fn is_bundle(f: &str, xz: bool) -> bool {
     stem.is_some_and(|s| !s.is_empty() && !s.contains(['\n', '\r', '\u{2028}', '\u{2029}']))
 }
 
-/// The newest bundle already in the cache directory, if any.
-fn newest_cached(cache_path: &Path) -> Option<String> {
+/// The newest bundle for a platform already in the cache directory, if any.
+fn newest_cached(cache_path: &Path, prefix: &str) -> Option<String> {
     let mut files: Vec<String> = fs::read_dir(cache_path)
         .ok()?
         .filter_map(|e| e.ok()?.file_name().into_string().ok())
-        .filter(|f| is_bundle(f, false))
+        .filter(|f| is_bundle(f, prefix, false))
         .collect();
     files.sort();
     files.pop()
 }
 
-/// The bundle name `latest` points at, e.g. `bundle-20261001T000000Z.json`.
-fn latest_name(agent: &Agent, base_url: &str, token: &str) -> Result<String, Error> {
-    let url = format!("{base_url}/latest");
+/// The bundle name `<prefix>latest` points at, e.g. `bundle-20261001T000000Z.json`.
+fn latest_name(agent: &Agent, base_url: &str, prefix: &str, token: &str) -> Result<String, Error> {
+    let url = format!("{base_url}/{prefix}latest");
     let mut body = Vec::new();
     download(agent, &url, token)?
         .body_mut()
@@ -149,21 +171,48 @@ fn latest_name(agent: &Agent, base_url: &str, token: &str) -> Result<String, Err
             .all(|b| b.is_ascii_alphanumeric() || b"._-".contains(&b))
     {
         return Err(Error::new(format!(
-            "latest holds \"{latest}\", which is not a timestamp."
+            "{prefix}latest holds \"{latest}\", which is not a timestamp."
         )));
     }
-    Ok(format!("bundle-{latest}.json"))
+    Ok(format!("{prefix}bundle-{latest}.json"))
 }
 
-/// Downloads the AWS EC2 pricing data compressed blob and decompresses it.
-///
-/// The bucket's `latest` object names the newest bundle. With caching on, a bundle
-/// is only downloaded when `latest` names one that is not in the cache yet, and if
-/// `latest` cannot be fetched at all (offline, outage) the newest cached bundle is used.
+/// Downloads the AWS EC2 pricing data. The same as `download_aws_pricing_data("ec2", options)`.
 ///
 /// This blocks on network and disk I/O. From async code, run it on a blocking thread, e.g.
 /// with `tokio::task::spawn_blocking`.
 pub fn download_aws_ec2_pricing_data(options: &Options) -> Result<AwsPricingData, Error> {
+    download_aws_pricing_data("ec2", options)
+}
+
+/// Downloads one AWS platform's pricing data compressed blob and decompresses it. `platform`
+/// is one of [`AWS_PLATFORMS`] or any other lowercase name (`[a-z0-9]+`).
+///
+/// The bucket's `<platform>-latest` object (`latest` for EC2) names the newest bundle. With
+/// caching on, a bundle is only downloaded when that names one that is not in the cache yet,
+/// and if it cannot be fetched at all (offline, outage) the newest cached bundle is used.
+///
+/// This blocks on network and disk I/O. From async code, run it on a blocking thread, e.g.
+/// with `tokio::task::spawn_blocking`.
+pub fn download_aws_pricing_data(
+    platform: &str,
+    options: &Options,
+) -> Result<AwsPricingData, Error> {
+    if platform.is_empty()
+        || !platform
+            .bytes()
+            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit())
+    {
+        return Err(Error::new(format!(
+            "\"{platform}\" is not a platform name."
+        )));
+    }
+    // EC2's keys have no prefix because they were published before the other platforms.
+    let prefix = if platform == "ec2" {
+        String::new()
+    } else {
+        format!("{platform}-")
+    };
     let token = options
         .token
         .clone()
@@ -197,11 +246,11 @@ pub fn download_aws_ec2_pricing_data(options: &Options) -> Result<AwsPricingData
         .build()
         .into();
 
-    let name = match latest_name(&agent, base_url, &token) {
+    let name = match latest_name(&agent, base_url, &prefix, &token) {
         Ok(name) => name,
         // A rejected token is a real answer; anything else falls back to what we already have.
         Err(err) => match &cache_path {
-            Some(path) if err.status() != Some(401) => newest_cached(path).ok_or(err)?,
+            Some(path) if err.status() != Some(401) => newest_cached(path, &prefix).ok_or(err)?,
             _ => return Err(err),
         },
     };
@@ -222,7 +271,7 @@ pub fn download_aws_ec2_pricing_data(options: &Options) -> Result<AwsPricingData
                     Error::with_source(format!("GET {url} could not be decompressed."), e)
                 })?;
             if let Some(path) = &cache_path {
-                write_cache(path, &name, &json).map_err(|e| {
+                write_cache(path, &prefix, &name, &json).map_err(|e| {
                     Error::with_source(format!("Could not cache {name} in {}.", path.display()), e)
                 })?;
             }
@@ -230,24 +279,24 @@ pub fn download_aws_ec2_pricing_data(options: &Options) -> Result<AwsPricingData
         }
     };
 
-    let raw = serde_json::from_slice(&json)
-        .map_err(|e| Error::with_source(format!("{name} is not a valid bundle."), e))?;
-    Ok(AwsPricingData::new(raw))
+    let invalid = format!("{name} is not a valid bundle.");
+    let raw = serde_json::from_slice(&json).map_err(|e| Error::with_source(&*invalid, e))?;
+    AwsPricingData::new(raw).map_err(|e| Error::with_source(invalid, e))
 }
 
-fn write_cache(cache_path: &Path, name: &str, json: &[u8]) -> std::io::Result<()> {
+fn write_cache(cache_path: &Path, prefix: &str, name: &str, json: &[u8]) -> std::io::Result<()> {
     fs::create_dir_all(cache_path)?;
     // Write then rename, so a crash mid-write never leaves a truncated bundle to be read next time.
     let tmp = cache_path.join(format!("{name}.{}.tmp", process::id()));
     fs::write(&tmp, json)?;
     fs::rename(&tmp, cache_path.join(name))?;
-    // Older bundles, including compressed ones cached by earlier versions of this SDK.
+    // This platform's older bundles, including compressed ones cached by earlier versions of this SDK.
     for entry in fs::read_dir(cache_path)? {
         let entry = entry?;
         if entry
             .file_name()
             .to_str()
-            .is_some_and(|f| f != name && is_bundle(f, true))
+            .is_some_and(|f| f != name && is_bundle(f, prefix, true))
         {
             match fs::remove_file(entry.path()) {
                 Err(e) if e.kind() != ErrorKind::NotFound => return Err(e),

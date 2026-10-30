@@ -1,7 +1,7 @@
 # infrawrench-bulk-instances
 
-AWS EC2 instance attributes and prices, with their full history, from the bundle
-Infrawrench publishes at `instances-bundles.infrawrench.com`.
+AWS instance attributes and prices (EC2, RDS, ElastiCache and more), with their full
+history, from the bundles Infrawrench publishes at `instances-bundles.infrawrench.com`.
 
 ```sh
 pip install infrawrench-bulk-instances
@@ -36,15 +36,59 @@ credential or a WorkOS access token). It defaults to `INFRAWRENCH_API_KEY`.
 Failures raise `AWSPricingDataError`, whose `status` is the HTTP status, if there
 was a response. Requires Python 3.10 or later; no dependencies.
 
+## Other AWS platforms
+
+`download_aws_pricing_data(platform, ...)` loads any platform's bundle;
+`download_aws_ec2_pricing_data(...)` is the same as `download_aws_pricing_data("ec2", ...)`.
+`AWS_PLATFORMS` lists them:
+
+| Platform | AWS service |
+| --- | --- |
+| `ec2` | EC2 |
+| `rds` | RDS |
+| `elasticache` | ElastiCache |
+| `opensearch` | OpenSearch Service |
+| `redshift` | Redshift |
+| `docdb` | DocumentDB |
+| `neptune` | Neptune |
+| `memorydb` | MemoryDB |
+| `dax` | DynamoDB Accelerator |
+| `sagemaker` | SageMaker |
+| `emr` | EMR |
+| `gamelift` | GameLift |
+
+The fields that pick a price differ by platform. `data.variant_keys` names them, and every
+price has a `variant` mapping keyed by them:
+
+```python
+from infrawrench_bulk_instances import download_aws_pricing_data
+
+rds = download_aws_pricing_data("rds")
+rds.variant_keys  # ("databaseEngine", "databaseEdition", "licenseModel", "deploymentOption", ...)
+db = rds.get("db.m5.large")
+assert db is not None
+next(
+    p.hourly
+    for p in db.pricing.on_demand
+    if p.region_code == "us-east-1" and p.variant["databaseEngine"] == "MySQL"
+    and p.variant["deploymentOption"] == "Multi-AZ"
+)
+```
+
+`operating_system`, `tenancy`, `license_model`, `pre_installed_sw` and `capacitystatus` are EC2's
+variant fields. On other platforms they are `""`, unless the platform has a field with that name
+(RDS has `licenseModel`).
+
 ## Caching
 
 The bundle is downloaded xz-compressed (about 20 MB) and kept decompressed (about
 210 MB) in `~/.infrawrench/aws_pricing_data` (`cache_path`), so a cached load skips
 decompression. Each load asks the server which bundle is latest and downloads it
 only if it is not cached, deleting the older one. If the server cannot be
-reached, the newest cached bundle is used instead. Pass `cache_pricing_data=False`
-to always download and never touch the disk. The cache is shared with the other
-Infrawrench bulk-instances SDKs.
+reached, the newest cached bundle is used instead. Each platform's bundle is cached
+under its own name (`rds-bundle-…json`), so loading one never evicts another. Pass
+`cache_pricing_data=False` to always download and never touch the disk. The cache is
+shared with the other Infrawrench bulk-instances SDKs.
 
 Loading decompresses and parses the whole bundle. Instances are decoded lazily:
 `get` only wraps the raw rows, and `attributes`, `attributes_history`, `pricing`

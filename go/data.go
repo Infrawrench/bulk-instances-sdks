@@ -10,12 +10,23 @@ import (
 	"math"
 	"slices"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
 
+// EC2VariantKeys are the variant keys of EC2 bundles, which don't list their own.
+var EC2VariantKeys = []string{"operatingSystem", "tenancy", "licenseModel", "preInstalledSw", "capacitystatus"}
+
 // Variant holds the product fields that pick a price.
 type Variant struct {
+	// Fields holds every field that picks the price, keyed by name: for RDS,
+	// "databaseEngine", "deploymentOption" and so on. [AWSPricingData.VariantKeys]
+	// gives their order.
+	Fields map[string]string
+
+	// EC2's variant fields. For other platforms these are "" unless the platform
+	// shares the field.
 	OperatingSystem string
 	Tenancy         string
 	LicenseModel    string
@@ -163,11 +174,15 @@ func date(ts num) time.Time {
 
 // bundle is the bundle as instances-bundler writes it; every string is an index into table.
 type bundle struct {
-	table     []string
-	snapshots []num
-	regions   []json.RawMessage
-	variants  [][]num
-	terms     [][]num
+	// EC2 bundles leave out offer, which stays nil, and variant_keys, which
+	// parseBundle sets to EC2VariantKeys.
+	offer       *string
+	variantKeys []string
+	table       []string
+	snapshots   []num
+	regions     []json.RawMessage
+	variants    [][]num
+	terms       [][]num
 	// keys holds the instance types in bundle order; instances holds each one's raw row.
 	keys      []string
 	instances map[string][]byte
@@ -201,6 +216,10 @@ func parseBundle(b []byte) (*AWSPricingData, error) {
 			break
 		}
 		switch tok {
+		case "offer":
+			err = dec.Decode(&bd.offer)
+		case "variant_keys":
+			err = dec.Decode(&bd.variantKeys)
 		case "compression_table":
 			err = dec.Decode(&bd.table)
 		case "snapshots":
@@ -225,10 +244,27 @@ func parseBundle(b []byte) (*AWSPricingData, error) {
 			err = errors.New("unexpected data after the bundle")
 		}
 	}
+	if err == nil {
+		err = bd.checkVariants()
+	}
 	if err != nil {
 		return nil, fmt.Errorf("bulkinstances: parsing the bundle: %w", err)
 	}
 	return newAWSPricingData(bd), nil
+}
+
+// checkVariants defaults the variant keys to EC2's and checks that every variant has
+// one field per key.
+func (bd *bundle) checkVariants() error {
+	if bd.variantKeys == nil {
+		bd.variantKeys = slices.Clone(EC2VariantKeys)
+	}
+	for _, row := range bd.variants {
+		if len(row) != len(bd.variantKeys) {
+			return fmt.Errorf("variant has %d fields, expected %d", len(row), len(bd.variantKeys))
+		}
+	}
+	return nil
 }
 
 func (bd *bundle) parseInstances(dec *json.Decoder, b []byte) error {
@@ -273,7 +309,7 @@ func decodeTuple(b []byte, dsts ...any) error {
 	return nil
 }
 
-// AWSPricingData is the AWS EC2 pricing data, keyed by instance type.
+// AWSPricingData is one AWS platform's pricing data, keyed by instance type.
 //
 // Nothing is decoded until it is asked for: Get wraps the raw rows, and each
 // method of the returned [AWSInstance] decodes its part on first call and keeps
@@ -324,6 +360,20 @@ func (d *AWSPricingData) Get(instanceType string) (*AWSInstance, bool) {
 	return inst, true
 }
 
+// Offer returns the AWS offer code, e.g. "AmazonEC2" or "AmazonRDS".
+func (d *AWSPricingData) Offer() string {
+	if d.raw.offer == nil {
+		return "AmazonEC2"
+	}
+	return *d.raw.offer
+}
+
+// VariantKeys returns the names of the fields that pick a price, which every
+// price's [Variant.Fields] is keyed by. EC2 bundles have [EC2VariantKeys].
+func (d *AWSPricingData) VariantKeys() []string {
+	return slices.Clone(d.raw.variantKeys)
+}
+
 // Snapshots returns the publication date of every AWS price list in the bundle,
 // oldest first.
 func (d *AWSPricingData) Snapshots() []time.Time {
@@ -360,12 +410,19 @@ func (d *AWSPricingData) decodeRegions() map[string]map[string]string {
 func (d *AWSPricingData) decodeVariants() []Variant {
 	out := make([]Variant, len(d.raw.variants))
 	for i, row := range d.raw.variants {
+		// parseBundle checked that every row has one field per key.
+		fields := make(map[string]string, len(row))
+		for j, k := range d.raw.variantKeys {
+			fields[k] = d.str(row[j])
+		}
+		// A missing field reads as "".
 		out[i] = Variant{
-			OperatingSystem: d.str(at(row, 0)),
-			Tenancy:         d.str(at(row, 1)),
-			LicenseModel:    d.str(at(row, 2)),
-			PreInstalledSW:  d.str(at(row, 3)),
-			Capacitystatus:  d.str(at(row, 4)),
+			Fields:          fields,
+			OperatingSystem: fields["operatingSystem"],
+			Tenancy:         fields["tenancy"],
+			LicenseModel:    fields["licenseModel"],
+			PreInstalledSW:  fields["preInstalledSw"],
+			Capacitystatus:  fields["capacitystatus"],
 		}
 	}
 	return out
@@ -551,13 +608,20 @@ func (i *AWSInstance) Pricing() Pricing {
 	return i.pricing()
 }
 
-type onDemandKey struct {
-	region string
-	Variant
+// priceKey identifies a price by its location and every variant field, in variant-key
+// order, so that variants differing only in a field EC2 lacks are kept apart.
+func (d *AWSPricingData) priceKey(region string, v Variant) string {
+	var b strings.Builder
+	b.WriteString(region)
+	for _, k := range d.raw.variantKeys {
+		b.WriteByte(0)
+		b.WriteString(v.Fields[k])
+	}
+	return b.String()
 }
 
 type reservedKey struct {
-	onDemandKey
+	price string
 	ReservedTerm
 }
 
@@ -578,17 +642,17 @@ func latest[T any, K comparable](rows []T, key func(T) K) []T {
 }
 
 func (i *AWSInstance) decodePricing() Pricing {
-	h := i.PricingHistory()
+	d, h := i.data, i.PricingHistory()
 	var p Pricing
-	for _, c := range latest(h.OnDemand, func(c OnDemandPriceChange) onDemandKey {
-		return onDemandKey{c.Region, c.Variant}
+	for _, c := range latest(h.OnDemand, func(c OnDemandPriceChange) string {
+		return d.priceKey(c.Region, c.Variant)
 	}) {
 		if c.Hourly != nil {
 			p.OnDemand = append(p.OnDemand, OnDemandPrice{Location: c.Location, Variant: c.Variant, Hourly: *c.Hourly, Since: c.At})
 		}
 	}
 	for _, c := range latest(h.Reserved, func(c ReservedPriceChange) reservedKey {
-		return reservedKey{onDemandKey{c.Region, c.Variant}, c.ReservedTerm}
+		return reservedKey{d.priceKey(c.Region, c.Variant), c.ReservedTerm}
 	}) {
 		if c.Hourly != nil {
 			upfront := 0.0

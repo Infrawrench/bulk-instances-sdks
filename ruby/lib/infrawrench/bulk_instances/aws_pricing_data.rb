@@ -2,7 +2,7 @@
 
 module Infrawrench
   module BulkInstances
-    # The AWS EC2 pricing data, keyed by instance type.
+    # One AWS platform's pricing data, keyed by instance type.
     #
     # Nothing is decoded until it is asked for: #get wraps the raw rows, and each
     # reader on the returned AWSInstance decodes its part on first access and keeps
@@ -15,10 +15,12 @@ module Infrawrench
       # index into +compression_table+:
       #
       #   {
+      #     "offer" => "AmazonRDS", # EC2 bundles leave it out
       #     "compression_table" => [String, ...],
       #     "snapshots" => [Integer, ...],
       #     "regions" => [[location, [[key, value], ...]], ...],
-      #     "variants" => [[os, tenancy, license, sw, capacity], ...],
+      #     "variant_keys" => [String, ...], # EC2 bundles leave it out (see EC2_VARIANT_KEYS)
+      #     "variants" => [[value, ...], ...], # one value per variant key
       #     "reserved_terms" => [[lease, offering, purchase], ...],
       #     "instances" => { "m5.large" => [attrs, attr_changes, base_price, on_demand, reserved, created_at, deleted_at] },
       #   }
@@ -49,6 +51,18 @@ module Infrawrench
         inst
       end
       alias [] get
+
+      # The AWS offer code, e.g. +AmazonEC2+ or +AmazonRDS+.
+      # @return [String]
+      def offer
+        @raw["offer"] || "AmazonEC2"
+      end
+
+      # The names of the fields that pick a price, which every price's +variant+ is keyed by.
+      # @return [Array<String>]
+      def variant_keys
+        @raw["variant_keys"] || EC2_VARIANT_KEYS
+      end
 
       # The publication date of every AWS price list in the bundle, oldest first.
       # @return [Array<Time>]
@@ -82,13 +96,18 @@ module Infrawrench
       # @api private
       # @return [Variant]
       def variant(i)
-        @variants ||= @raw["variants"].map do |os, tenancy, license, sw, capacity|
+        @variants ||= @raw["variants"].map do |fields|
+          keys = variant_keys
+          raise "variant has #{fields.length} fields, expected #{keys.length}" if fields.length != keys.length
+
+          variant = keys.zip(fields).to_h { |k, v| [k, str(v)] }.freeze
           Variant.new(
-            operating_system: str(os),
-            tenancy: str(tenancy),
-            license_model: str(license),
-            pre_installed_sw: str(sw),
-            capacitystatus: str(capacity),
+            variant:,
+            operating_system: variant.fetch("operatingSystem", ""),
+            tenancy: variant.fetch("tenancy", ""),
+            license_model: variant.fetch("licenseModel", ""),
+            pre_installed_sw: variant.fetch("preInstalledSw", ""),
+            capacitystatus: variant.fetch("capacitystatus", ""),
           )
         end.freeze
         @variants[i]

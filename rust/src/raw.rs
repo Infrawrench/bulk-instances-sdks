@@ -9,10 +9,16 @@ use serde::de::{Deserializer, MapAccess, Visitor};
 
 #[derive(Deserialize)]
 pub(crate) struct BundleFile {
+    /// The AWS offer code. EC2 bundles leave it out.
+    #[serde(default)]
+    pub offer: Option<String>,
     pub compression_table: Vec<String>,
     pub snapshots: Vec<f64>,
     pub regions: Vec<(u32, Vec<[u32; 2]>)>,
-    pub variants: Vec<[u32; 5]>,
+    /// The names of each variant's fields. EC2 bundles leave it out (see `EC2_VARIANT_KEYS`).
+    #[serde(default)]
+    pub variant_keys: Option<Vec<String>>,
+    pub variants: Vec<Vec<u32>>,
     pub reserved_terms: Vec<[u32; 3]>,
     pub instances: Instances,
 }

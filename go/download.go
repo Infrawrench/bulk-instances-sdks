@@ -20,7 +20,8 @@ import (
 	"github.com/ulikunitz/xz"
 )
 
-// Options configures [DownloadAWSEC2PricingData]. The zero value uses every default.
+// Options configures [DownloadAWSPricingData] and [DownloadAWSEC2PricingData]. The zero
+// value uses every default.
 type Options struct {
 	// Token is your Infrawrench API token. Defaults to the INFRAWRENCH_API_KEY environment variable.
 	Token string
@@ -43,7 +44,14 @@ const (
 	userAgent      = "infrawrench/bulk-instances, go, 1.0"
 )
 
+// AWSPlatforms lists the AWS platforms Infrawrench publishes a bundle for. Any other
+// lowercase name is requested as is, so a platform added later works without a new SDK.
+var AWSPlatforms = []string{
+	"ec2", "rds", "elasticache", "opensearch", "redshift", "docdb", "neptune", "memorydb", "dax", "sagemaker", "emr", "gamelift",
+}
+
 var (
+	platformName   = regexp.MustCompile(`^[a-z0-9]+$`)
 	latestName     = regexp.MustCompile(`^[A-Za-z0-9._-]+$`)
 	cachedBundle   = regexp.MustCompile(`^bundle-.+\.json$`)
 	obsoleteBundle = regexp.MustCompile(`^bundle-.+\.json(\.xz)?$`)
@@ -131,31 +139,53 @@ func retryAfter(header string) time.Duration {
 	return time.Duration(secs * float64(time.Second))
 }
 
-// newestCached returns the newest bundle already in the cache directory, or "" if there is none.
-func newestCached(cachePath string) string {
+// isBundle reports whether name is one of a platform's bundles, given the platform's
+// prefix and the pattern the rest of the name must match.
+func isBundle(name, prefix string, pattern *regexp.Regexp) bool {
+	return strings.HasPrefix(name, prefix) && pattern.MatchString(name[len(prefix):])
+}
+
+// newestCached returns the newest bundle for a platform already in the cache
+// directory, or "" if there is none.
+func newestCached(cachePath, prefix string) string {
 	entries, err := os.ReadDir(cachePath)
 	if err != nil {
 		return ""
 	}
 	newest := ""
 	for _, e := range entries {
-		if cachedBundle.MatchString(e.Name()) && e.Name() > newest {
+		if isBundle(e.Name(), prefix, cachedBundle) && e.Name() > newest {
 			newest = e.Name()
 		}
 	}
 	return newest
 }
 
-// DownloadAWSEC2PricingData downloads the AWS EC2 pricing data compressed blob and
-// decompresses it.
-//
-// The bucket's latest object names the newest bundle. With caching on, a bundle
-// is only downloaded when latest names one that is not in the cache yet, and if
-// latest cannot be fetched at all (offline, outage) the newest cached bundle is used.
-//
-// Download failures are returned as an [*Error]; cache, decompression and parsing
-// failures are returned as they are.
+// DownloadAWSEC2PricingData downloads the AWS EC2 pricing data. It is the same as
+// DownloadAWSPricingData(ctx, "ec2", opts).
 func DownloadAWSEC2PricingData(ctx context.Context, opts Options) (*AWSPricingData, error) {
+	return DownloadAWSPricingData(ctx, "ec2", opts)
+}
+
+// DownloadAWSPricingData downloads one AWS platform's pricing data compressed blob
+// and decompresses it. platform is one of [AWSPlatforms], or any other lowercase name.
+//
+// The bucket's <platform>-latest object (latest for EC2) names the newest bundle.
+// With caching on, a bundle is only downloaded when that names one that is not in
+// the cache yet, and if it cannot be fetched at all (offline, outage) the newest
+// cached bundle is used.
+//
+// Download failures and malformed platform names are returned as an [*Error];
+// cache, decompression and parsing failures are returned as they are.
+func DownloadAWSPricingData(ctx context.Context, platform string, opts Options) (*AWSPricingData, error) {
+	if !platformName.MatchString(platform) {
+		return nil, &Error{Message: fmt.Sprintf("%q is not a platform name.", platform)}
+	}
+	// EC2's keys have no prefix because they were published before the other platforms.
+	prefix := ""
+	if platform != "ec2" {
+		prefix = platform + "-"
+	}
 	token := opts.Token
 	if token == "" {
 		token = os.Getenv("INFRAWRENCH_API_KEY")
@@ -182,14 +212,14 @@ func DownloadAWSEC2PricingData(ctx context.Context, opts Options) (*AWSPricingDa
 		client = http.DefaultClient
 	}
 
-	name, err := latestBundle(ctx, client, baseURL, token)
+	name, err := latestBundle(ctx, client, baseURL, prefix, token)
 	if err != nil {
 		// A rejected token is a real answer, and so is a cancelled context; anything
 		// else falls back to what we already have.
 		var e *Error
 		cached := ""
 		if cache && !(errors.As(err, &e) && e.Status == http.StatusUnauthorized) && ctx.Err() == nil {
-			cached = newestCached(cachePath)
+			cached = newestCached(cachePath, prefix)
 		}
 		if cached == "" {
 			return nil, err
@@ -210,7 +240,7 @@ func DownloadAWSEC2PricingData(ctx context.Context, opts Options) (*AWSPricingDa
 			return nil, err
 		}
 		if cache {
-			if err := store(cachePath, name, json); err != nil {
+			if err := store(cachePath, prefix, name, json); err != nil {
 				return nil, err
 			}
 		}
@@ -219,9 +249,9 @@ func DownloadAWSEC2PricingData(ctx context.Context, opts Options) (*AWSPricingDa
 	return parseBundle(json)
 }
 
-// latestBundle returns the file name of the bundle the bucket's latest object names.
-func latestBundle(ctx context.Context, client *http.Client, baseURL, token string) (string, error) {
-	rawURL := baseURL + "/latest"
+// latestBundle returns the file name of the bundle the bucket's <prefix>latest object names.
+func latestBundle(ctx context.Context, client *http.Client, baseURL, prefix, token string) (string, error) {
+	rawURL := baseURL + "/" + prefix + "latest"
 	res, err := download(ctx, client, rawURL, token)
 	if err != nil {
 		return "", err
@@ -233,9 +263,9 @@ func latestBundle(ctx context.Context, client *http.Client, baseURL, token strin
 	}
 	latest := strings.TrimSpace(string(body))
 	if !latestName.MatchString(latest) {
-		return "", &Error{Message: fmt.Sprintf("latest holds %q, which is not a timestamp.", latest)}
+		return "", &Error{Message: fmt.Sprintf("%slatest holds %q, which is not a timestamp.", prefix, latest)}
 	}
-	return "bundle-" + latest + ".json", nil
+	return prefix + "bundle-" + latest + ".json", nil
 }
 
 // downloadBundle GETs the xz-compressed bundle at rawURL and returns it decompressed.
@@ -275,8 +305,8 @@ func (b *bodyReader) Read(p []byte) (int, error) {
 	return n, err
 }
 
-// store writes the decompressed bundle to the cache and deletes every older one.
-func store(cachePath, name string, json []byte) error {
+// store writes the decompressed bundle to the cache and deletes the platform's older ones.
+func store(cachePath, prefix, name string, json []byte) error {
 	if err := os.MkdirAll(cachePath, 0o777); err != nil {
 		return err
 	}
@@ -288,13 +318,13 @@ func store(cachePath, name string, json []byte) error {
 	if err := os.Rename(tmp, filepath.Join(cachePath, name)); err != nil {
 		return err
 	}
-	// Older bundles, including compressed ones cached by earlier versions of this SDK.
+	// This platform's older bundles, including compressed ones cached by earlier versions of this SDK.
 	entries, err := os.ReadDir(cachePath)
 	if err != nil {
 		return err
 	}
 	for _, e := range entries {
-		if e.Name() != name && obsoleteBundle.MatchString(e.Name()) {
+		if e.Name() != name && isBundle(e.Name(), prefix, obsoleteBundle) {
 			if err := os.Remove(filepath.Join(cachePath, e.Name())); err != nil && !errors.Is(err, fs.ErrNotExist) {
 				return err
 			}
