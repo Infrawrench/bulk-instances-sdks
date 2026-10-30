@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    infrawrench-bulk_instances (1.1.0)
+    infrawrench-bulk_instances (1.2.0)
       fiddle (~> 1.1)
 
 GEM
@@ -18,7 +18,7 @@ DEPENDENCIES
 
 CHECKSUMS
   fiddle (1.1.8) sha256=7fa8ee3627271497f3add5503acdbc3f40b32f610fc1cf49634f083ef3f32eee
-  infrawrench-bulk_instances (1.1.0)
+  infrawrench-bulk_instances (1.2.0)
 
 BUNDLED WITH
   4.0.3
