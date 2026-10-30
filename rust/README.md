@@ -97,6 +97,28 @@ fn main() -> Result<(), infrawrench_bulk_instances::Error> {
 EC2's variant fields. On other platforms they are `""`, unless the platform has a field with
 that name (RDS has `licenseModel`).
 
+## One instance
+
+`fetch_aws_instance(platform, instance_type, &options)` fetches a single instance from the
+Infrawrench API instead of downloading the platform's whole bundle. It returns the same
+`AwsInstance` that `get` does, owned, or `None` if the platform has no instance with that name:
+
+```rust no_run
+use infrawrench_bulk_instances::{AwsInstanceOptions, fetch_aws_instance};
+
+fn main() -> Result<(), infrawrench_bulk_instances::Error> {
+    if let Some(m5) = fetch_aws_instance("ec2", "m5.large", &AwsInstanceOptions::default())? {
+        let prices = m5.pricing().on_demand.len();
+    }
+    Ok(())
+}
+```
+
+`AwsInstanceOptions` takes `token` like the bundle download, and `base_url` for where the API
+is served from (`https://app.infrawrench.com` by default). Nothing is cached. The API syncs each
+new bundle within about half an hour of it being published, so it can briefly trail
+`download_aws_pricing_data`. Like the download, it blocks.
+
 ## Caching
 
 The bundle is downloaded xz-compressed (about 20 MB) and kept decompressed (about

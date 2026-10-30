@@ -18,6 +18,9 @@ serves all of them.
 | PHP        | [`php/`](php)      | `composer require infrawrench/bulk-instances`              |
 | Go         | [`go/`](go)        | `go get github.com/infrawrench/bulk-instances-sdks/go`     |
 
+Each SDK can also fetch a single instance from the Infrawrench API
+(`/api/v1/aws-bulk-pricing/<platform>/<instance>`) without downloading the whole bundle.
+
 Each directory's README covers that SDK's API. Any Infrawrench bearer credential works
 as the token, and every SDK defaults to `INFRAWRENCH_API_KEY`.
 

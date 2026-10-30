@@ -18,8 +18,10 @@ pub use crate::data::{
     ReservedTerm, Variant,
 };
 pub use crate::error::Error;
+use crate::raw::InstanceFile;
 
 const DEFAULT_BASE_URL: &str = "https://instances-bundles.infrawrench.com";
+const DEFAULT_API_URL: &str = "https://app.infrawrench.com";
 const USER_AGENT: &str = "infrawrench/bulk-instances, rust, 1.0";
 
 /// The AWS platforms Infrawrench publishes a bundle for. Any other lowercase name is
@@ -84,6 +86,63 @@ impl fmt::Debug for Options {
     }
 }
 
+/// Options for [`fetch_aws_instance`].
+///
+/// ```
+/// let options = infrawrench_bulk_instances::AwsInstanceOptions {
+///     token: Some("iwk_...".into()),
+///     ..Default::default()
+/// };
+/// ```
+#[derive(Clone, Default)]
+pub struct AwsInstanceOptions {
+    /// Defines your Infrawrench API token. Defaults to the `INFRAWRENCH_API_KEY` environment variable.
+    pub token: Option<String>,
+
+    /// Where the Infrawrench API is served from. Defaults to <https://app.infrawrench.com>
+    pub base_url: Option<String>,
+}
+
+impl fmt::Debug for AwsInstanceOptions {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("AwsInstanceOptions")
+            .field("token", &self.token.as_ref().map(|_| "<redacted>"))
+            .field("base_url", &self.base_url)
+            .finish()
+    }
+}
+
+fn agent() -> Agent {
+    Agent::config_builder()
+        .http_status_as_error(false)
+        .user_agent(USER_AGENT)
+        .build()
+        .into()
+}
+
+fn check_platform(platform: &str) -> Result<(), Error> {
+    if platform.is_empty()
+        || !platform
+            .bytes()
+            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit())
+    {
+        return Err(Error::new(format!(
+            "\"{platform}\" is not a platform name."
+        )));
+    }
+    Ok(())
+}
+
+fn token(token: &Option<String>) -> Result<String, Error> {
+    token
+        .clone()
+        .or_else(|| env::var("INFRAWRENCH_API_KEY").ok())
+        .filter(|t| !t.is_empty())
+        .ok_or_else(|| {
+            Error::new("No Infrawrench API token: pass `token` or set INFRAWRENCH_API_KEY.")
+        })
+}
+
 fn get(agent: &Agent, url: &str, token: &str) -> Result<Response<Body>, Error> {
     agent
         .get(url)
@@ -92,7 +151,8 @@ fn get(agent: &Agent, url: &str, token: &str) -> Result<Response<Body>, Error> {
         .map_err(|e| Error::with_source(format!("GET {url} failed."), e))
 }
 
-/// GETs `url`, retrying the 503 the bundles Worker answers when it cannot reach the Infrawrench API.
+/// GETs `url`, retrying the 503 the bundles Worker answers when it cannot reach the Infrawrench API
+/// (and the API answers when it cannot reach its store).
 fn download(agent: &Agent, url: &str, token: &str) -> Result<Response<Body>, Error> {
     let mut attempt = 1;
     loop {
@@ -198,29 +258,14 @@ pub fn download_aws_pricing_data(
     platform: &str,
     options: &Options,
 ) -> Result<AwsPricingData, Error> {
-    if platform.is_empty()
-        || !platform
-            .bytes()
-            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit())
-    {
-        return Err(Error::new(format!(
-            "\"{platform}\" is not a platform name."
-        )));
-    }
+    check_platform(platform)?;
     // EC2's keys have no prefix because they were published before the other platforms.
     let prefix = if platform == "ec2" {
         String::new()
     } else {
         format!("{platform}-")
     };
-    let token = options
-        .token
-        .clone()
-        .or_else(|| env::var("INFRAWRENCH_API_KEY").ok())
-        .filter(|t| !t.is_empty())
-        .ok_or_else(|| {
-            Error::new("No Infrawrench API token: pass `token` or set INFRAWRENCH_API_KEY.")
-        })?;
+    let token = token(&options.token)?;
     let base_url = options
         .base_url
         .as_deref()
@@ -240,11 +285,7 @@ pub fn download_aws_pricing_data(
                 .join("aws_pricing_data"),
         ),
     };
-    let agent: Agent = Agent::config_builder()
-        .http_status_as_error(false)
-        .user_agent(USER_AGENT)
-        .build()
-        .into();
+    let agent = agent();
 
     let name = match latest_name(&agent, base_url, &prefix, &token) {
         Ok(name) => name,
@@ -305,4 +346,62 @@ fn write_cache(cache_path: &Path, prefix: &str, name: &str, json: &[u8]) -> std:
         }
     }
     Ok(())
+}
+
+/// Fetches one instance from the Infrawrench API, without downloading the platform's bundle.
+/// Nothing is cached. Returns `None` if the platform has no instance with that name.
+///
+/// The result is the same as `download_aws_pricing_data(platform, ..)?.get(instance_type)`, from
+/// whichever bundle the API last synced, which can trail the newest bundle by up to half an hour.
+///
+/// This blocks on network I/O. From async code, run it on a blocking thread, e.g. with
+/// `tokio::task::spawn_blocking`.
+pub fn fetch_aws_instance(
+    platform: &str,
+    instance_type: &str,
+    options: &AwsInstanceOptions,
+) -> Result<Option<AwsInstance>, Error> {
+    check_platform(platform)?;
+    if instance_type.is_empty() {
+        return Err(Error::new("The instance type is empty."));
+    }
+    let token = token(&options.token)?;
+    let base_url = options
+        .base_url
+        .as_deref()
+        .unwrap_or(DEFAULT_API_URL)
+        .trim_end_matches('/');
+    let url = format!(
+        "{base_url}/api/v1/aws-bulk-pricing/{platform}/{}",
+        encode_uri_component(instance_type)
+    );
+    let mut res = match download(&agent(), &url, &token) {
+        Ok(res) => res,
+        Err(err) if err.status() == Some(404) => return Ok(None),
+        Err(err) => return Err(err),
+    };
+    let mut json = Vec::new();
+    res.body_mut()
+        .as_reader()
+        .read_to_end(&mut json)
+        .map_err(|e| Error::with_source(format!("GET {url} failed."), e))?;
+    let invalid = format!("GET {url} did not return a valid instance.");
+    let file: InstanceFile =
+        serde_json::from_slice(&json).map_err(|e| Error::with_source(&*invalid, e))?;
+    let name = file.name.clone();
+    let data = AwsPricingData::new(file.into()).map_err(|e| Error::with_source(invalid, e))?;
+    Ok(data.into_instance(&name))
+}
+
+/// Percent-encodes `s` as JavaScript's `encodeURIComponent` does.
+fn encode_uri_component(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    for b in s.bytes() {
+        if b.is_ascii_alphanumeric() || b"-_.!~*'()".contains(&b) {
+            out.push(b as char);
+        } else {
+            out.push_str(&format!("%{b:02X}"));
+        }
+    }
+    out
 }

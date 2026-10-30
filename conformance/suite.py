@@ -2,10 +2,10 @@
 
     python3 suite.py <lang> -- <command...>
 
-The command is run as `<command...> <baseUrl> <cacheDir> <token|-> <cache 1|0> [platform]`, must print the dump
-(see README.md) on success, or `{"error": {"status": <int|null>}}` and exit 3 on AWSPricingDataError.
+The command is run as `<command...> <baseUrl> <cacheDir> <token|-> <cache 1|0> [platform [instance]]`, must print the
+dump (see README.md) on success, or `{"error": {"status": <int|null>}}` and exit 3 on AWSPricingDataError.
 """
-import json, os, shutil, subprocess, sys, tempfile, threading, time
+import json, os, shutil, subprocess, sys, tempfile, threading, time, urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 here = os.path.dirname(os.path.abspath(__file__))
@@ -20,7 +20,10 @@ cmd = sys.argv[sys.argv.index("--") + 1:]
 class State:
     fail_latest = 0      # answer this many /latest requests with 503
     latest_body = None   # override /latest content
+    fail_api = 0         # answer this many API requests with 503
     log = []             # (path, auth, user-agent)
+
+API = "/api/v1/aws-bulk-pricing/"
 
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *a): pass
@@ -34,6 +37,15 @@ class Handler(BaseHTTPRequestHandler):
                 return self.reply(503, b"busy", {"Retry-After": "1"})
             body = State.latest_body if State.latest_body is not None else open(os.path.join(FIX, "latest"), "rb").read()
             return self.reply(200, body)
+        if self.path.startswith(API):
+            if State.fail_api > 0:
+                State.fail_api -= 1
+                return self.reply(503, b"busy", {"Retry-After": "1"})
+            platform, _, name = self.path[len(API):].partition("/")
+            p = os.path.join(FIX, "api", platform, urllib.parse.unquote(name) + ".json")
+            if "/" not in urllib.parse.unquote(name) and os.path.isfile(p):
+                return self.reply(200, open(p, "rb").read(), {"Content-Type": "application/json"})
+            return self.reply(404, b'{"error":"No such instance"}', {"Content-Type": "application/json"})
         if self.path == "/rds-latest":
             return self.reply(200, open(os.path.join(FIX, "rds-latest"), "rb").read())
         p = os.path.join(FIX, self.path.lstrip("/"))
@@ -52,12 +64,12 @@ threading.Thread(target=server.serve_forever, daemon=True).start()
 BASE = f"http://127.0.0.1:{server.server_address[1]}"
 DEAD = "http://127.0.0.1:9"
 
-def run(base, cache_dir, token="test-token", cache=True, env_token=None, platform=None):
+def run(base, cache_dir, token="test-token", cache=True, env_token=None, platform=None, instance=None):
     env = {k: v for k, v in os.environ.items() if k != "INFRAWRENCH_API_KEY"}
     if env_token: env["INFRAWRENCH_API_KEY"] = env_token
     State.log = []
     t = time.time()
-    args = [base, cache_dir, token, "1" if cache else "0"] + ([platform] if platform else [])
+    args = [base, cache_dir, token, "1" if cache else "0"] + ([platform] if platform else []) + ([instance] if instance is not None else [])
     p = subprocess.run(cmd + args, capture_output=True, text=True, env=env, encoding="utf-8")
     try:
         out = json.loads(p.stdout)
@@ -181,6 +193,49 @@ try:
     p, out, _ = run(BASE, os.path.join(tmp, "badname"), platform="../rds")
     error_with("a malformed platform name is an AWSPricingDataError", p, out, None)
     check("a malformed platform name makes no request", State.log == [], State.log)
+
+    # One instance from the Infrawrench API, decoded the same as from the whole bundle. attributesIn is
+    # dumped for the regions the instance's attributes are overridden in; any other gives `attributes`.
+    unused = os.path.join(tmp, "unused")
+    for platform, reference in [("ec2", REFERENCE), ("rds", REFERENCE_RDS)]:
+        for name, expected in reference["instances"].items():
+            p, out, _ = run(BASE, unused, platform=platform, instance=name)
+            got = out.get("instance") if isinstance(out, dict) else None
+            if isinstance(got, dict) and isinstance(got.get("attributesIn"), dict):
+                expected = {**expected, "attributesIn": {r: expected["attributesIn"].get(r) for r in got["attributesIn"]}}
+            dump_ok(f"API {platform}/{name} decodes to the reference", p, got, expected)
+            check(f"API {platform}/{name} fetches only that instance",
+                  [x[:2] for x in State.log] == [(f"{API}{platform}/{name}", "Bearer test-token")], State.log)
+    check("API User-Agent", {ua for _, _, ua in State.log} == {f"infrawrench/bulk-instances, {lang}, 1.0"}, State.log)
+
+    p, out, _ = run(BASE, unused, platform="ec2", instance="nope")
+    check("API missing instance is null", p.returncode == 0 and out == {"instance": None}, (p.returncode, p.stdout[:200], p.stderr[-800:]))
+    p, out, _ = run(BASE + "/", unused, platform="ec2", instance="x y/z")
+    check("API escapes the instance type, and drops a trailing slash from the base URL",
+          out == {"instance": None} and [x[0] for x in State.log] == [f"{API}ec2/x%20y%2Fz"], (p.stdout[:200], State.log))
+    p, out, _ = run(BASE, unused, token="wrong", platform="ec2", instance="m5.large")
+    error_with("API rejected token is 401", p, out, 401)
+    State.fail_api = 1
+    p, out, secs = run(BASE, unused, platform="ec2", instance="m5.large")
+    check("API 503 is retried", isinstance(out, dict) and out.get("instance") is not None and secs >= 1
+          and len(State.log) == 2, (secs, p.stdout[:200], State.log))
+    State.fail_api = 3
+    p, out, _ = run(BASE, unused, platform="ec2", instance="m5.large")
+    error_with("API three 503s give up with status 503", p, out, 503)
+    State.fail_api = 0
+    p, out, _ = run(BASE, unused, token="-", env_token="test-token", platform="rds", instance="db.t3.micro")
+    check("API token defaults to INFRAWRENCH_API_KEY", isinstance(out, dict) and out.get("instance") is not None, p.stdout[:200])
+    p, out, _ = run(BASE, unused, token="-", platform="rds", instance="db.t3.micro")
+    error_with("API no token at all is an AWSPricingDataError", p, out, None)
+    p, out, _ = run(BASE, unused, platform="../ec2", instance="m5.large")
+    error_with("API malformed platform name is an AWSPricingDataError", p, out, None)
+    check("API malformed platform name makes no request", State.log == [], State.log)
+    p, out, _ = run(BASE, unused, platform="ec2", instance="")
+    error_with("API empty instance type is an AWSPricingDataError", p, out, None)
+    check("API empty instance type makes no request", State.log == [], State.log)
+    p, out, _ = run(DEAD, unused, platform="ec2", instance="m5.large")
+    check("API offline fails", p.returncode != 0, p.stdout[:200])
+    check("API writes nothing to the cache directory", not os.path.exists(unused), unused)
 finally:
     shutil.rmtree(tmp)
     server.shutdown()

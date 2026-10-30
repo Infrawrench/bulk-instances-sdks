@@ -29,6 +29,18 @@ final class BundleParser {
     record RawRegion(double location, Rows pairs) {}
 
     static AWSPricingData parse(InputStream in) throws IOException {
+        return parse(in, false);
+    }
+
+    /**
+     * One instance as the Infrawrench API serves it: the bundle's tables cut down to what it uses, with {@code name}
+     * and {@code instance} in place of {@code instances}. The result holds just that instance.
+     */
+    static AWSPricingData parseInstance(InputStream in) throws IOException {
+        return parse(in, true);
+    }
+
+    private static AWSPricingData parse(InputStream in, boolean oneInstance) throws IOException {
         try (JsonParser p = FACTORY.createParser(in)) {
             p.nextToken();
             Rows.expect(p, START_OBJECT);
@@ -40,6 +52,8 @@ final class BundleParser {
             List<double[]> variants = List.of();
             Rows terms = Rows.EMPTY;
             Map<String, RawInstance> instances = new LinkedHashMap<>();
+            String name = null;
+            RawInstance instance = null;
             for (String field; (field = p.nextFieldName()) != null; ) {
                 p.nextToken();
                 switch (field) {
@@ -51,10 +65,22 @@ final class BundleParser {
                     case "variants" -> variants = variants(p);
                     case "reserved_terms" -> terms = Rows.parse(p, 3);
                     case "instances" -> instances = instances(p);
+                    case "name" -> {
+                        if (oneInstance) name = string(p);
+                        else p.skipChildren();
+                    }
+                    case "instance" -> {
+                        if (oneInstance) instance = instance(p);
+                        else p.skipChildren();
+                    }
                     default -> p.skipChildren();
                 }
             }
             if (p.nextToken() != null) throw new JsonParseException(p, "Unexpected content after the bundle");
+            if (oneInstance) {
+                if (name == null || instance == null) throw new IOException("The instance has no name or rows");
+                instances = Map.of(name, instance);
+            }
             if (offer == null) offer = "AmazonEC2";
             if (variantKeys == null) variantKeys = BulkInstances.EC2_VARIANT_KEYS;
             for (double[] v : variants) {

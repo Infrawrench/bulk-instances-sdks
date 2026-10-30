@@ -5,10 +5,17 @@ from dataclasses import fields
 from datetime import datetime
 from typing import Any
 
-from infrawrench_bulk_instances import AWSPricingDataError, download_aws_ec2_pricing_data, download_aws_pricing_data
+from infrawrench_bulk_instances import (
+    AWSInstance,
+    AWSPricingDataError,
+    download_aws_ec2_pricing_data,
+    download_aws_pricing_data,
+    fetch_aws_instance,
+)
 
 base_url, cache_path, token, cache = sys.argv[1:5]
 platform = sys.argv[5] if len(sys.argv) > 5 else None
+instance_type = sys.argv[6] if len(sys.argv) > 6 else None
 
 
 def ts(d: datetime | None) -> int | None:
@@ -33,6 +40,32 @@ def value(v: Any) -> Any:
 def row(r: Any) -> dict[str, Any]:
     return {CAMEL.get(f.name, f.name): value(getattr(r, f.name)) for f in fields(r)}
 
+
+def instance(i: AWSInstance, region_names: list[str]) -> dict[str, Any]:
+    p, h = i.pricing, i.pricing_history
+    return {
+        "name": i.name,
+        "createdAt": ts(i.created_at),
+        "deletedAt": ts(i.deleted_at),
+        "attributes": dict(i.attributes),
+        "attributesIn": {r: i.attributes_in(r) for r in [*region_names, "Mystery", "Nowhere"]},
+        "attributesHistory": [row(c) for c in i.attributes_history],
+        "pricing": {"onDemand": [row(r) for r in p.on_demand], "reserved": [row(r) for r in p.reserved]},
+        "pricingHistory": {"onDemand": [row(r) for r in h.on_demand], "reserved": [row(r) for r in h.reserved]},
+    }
+
+
+if instance_type is not None:
+    assert platform is not None
+    try:
+        one = fetch_aws_instance(platform, instance_type, base_url=base_url, token=None if token == "-" else token)
+    except AWSPricingDataError as e:
+        print(json.dumps({"error": {"status": e.status, "message": str(e)}}))
+        sys.exit(3)
+    # The regions its attributes are overridden in; every other one is the same as `attributes`.
+    overridden = sorted({c.region for c in one.attributes_history if c.region is not None}) if one else []
+    print(json.dumps({"instance": None if one is None else instance(one, overridden)}, indent=1))
+    sys.exit(0)
 
 try:
     options: dict[str, Any] = {
@@ -62,15 +95,5 @@ assert ("m5.large" in data) is data.has("m5.large")
 for k in data.keys():
     i = data.get(k)
     assert i is not None and data.get(k) is i
-    p, h = i.pricing, i.pricing_history
-    out["instances"][k] = {
-        "name": i.name,
-        "createdAt": ts(i.created_at),
-        "deletedAt": ts(i.deleted_at),
-        "attributes": dict(i.attributes),
-        "attributesIn": {r: i.attributes_in(r) for r in [*regions, "Mystery", "Nowhere"]},
-        "attributesHistory": [row(c) for c in i.attributes_history],
-        "pricing": {"onDemand": [row(r) for r in p.on_demand], "reserved": [row(r) for r in p.reserved]},
-        "pricingHistory": {"onDemand": [row(r) for r in h.on_demand], "reserved": [row(r) for r in h.reserved]},
-    }
+    out["instances"][k] = instance(i, list(regions))
 print(json.dumps(out, indent=1))

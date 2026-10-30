@@ -253,6 +253,31 @@ func parseBundle(b []byte) (*AWSPricingData, error) {
 	return newAWSPricingData(bd), nil
 }
 
+// parseInstance parses one instance as GET /api/v1/aws-bulk-pricing/<platform>/<instance>
+// returns it: the bundle's tables cut down to what this instance uses, its row
+// renumbered to match, and its name.
+func parseInstance(b []byte) (*AWSInstance, error) {
+	var file struct {
+		Name     string          `json:"name"`
+		Instance json.RawMessage `json:"instance"`
+	}
+	if err := json.Unmarshal(b, &file); err != nil {
+		return nil, fmt.Errorf("bulkinstances: parsing the instance: %w", err)
+	}
+	if file.Instance == nil {
+		return nil, errors.New("bulkinstances: parsing the instance: it has no instance row")
+	}
+	// The tables are the same shape as a bundle's, and parseBundle skips the other fields.
+	d, err := parseBundle(b)
+	if err != nil {
+		return nil, err
+	}
+	d.raw.keys = []string{file.Name}
+	d.raw.instances = map[string][]byte{file.Name: file.Instance}
+	inst, _ := d.Get(file.Name)
+	return inst, nil
+}
+
 // checkVariants defaults the variant keys to EC2's and checks that every variant has
 // one field per key.
 func (bd *bundle) checkVariants() error {

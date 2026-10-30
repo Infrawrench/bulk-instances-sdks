@@ -5,7 +5,8 @@
 // instances-bundles.infrawrench.com and returns it as an [AWSPricingData], keyed
 // by instance type. [DownloadAWSPricingData] fetches any other platform's bundle,
 // such as "rds" (see [AWSPlatforms]). Each platform's bundle is cached under its
-// own name, so loading one never evicts another.
+// own name, so loading one never evicts another. [FetchAWSInstance] fetches a
+// single instance from the Infrawrench API instead, without the whole bundle.
 //
 // The fields that pick a price differ by platform: [AWSPricingData.VariantKeys]
 // names them, and every price's [Variant.Fields] is keyed by them. The other

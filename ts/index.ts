@@ -41,7 +41,10 @@ function get(url: string, token: string) {
   });
 }
 
-/** GETs `url`, retrying the 503 the bundles Worker answers when it cannot reach the Infrawrench API. */
+/**
+ * GETs `url`, retrying the 503 the bundles Worker answers when it cannot reach the Infrawrench API
+ * (and the API answers when it cannot reach its store).
+ */
 async function download(url: string, token: string): Promise<Response> {
   for (let attempt = 1; ; attempt++) {
     const res = await get(url, token);
@@ -143,6 +146,60 @@ export async function downloadAwsPricingData(
   }
 
   return new AWSPricingData(JSON.parse(json));
+}
+
+const DEFAULT_API_URL = "https://app.infrawrench.com";
+
+/** Options for {@link fetchAwsInstance}. */
+export type AWSInstanceOptions = {
+  /** Defines your Infrawrench API token. Defaults to the `INFRAWRENCH_API_KEY` environment variable. */
+  token?: string;
+
+  /** Where the Infrawrench API is served from. Defaults to https://app.infrawrench.com */
+  baseUrl?: string;
+};
+
+/**
+ * One instance as `GET /api/v1/aws-bulk-pricing/<platform>/<instance>` returns it: the bundle's
+ * tables cut down to what this instance uses, and its row renumbered to match.
+ */
+type InstanceFile = Pick<BundleFile, "offer" | "compression_table" | "regions" | "variant_keys" | "variants" | "reserved_terms"> & {
+  name: string;
+  instance: RawInstance;
+};
+
+/**
+ * Fetches one instance from the Infrawrench API, without downloading the platform's bundle.
+ * Nothing is cached. Returns `undefined` if the platform has no instance with that name.
+ *
+ * The result is the same as `(await downloadAwsPricingData(platform)).get(instanceType)`, from
+ * whichever bundle the API last synced, which can trail the newest bundle by up to half an hour.
+ */
+export async function fetchAwsInstance(
+  platform: AWSPlatform | (string & {}),
+  instanceType: string,
+  options: AWSInstanceOptions = {},
+): Promise<AWSInstance | undefined> {
+  if (!/^[a-z0-9]+$/.test(platform)) {
+    throw new AWSPricingDataError(`"${platform}" is not a platform name.`);
+  }
+  if (instanceType === "") {
+    throw new AWSPricingDataError("The instance type is empty.");
+  }
+  const token = options.token ?? process.env.INFRAWRENCH_API_KEY;
+  if (!token) {
+    throw new AWSPricingDataError("No Infrawrench API token: pass `token` or set INFRAWRENCH_API_KEY.");
+  }
+  const baseUrl = (options.baseUrl ?? DEFAULT_API_URL).replace(/\/+$/, "");
+  let res: Response;
+  try {
+    res = await download(`${baseUrl}/api/v1/aws-bulk-pricing/${platform}/${encodeURIComponent(instanceType)}`, token);
+  } catch (err) {
+    if (err instanceof AWSPricingDataError && err.status === 404) return undefined;
+    throw err;
+  }
+  const file = (await res.json()) as InstanceFile;
+  return new AWSPricingData({ ...file, snapshots: [], instances: { [file.name]: file.instance } }).get(file.name);
 }
 
 /** The bundle as instances-bundler writes it; every string is an index into `compression_table`. */

@@ -7,14 +7,16 @@ import os
 import re
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from http.client import HTTPException
 from pathlib import Path
 from typing import Final
 
-from ._data import AWSPricingData
+from ._data import AWSInstance, AWSPricingData
 
 DEFAULT_BASE_URL = "https://instances-bundles.infrawrench.com"
+DEFAULT_API_URL = "https://app.infrawrench.com"
 _USER_AGENT = "infrawrench/bulk-instances, python, 1.0"
 
 
@@ -37,7 +39,8 @@ def _retry_after(value: str | None) -> float:
 
 
 def _download(url: str, token: str) -> bytes:
-    """GETs ``url``, retrying the 503 the bundles Worker answers when it cannot reach the Infrawrench API."""
+    """GETs ``url``, retrying the 503 the bundles Worker answers when it cannot reach the Infrawrench API
+    (and the API answers when it cannot reach its store)."""
     request = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}", "User-Agent": _USER_AGENT})
     attempt = 1
     while True:
@@ -175,3 +178,45 @@ def download_aws_pricing_data(
                     (cache_dir / f).unlink(missing_ok=True)
 
     return AWSPricingData(json.loads(text))
+
+
+def fetch_aws_instance(
+    platform: str,
+    instance_type: str,
+    *,
+    token: str | None = None,
+    base_url: str | None = None,
+) -> AWSInstance | None:
+    """Fetches one instance from the Infrawrench API, without downloading the platform's bundle.
+
+    Nothing is cached. The result is the same as ``download_aws_pricing_data(platform).get(instance_type)``,
+    from whichever bundle the API last synced, which can trail the newest bundle by up to half an hour.
+
+    :param platform: The platform, e.g. ``"ec2"`` or ``"rds"`` (see :data:`AWS_PLATFORMS`).
+    :param instance_type: The instance type, e.g. ``"m5.large"``.
+    :param token: Defines your Infrawrench API token. Defaults to the ``INFRAWRENCH_API_KEY`` environment variable.
+    :param base_url: Where the Infrawrench API is served from. Defaults to https://app.infrawrench.com
+    :returns: The instance, or ``None`` if the platform has no instance with that name.
+    :raises AWSPricingDataError: When the platform name is malformed, the instance type is empty, the token
+        is missing or rejected, or the instance cannot be fetched.
+    """
+    if not re.fullmatch(r"[a-z0-9]+", platform):
+        raise AWSPricingDataError(f'"{platform}" is not a platform name.')
+    if instance_type == "":
+        raise AWSPricingDataError("The instance type is empty.")
+    if token is None:
+        token = os.environ.get("INFRAWRENCH_API_KEY")
+    if not token:
+        raise AWSPricingDataError("No Infrawrench API token: pass `token` or set INFRAWRENCH_API_KEY.")
+    base_url = (DEFAULT_API_URL if base_url is None else base_url).rstrip("/")
+    try:
+        name = urllib.parse.quote(instance_type, safe="")
+        body = _download(f"{base_url}/api/v1/aws-bulk-pricing/{platform}/{name}", token)
+    except AWSPricingDataError as err:
+        if err.status == 404:
+            return None
+        raise
+    # The bundle's tables cut down to what this instance uses, and its row renumbered to match.
+    value = json.loads(body)
+    name = value["name"]
+    return AWSPricingData({**value, "snapshots": [], "instances": {name: value["instance"]}}).get(name)

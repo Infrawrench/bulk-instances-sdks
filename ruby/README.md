@@ -69,6 +69,21 @@ variant fields. On other platforms they are `""`, unless the platform has a fiel
 Requires Ruby 3.2 or later, and liblzma (part of macOS and of practically every
 Linux distribution; `xz-utils`/`xz` otherwise) to decompress downloads.
 
+## One instance
+
+`Infrawrench::BulkInstances.fetch_aws_instance(platform, instance_type, ...)` fetches a single
+instance from the Infrawrench API instead of downloading the platform's whole bundle. It returns
+the same `AWSInstance` that `get` does, or `nil` if the platform has no instance with that name:
+
+```ruby
+m5 = Infrawrench::BulkInstances.fetch_aws_instance("ec2", "m5.large")
+m5&.pricing&.on_demand&.length
+```
+
+It takes `token:` like the bundle download, and `base_url:` for where the API is served from
+(`https://app.infrawrench.com` by default). Nothing is cached. The API syncs each new bundle within
+about half an hour of it being published, so it can briefly trail `download_aws_pricing_data`.
+
 ## Caching
 
 The bundle is downloaded xz-compressed (about 20 MB) and kept decompressed (about
