@@ -1,6 +1,8 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use infrawrench_bulk_instances::{Options, ReservedTerm, Variant, download_aws_ec2_pricing_data};
+use infrawrench_bulk_instances::{
+    Options, ReservedTerm, Variant, download_aws_ec2_pricing_data, download_aws_pricing_data,
+};
 use serde_json::{Map, Value, json};
 
 fn ts(t: SystemTime) -> Value {
@@ -10,6 +12,7 @@ fn ts(t: SystemTime) -> Value {
 fn base(region: &str, region_code: &Option<String>, v: &Variant) -> Map<String, Value> {
     let Value::Object(m) = json!({
         "region": region, "regionCode": region_code,
+        "variant": v.fields.iter().map(|(k, v)| (k.clone(), json!(v))).collect::<Map<_, _>>(),
         "operatingSystem": v.operating_system, "tenancy": v.tenancy, "licenseModel": v.license_model,
         "preInstalledSw": v.pre_installed_sw, "capacitystatus": v.capacitystatus,
     }) else {
@@ -34,8 +37,10 @@ fn extend(mut m: Map<String, Value>, extra: Value) -> Value {
 
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
-    let [base_url, cache_path, token, cache] = &args[..] else {
-        panic!("usage: dump <baseUrl> <cacheDir> <token|-> <1|0>")
+    let (base_url, cache_path, token, cache, platform) = match &args[..] {
+        [b, p, t, c] => (b, p, t, c, None),
+        [b, p, t, c, platform] => (b, p, t, c, Some(platform)),
+        _ => panic!("usage: dump <baseUrl> <cacheDir> <token|-> <1|0> [platform]"),
     };
     let options = Options {
         token: (token != "-").then(|| token.clone()),
@@ -43,7 +48,11 @@ fn main() {
         cache_path: Some(cache_path.into()),
         base_url: Some(base_url.clone()),
     };
-    let data = match download_aws_ec2_pricing_data(&options) {
+    let result = match platform {
+        None => download_aws_ec2_pricing_data(&options),
+        Some(platform) => download_aws_pricing_data(platform, &options),
+    };
+    let data = match result {
         Ok(d) => d,
         Err(e) => {
             println!(
@@ -124,6 +133,8 @@ fn main() {
         }));
     }
     let out = json!({
+        "offer": data.offer(),
+        "variantKeys": data.variant_keys(),
         "snapshots": data.snapshots().into_iter().map(ts).collect::<Vec<_>>(),
         "regions": regions,
         "keys": keys,

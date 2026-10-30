@@ -1,7 +1,7 @@
 # com.infrawrench:bulk-instances
 
-AWS EC2 instance attributes and prices, with their full history, from the bundle
-Infrawrench publishes at `instances-bundles.infrawrench.com`.
+AWS instance attributes and prices (EC2, RDS, ElastiCache and more), with their full
+history, from the bundles Infrawrench publishes at `instances-bundles.infrawrench.com`.
 
 ```xml
 <dependency>
@@ -48,13 +48,53 @@ Failures to download throw `AWSPricingDataException`, an `IOException` whose
 token). Other `IOException`s mean the cache could not be read or written, or the
 bundle is corrupt.
 
+## Other AWS platforms
+
+`BulkInstances.downloadAwsPricingData(platform, options)` loads any platform's bundle;
+`downloadAwsEc2PricingData(options)` is the same as `downloadAwsPricingData("ec2", options)`.
+`BulkInstances.AWS_PLATFORMS` lists the platforms; any other lowercase name is requested as is.
+
+| Platform | AWS service |
+| --- | --- |
+| `ec2` | EC2 |
+| `rds` | RDS |
+| `elasticache` | ElastiCache |
+| `opensearch` | OpenSearch Service |
+| `redshift` | Redshift |
+| `docdb` | DocumentDB |
+| `neptune` | Neptune |
+| `memorydb` | MemoryDB |
+| `dax` | DynamoDB Accelerator |
+| `sagemaker` | SageMaker |
+| `emr` | EMR |
+| `gamelift` | GameLift |
+
+The fields that pick a price differ by platform. `data.variantKeys()` names them, and every
+price's `variant().fields()` is a map keyed by them:
+
+```java
+AWSPricingData rds = BulkInstances.downloadAwsPricingData("rds");
+rds.variantKeys(); // [databaseEngine, databaseEdition, licenseModel, deploymentOption, ...]
+rds.get("db.m5.large").orElseThrow().pricing().onDemand().stream()
+        .filter(p -> p.location().regionCode().equals(Optional.of("us-east-1"))
+                && p.variant().fields().get("databaseEngine").equals("MySQL")
+                && p.variant().fields().get("deploymentOption").equals("Multi-AZ"))
+        .findFirst()
+        .map(OnDemandPrice::hourly);
+```
+
+`operatingSystem()`, `tenancy()`, `licenseModel()`, `preInstalledSw()` and `capacitystatus()`
+are EC2's variant fields. On other platforms they are `""`, unless the platform has a field
+with that name (RDS has `licenseModel`).
+
 ## Caching
 
 The bundle is downloaded xz-compressed (about 20 MB) and kept decompressed (about
 210 MB) in `~/.infrawrench/aws_pricing_data` (`cachePath`), so a cached load skips
 decompression. Each load asks the server which bundle is latest and downloads it
 only if it is not cached, deleting the older one. If the server cannot be
-reached, the newest cached bundle is used instead. Pass `cachePricingData(false)`
+reached, the newest cached bundle is used instead. Each platform's bundle is cached
+under its own name (`rds-bundle-…json`), so loading one never evicts another. Pass `cachePricingData(false)`
 to always download and never touch the disk. The cache is shared with the other
 Infrawrench SDKs.
 

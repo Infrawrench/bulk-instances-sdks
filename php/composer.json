@@ -1,6 +1,6 @@
 {
     "name": "infrawrench/bulk-instances",
-    "description": "AWS EC2 instance attributes and pricing, with full history, from Infrawrench.",
+    "description": "AWS instance attributes and pricing (EC2, RDS, ElastiCache and more), with full history, from Infrawrench.",
     "version": "1.0.0",
     "type": "library",
     "keywords": [

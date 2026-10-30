@@ -1,6 +1,6 @@
 # Conformance suite
 
-Every SDK must decode the same bundle to the same values and handle downloads, caching and
+Every SDK must decode the same bundles to the same values and handle downloads, caching and
 errors the same way. `suite.py` serves `fixture/` from a fake bundles server, runs one SDK's dump
 program through each scenario, and compares its output with `reference.json`, which is the
 TypeScript SDK's output.
@@ -9,20 +9,24 @@ TypeScript SDK's output.
 conformance/run.sh <typescript|python|ruby|java|csharp|rust|php|go>
 ```
 
-`make_fixture.py` regenerates `fixture/`. After changing it, regenerate `reference.json` from the
-TypeScript SDK (offline, from a cache seeded with the fixture):
+`make_fixture.py` regenerates `fixture/`: an EC2 bundle, and an RDS one served as `rds-latest` and
+`rds-bundle-<name>.json.xz`. After changing it, regenerate `reference.json` and `reference-rds.json` from
+the TypeScript SDK (offline, from a cache seeded with the fixture):
 
 ```sh
-mkdir -p /tmp/seed && cp conformance/fixture/bundle-*.json /tmp/seed/
+mkdir -p /tmp/seed && cp conformance/fixture/*bundle-*.json /tmp/seed/
 node conformance/dumps/typescript/dump.mjs http://127.0.0.1:9 /tmp/seed test-token 1 > conformance/reference.json
+node conformance/dumps/typescript/dump.mjs http://127.0.0.1:9 /tmp/seed test-token 1 rds > conformance/reference-rds.json
 ```
 
 ## Dump program contract
 
-Invoked as `<program> <baseUrl> <cacheDir> <token> <cache>`:
+Invoked as `<program> <baseUrl> <cacheDir> <token> <cache> [platform]`:
 
 - `token` is `-` to pass no token (so the SDK falls back to `INFRAWRENCH_API_KEY`).
 - `cache` is `1` or `0` (`cachePricingData`).
+- Without `platform`, load with the SDK's EC2 function; with it, load with the SDK's function that takes a
+  platform, passing it through unchecked.
 
 On success print one JSON object to stdout and exit 0. On the SDK's AWSPricingDataError print
 `{"error": {"status": <HTTP status or null>, "message": "..."}}` and exit 3. Any other failure: exit non-zero.
@@ -32,6 +36,8 @@ public API only:
 
 ```
 {
+  "offer": "AmazonEC2",
+  "variantKeys": ["operatingSystem", ...],
   "snapshots": [ts, ...],
   "regions": { "<location>": { "<key>": "<value>" } },
   "keys": [sorted instance types],
@@ -44,7 +50,7 @@ public API only:
       "attributesIn": { "<loc>": {...} },  // for every location in regions, plus "Mystery" and "Nowhere"
       "attributesHistory": [ {"at", "key", "value"|null, "region"|null} ],   // SDK order
       "pricing": {
-        "onDemand": [ {"region", "regionCode", "operatingSystem", "tenancy", "licenseModel", "preInstalledSw", "capacitystatus", "hourly", "since"} ],
+        "onDemand": [ {"region", "regionCode", "variant": {<variant key>: value}, "operatingSystem", "tenancy", "licenseModel", "preInstalledSw", "capacitystatus", "hourly", "since"} ],
         "reserved": [ {...same location+variant..., "leaseContractLength", "offeringClass", "purchaseOption", "hourly", "upfront", "since"} ]
       },
       "pricingHistory": {

@@ -1,6 +1,6 @@
 namespace Infrawrench.BulkInstances;
 
-/// <summary>Options for <see cref="BulkInstances.DownloadAwsEc2PricingDataAsync"/>.</summary>
+/// <summary>Options for <see cref="BulkInstances.DownloadAwsPricingDataAsync"/> and <see cref="BulkInstances.DownloadAwsEc2PricingDataAsync"/>.</summary>
 public sealed record AwsPricingDataOptions
 {
     /// <summary>Defines your Infrawrench API token. Defaults to the <c>INFRAWRENCH_API_KEY</c> environment variable.</summary>

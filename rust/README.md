@@ -1,7 +1,7 @@
 # infrawrench-bulk-instances
 
-AWS EC2 instance attributes and prices, with their full history, from the bundle
-Infrawrench publishes at `instances-bundles.infrawrench.com`.
+AWS instance attributes and prices (EC2, RDS, ElastiCache and more), with their full
+history, from the bundles Infrawrench publishes at `instances-bundles.infrawrench.com`.
 
 ```sh
 cargo add infrawrench-bulk-instances
@@ -47,14 +47,65 @@ credential or a WorkOS access token). It defaults to `INFRAWRENCH_API_KEY`.
 thread (e.g. `tokio::task::spawn_blocking`). The returned `AwsPricingData` is
 `Send + Sync`.
 
+## Other AWS platforms
+
+`download_aws_pricing_data(platform, &options)` loads any platform's bundle;
+`download_aws_ec2_pricing_data(&options)` is the same as
+`download_aws_pricing_data("ec2", &options)`. `AWS_PLATFORMS` lists them:
+
+| Platform | AWS service |
+| --- | --- |
+| `ec2` | EC2 |
+| `rds` | RDS |
+| `elasticache` | ElastiCache |
+| `opensearch` | OpenSearch Service |
+| `redshift` | Redshift |
+| `docdb` | DocumentDB |
+| `neptune` | Neptune |
+| `memorydb` | MemoryDB |
+| `dax` | DynamoDB Accelerator |
+| `sagemaker` | SageMaker |
+| `emr` | EMR |
+| `gamelift` | GameLift |
+
+The fields that pick a price differ by platform. `data.variant_keys()` names them, and
+every price's `variant.fields` holds them as `(key, value)` pairs in that order:
+
+```rust no_run
+use infrawrench_bulk_instances::{Options, download_aws_pricing_data};
+
+fn main() -> Result<(), infrawrench_bulk_instances::Error> {
+    let rds = download_aws_pricing_data("rds", &Options::default())?;
+    let keys = rds.variant_keys(); // ["databaseEngine", "databaseEdition", "licenseModel", "deploymentOption", ...]
+    let hourly = rds
+        .get("db.m5.large")
+        .unwrap()
+        .pricing()
+        .on_demand
+        .iter()
+        .find(|p| {
+            p.region_code.as_deref() == Some("us-east-1")
+                && p.variant.get("databaseEngine") == Some("MySQL")
+                && p.variant.get("deploymentOption") == Some("Multi-AZ")
+        })
+        .map(|p| p.hourly);
+    Ok(())
+}
+```
+
+`operating_system`, `tenancy`, `license_model`, `pre_installed_sw` and `capacitystatus` are
+EC2's variant fields. On other platforms they are `""`, unless the platform has a field with
+that name (RDS has `licenseModel`).
+
 ## Caching
 
 The bundle is downloaded xz-compressed (about 20 MB) and kept decompressed (about
 210 MB) in `~/.infrawrench/aws_pricing_data` (`cache_path`), so a cached load skips
 decompression. Each load asks the server which bundle is latest and downloads it
 only if it is not cached, deleting the older one. If the server cannot be
-reached, the newest cached bundle is used instead. Set `cache_pricing_data: false`
-to always download and never touch the disk.
+reached, the newest cached bundle is used instead. Each platform's bundle is cached
+under its own name (`rds-bundle-…json`), so loading one never evicts another. Set
+`cache_pricing_data: false` to always download and never touch the disk.
 
 Loading decompresses and parses the whole bundle. Instances are decoded lazily:
 `get` only wraps the raw rows, and `attributes`, `attributes_history`, `pricing`

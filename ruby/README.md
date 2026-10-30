@@ -1,7 +1,7 @@
 # infrawrench-bulk_instances
 
-AWS EC2 instance attributes and prices, with their full history, from the bundle
-Infrawrench publishes at `instances-bundles.infrawrench.com`.
+AWS instance attributes and prices (EC2, RDS, ElastiCache and more), with their full
+history, from the bundles Infrawrench publishes at `instances-bundles.infrawrench.com`.
 
 ```sh
 gem install infrawrench-bulk_instances
@@ -29,6 +29,43 @@ m5.pricing_history.reserved # every reserved price change, oldest first
 Any Infrawrench bearer credential works as `token:` (an `iwk_` API key, an agent
 credential or a WorkOS access token). It defaults to `INFRAWRENCH_API_KEY`.
 
+## Other AWS platforms
+
+`download_aws_pricing_data(platform, **options)` loads any platform's bundle;
+`download_aws_ec2_pricing_data(**options)` is the same as `download_aws_pricing_data("ec2", **options)`.
+`Infrawrench::BulkInstances::AWS_PLATFORMS` lists the platforms:
+
+| Platform | AWS service |
+| --- | --- |
+| `ec2` | EC2 |
+| `rds` | RDS |
+| `elasticache` | ElastiCache |
+| `opensearch` | OpenSearch Service |
+| `redshift` | Redshift |
+| `docdb` | DocumentDB |
+| `neptune` | Neptune |
+| `memorydb` | MemoryDB |
+| `dax` | DynamoDB Accelerator |
+| `sagemaker` | SageMaker |
+| `emr` | EMR |
+| `gamelift` | GameLift |
+
+The fields that pick a price differ by platform. `data.variant_keys` names them, and every
+price has a `variant` hash keyed by them:
+
+```ruby
+rds = Infrawrench::BulkInstances.download_aws_pricing_data("rds")
+rds.variant_keys # ["databaseEngine", "databaseEdition", "licenseModel", "deploymentOption", ...]
+rds["db.m5.large"].pricing.on_demand.find do |p|
+  p.region_code == "us-east-1" && p.variant["databaseEngine"] == "MySQL" &&
+    p.variant["deploymentOption"] == "Multi-AZ"
+end&.hourly
+```
+
+`operating_system`, `tenancy`, `license_model`, `pre_installed_sw` and `capacitystatus` are EC2's
+variant fields. On other platforms they are `""`, unless the platform has a field with that name
+(RDS has `licenseModel`).
+
 Requires Ruby 3.2 or later, and liblzma (part of macOS and of practically every
 Linux distribution; `xz-utils`/`xz` otherwise) to decompress downloads.
 
@@ -38,7 +75,8 @@ The bundle is downloaded xz-compressed (about 20 MB) and kept decompressed (abou
 210 MB) in `~/.infrawrench/aws_pricing_data` (`cache_path:`), so a cached load skips
 decompression. Each load asks the server which bundle is latest and downloads it
 only if it is not cached, deleting the older one. If the server cannot be
-reached, the newest cached bundle is used instead. Pass `cache_pricing_data: false`
+reached, the newest cached bundle is used instead. Each platform's bundle is cached
+under its own name (`rds-bundle-…json`), so loading one never evicts another. Pass `cache_pricing_data: false`
 to always download and never touch the disk. The cache is shared with the other
 Infrawrench SDKs.
 

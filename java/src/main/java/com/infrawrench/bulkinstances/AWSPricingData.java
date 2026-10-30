@@ -12,17 +12,19 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * The AWS EC2 pricing data, keyed by instance type.
+ * One AWS platform's pricing data, keyed by instance type.
  *
  * <p>Nothing is decoded until it is asked for: {@link #get} wraps the raw rows, and each getter on the returned
  * {@link AWSInstance} decodes its part on first access and keeps the result. Everything returned is immutable and
  * shared between calls, so the data is safe to use from several threads.
  */
 public final class AWSPricingData {
+    private final String offer;
     private final String[] table;
     private final double[] snapshots;
     private final List<RawRegion> rawRegions;
-    private final Rows rawVariants;
+    private final List<String> variantKeys;
+    private final List<double[]> rawVariants;
     private final Rows rawTerms;
     private final Map<String, RawInstance> raw;
     private final List<String> keys;
@@ -32,11 +34,13 @@ public final class AWSPricingData {
     private volatile Map<String, Map<String, String>> regions;
 
     AWSPricingData(
-            String[] table, double[] snapshots, List<RawRegion> regions, Rows variants, Rows terms,
-            Map<String, RawInstance> instances) {
+            String offer, String[] table, double[] snapshots, List<RawRegion> regions, List<String> variantKeys,
+            List<double[]> variants, Rows terms, Map<String, RawInstance> instances) {
+        this.offer = offer;
         this.table = table;
         this.snapshots = snapshots;
         this.rawRegions = regions;
+        this.variantKeys = variantKeys;
         this.rawVariants = variants;
         this.rawTerms = terms;
         this.raw = instances;
@@ -72,6 +76,25 @@ public final class AWSPricingData {
         RawInstance r = raw.get(instanceType);
         if (r == null) return Optional.empty();
         return Optional.of(instances.computeIfAbsent(instanceType, name -> new AWSInstance(name, r, this)));
+    }
+
+    /**
+     * The AWS offer code, e.g. {@code AmazonEC2} or {@code AmazonRDS}.
+     *
+     * @return the offer code
+     */
+    public String offer() {
+        return offer;
+    }
+
+    /**
+     * The names of the fields that pick a price, which every price's {@link Variant#fields()} is keyed by.
+     * {@link BulkInstances#EC2_VARIANT_KEYS} for EC2.
+     *
+     * @return the variant keys (unmodifiable)
+     */
+    public List<String> variantKeys() {
+        return variantKeys;
     }
 
     /**
@@ -130,9 +153,13 @@ public final class AWSPricingData {
         List<Variant> out = variants;
         if (out == null) {
             List<Variant> l = new ArrayList<>();
-            Rows v = rawVariants;
-            for (int r = 0; r < v.size(); r++) {
-                l.add(new Variant(str(v.get(r, 0)), str(v.get(r, 1)), str(v.get(r, 2)), str(v.get(r, 3)), str(v.get(r, 4))));
+            for (double[] v : rawVariants) {
+                Map<String, String> fields = new LinkedHashMap<>();
+                for (int k = 0; k < v.length; k++) fields.put(variantKeys.get(k), str(v[k]));
+                l.add(new Variant(
+                        fields, fields.getOrDefault("operatingSystem", ""), fields.getOrDefault("tenancy", ""),
+                        fields.getOrDefault("licenseModel", ""), fields.getOrDefault("preInstalledSw", ""),
+                        fields.getOrDefault("capacitystatus", "")));
             }
             variants = out = List.copyOf(l);
         }

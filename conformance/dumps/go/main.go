@@ -35,7 +35,7 @@ func ptr[T any](p *T) any {
 
 func loc(l bulkinstances.Location, v bulkinstances.Variant) obj {
 	return obj{
-		"region": l.Region, "regionCode": nullable(l.RegionCode),
+		"region": l.Region, "regionCode": nullable(l.RegionCode), "variant": v.Fields,
 		"operatingSystem": v.OperatingSystem, "tenancy": v.Tenancy, "licenseModel": v.LicenseModel,
 		"preInstalledSw": v.PreInstalledSW, "capacitystatus": v.Capacitystatus,
 	}
@@ -54,7 +54,13 @@ func main() {
 	if token != "-" {
 		opts.Token = token
 	}
-	data, err := bulkinstances.DownloadAWSEC2PricingData(context.Background(), opts)
+	var data *bulkinstances.AWSPricingData
+	var err error
+	if len(os.Args) > 5 {
+		data, err = bulkinstances.DownloadAWSPricingData(context.Background(), os.Args[5], opts)
+	} else {
+		data, err = bulkinstances.DownloadAWSEC2PricingData(context.Background(), opts)
+	}
 	if err != nil {
 		var e *bulkinstances.Error
 		if errors.As(err, &e) {
@@ -124,6 +130,7 @@ func main() {
 		}
 	}
 	out, err := json.MarshalIndent(obj{
+		"offer": data.Offer(), "variantKeys": data.VariantKeys(),
 		"snapshots": snapshots, "regions": regions, "keys": keys,
 		"has":        obj{"m5.large": data.Has("m5.large"), "nope": data.Has("nope")},
 		"getMissing": getMissing, "instances": instances,

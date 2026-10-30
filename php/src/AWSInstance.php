@@ -144,6 +144,7 @@ final class AWSInstance
                         $r->operatingSystem, $r->tenancy, $r->licenseModel, $r->preInstalledSw, $r->capacitystatus,
                         hourly: $r->hourly,
                         since: $r->at,
+                        variant: $r->variant,
                     );
                 }
             }
@@ -157,6 +158,7 @@ final class AWSInstance
                         hourly: $r->hourly,
                         upfront: $r->upfront ?? 0.0,
                         since: $r->at,
+                        variant: $r->variant,
                     );
                 }
             }
@@ -185,6 +187,7 @@ final class AWSInstance
                     $v->operatingSystem, $v->tenancy, $v->licenseModel, $v->preInstalledSw, $v->capacitystatus,
                     at: $this->data->date($row[0]),
                     hourly: $price === null ? null : (float) $price,
+                    variant: $v->variant,
                 );
             }
 
@@ -204,6 +207,7 @@ final class AWSInstance
                     at: $this->data->date($row[0]),
                     hourly: $hourly === null ? null : (float) $hourly,
                     upfront: $hourly === null ? null : (float) ($row[5] ?? 0),
+                    variant: $v->variant,
                 );
             }
 
@@ -221,8 +225,9 @@ final class AWSInstance
         return $a[0] <=> $b[0];
     }
 
+    /** The location and the whole variant: EC2's five fields alone would merge, say, RDS's Single-AZ and Multi-AZ prices. */
     private static function odKey(OnDemandPriceChange|ReservedPriceChange $r): string
     {
-        return implode("\0", [$r->region, $r->operatingSystem, $r->tenancy, $r->licenseModel, $r->preInstalledSw, $r->capacitystatus]);
+        return implode("\0", [$r->region, ...array_values($r->variant)]);
     }
 }

@@ -10,15 +10,45 @@ use crate::raw::{BundleFile, RawInstance};
 /// Attributes of each AWS location (`regionCode`, `locationType`), keyed by location name.
 pub type Regions = BTreeMap<String, BTreeMap<String, String>>;
 
+/// The variant keys of EC2 bundles, which don't list their own.
+pub const EC2_VARIANT_KEYS: &[&str] = &[
+    "operatingSystem",
+    "tenancy",
+    "licenseModel",
+    "preInstalledSw",
+    "capacitystatus",
+];
+
 /// The product fields that pick a price.
+///
+/// `operating_system`, `tenancy`, `license_model`, `pre_installed_sw` and `capacitystatus` are
+/// EC2's variant fields. For other platforms they are `""` unless the platform shares the field.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 pub struct Variant {
+    /// Every field that picks the price, as `(key, value)` in
+    /// [`AwsPricingData::variant_keys`] order: for RDS, `databaseEngine`, `deploymentOption`
+    /// and so on.
+    pub fields: Vec<(String, String)>,
     pub operating_system: String,
     pub tenancy: String,
     pub license_model: String,
     pub pre_installed_sw: String,
     pub capacitystatus: String,
+}
+
+impl Variant {
+    /// The value of one of [`fields`](Self::fields), e.g. `get("deploymentOption")`.
+    pub fn get(&self, key: &str) -> Option<&str> {
+        field(&self.fields, key)
+    }
+}
+
+fn field<'a>(fields: &'a [(String, String)], key: &str) -> Option<&'a str> {
+    fields
+        .iter()
+        .find(|(k, _)| k == key)
+        .map(|(_, v)| v.as_str())
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -125,6 +155,7 @@ fn date(ts: f64) -> SystemTime {
 /// The parsed bundle and the parts every instance shares, each decoded once on first use.
 struct Shared {
     raw: BundleFile,
+    variant_keys: Vec<String>,
     regions: OnceLock<Regions>,
     variants: OnceLock<Vec<Variant>>,
     terms: OnceLock<Vec<ReservedTerm>>,
@@ -169,12 +200,23 @@ impl Shared {
             self.raw
                 .variants
                 .iter()
-                .map(|&[os, tenancy, license, sw, capacity]| Variant {
-                    operating_system: self.str(os).to_owned(),
-                    tenancy: self.str(tenancy).to_owned(),
-                    license_model: self.str(license).to_owned(),
-                    pre_installed_sw: self.str(sw).to_owned(),
-                    capacitystatus: self.str(capacity).to_owned(),
+                .map(|values| {
+                    // Lengths were checked in `AwsPricingData::new`.
+                    let fields: Vec<(String, String)> = self
+                        .variant_keys
+                        .iter()
+                        .zip(values)
+                        .map(|(k, &v)| (k.clone(), self.str(v).to_owned()))
+                        .collect();
+                    let ec2 = |key| field(&fields, key).unwrap_or_default().to_owned();
+                    Variant {
+                        operating_system: ec2("operatingSystem"),
+                        tenancy: ec2("tenancy"),
+                        license_model: ec2("licenseModel"),
+                        pre_installed_sw: ec2("preInstalledSw"),
+                        capacitystatus: ec2("capacitystatus"),
+                        fields,
+                    }
                 })
                 .collect()
         });
@@ -203,7 +245,7 @@ impl Shared {
     }
 }
 
-/// The AWS EC2 pricing data, keyed by instance type.
+/// One AWS platform's pricing data, keyed by instance type.
 ///
 /// Nothing is decoded until it is asked for: [`get`](Self::get) wraps the raw rows, and each
 /// getter on the returned [`AwsInstance`] decodes its part on first access and keeps the result.
@@ -220,15 +262,39 @@ pub struct AwsPricingData {
 }
 
 impl AwsPricingData {
-    pub(crate) fn new(raw: BundleFile) -> Self {
+    /// Fails if a variant does not have one field per variant key.
+    pub(crate) fn new(mut raw: BundleFile) -> Result<Self, String> {
+        let variant_keys = raw
+            .variant_keys
+            .take()
+            .unwrap_or_else(|| EC2_VARIANT_KEYS.iter().map(|&k| k.to_owned()).collect());
+        if let Some(v) = raw.variants.iter().find(|v| v.len() != variant_keys.len()) {
+            return Err(format!(
+                "variant has {} fields, expected {}",
+                v.len(),
+                variant_keys.len()
+            ));
+        }
         let instances = raw.instances.rows.iter().map(|_| OnceLock::new()).collect();
         let shared = Arc::new(Shared {
             raw,
+            variant_keys,
             regions: OnceLock::new(),
             variants: OnceLock::new(),
             terms: OnceLock::new(),
         });
-        Self { shared, instances }
+        Ok(Self { shared, instances })
+    }
+
+    /// The AWS offer code, e.g. `AmazonEC2` or `AmazonRDS`.
+    pub fn offer(&self) -> &str {
+        self.shared.raw.offer.as_deref().unwrap_or("AmazonEC2")
+    }
+
+    /// The names of the fields that pick a price, which every price's [`Variant::fields`] is
+    /// keyed by.
+    pub fn variant_keys(&self) -> &[String] {
+        &self.shared.variant_keys
     }
 
     /// Every instance type in the bundle, including ones AWS no longer lists (see
@@ -396,6 +462,8 @@ impl AwsInstance {
     pub fn pricing(&self) -> &Pricing {
         self.pricing.get_or_init(|| {
             let history = self.pricing_history();
+            // Keyed by the whole variant (`Variant::fields`): EC2's five fields alone would merge
+            // RDS's Single-AZ and Multi-AZ prices.
             let on_demand = latest(&history.on_demand, |r| (&r.region, &r.variant))
                 .into_iter()
                 .filter_map(|r| {

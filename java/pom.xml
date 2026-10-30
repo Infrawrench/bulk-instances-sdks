@@ -10,7 +10,7 @@
   <packaging>jar</packaging>
 
   <name>bulk-instances</name>
-  <description>AWS EC2 instance attributes and pricing, with full history, from Infrawrench.</description>
+  <description>AWS instance attributes and pricing (EC2, RDS, ElastiCache and more), with full history, from Infrawrench.</description>
   <url>https://infrawrench.com</url>
 
   <organization>

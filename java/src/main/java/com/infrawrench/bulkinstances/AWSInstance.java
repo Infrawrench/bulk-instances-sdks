@@ -208,6 +208,9 @@ public final class AWSInstance {
         return Double.isNaN(p) ? OptionalDouble.empty() : OptionalDouble.of(p);
     }
 
-    /** What identifies a price: the region and variant, plus the term for reserved prices. */
+    /**
+     * What identifies a price: the region and variant, plus the term for reserved prices. Variants are equal when
+     * all their fields are, so RDS's Single-AZ and Multi-AZ prices stay apart.
+     */
     private record Key(String region, Variant variant, ReservedTerm term) {}
 }

@@ -14,7 +14,7 @@ require_relative "bulk_instances/aws_pricing_data"
 require_relative "bulk_instances/aws_instance"
 
 module Infrawrench
-  # AWS EC2 instance attributes and pricing, with full history, from Infrawrench.
+  # AWS instance attributes and pricing (EC2, RDS, ElastiCache and more), with full history, from Infrawrench.
   module BulkInstances
     DEFAULT_BASE_URL = "https://instances-bundles.infrawrench.com"
     USER_AGENT = "infrawrench/bulk-instances, ruby, 1.0"
@@ -42,12 +42,15 @@ module Infrawrench
     end
     private_constant :Util
 
+    # The AWS platforms Infrawrench publishes a bundle for. Any other lowercase name is
+    # requested as is, so a platform added later works without a new SDK.
+    AWS_PLATFORMS = %w[ec2 rds elasticache opensearch redshift docdb neptune memorydb dax sagemaker emr gamelift].freeze
+
+    # The variant keys of EC2 bundles, which don't list their own.
+    EC2_VARIANT_KEYS = %w[operatingSystem tenancy licenseModel preInstalledSw capacitystatus].freeze
+
     class << self
-      # Downloads the AWS EC2 pricing data compressed blob and decompresses it.
-      #
-      # The bucket's +latest+ object names the newest bundle. With caching on, a bundle
-      # is only downloaded when +latest+ names one that is not in the cache yet, and if
-      # +latest+ cannot be fetched at all (offline, outage) the newest cached bundle is used.
+      # Downloads the AWS EC2 pricing data. The same as <tt>download_aws_pricing_data("ec2", ...)</tt>.
       #
       # @param token [String, nil] Your Infrawrench API token. Defaults to the +INFRAWRENCH_API_KEY+ environment variable.
       # @param cache_pricing_data [Boolean] Whether to cache the pricing data.
@@ -56,6 +59,29 @@ module Infrawrench
       # @return [AWSPricingData]
       # @raise [AWSPricingDataError]
       def download_aws_ec2_pricing_data(token: nil, cache_pricing_data: true, cache_path: nil, base_url: nil)
+        download_aws_pricing_data("ec2", token:, cache_pricing_data:, cache_path:, base_url:)
+      end
+
+      # Downloads one AWS platform's pricing data compressed blob and decompresses it.
+      #
+      # The bucket's <tt><platform>-latest</tt> object (+latest+ for EC2) names the newest bundle. With
+      # caching on, a bundle is only downloaded when that names one that is not in the cache yet,
+      # and if it cannot be fetched at all (offline, outage) the newest cached bundle is used.
+      #
+      # @param platform [String, Symbol] One of AWS_PLATFORMS, e.g. +"rds"+, or any other lowercase platform name.
+      # @param token [String, nil] Your Infrawrench API token. Defaults to the +INFRAWRENCH_API_KEY+ environment variable.
+      # @param cache_pricing_data [Boolean] Whether to cache the pricing data.
+      # @param cache_path [String, nil] The cache path. Defaults to <tt>~/.infrawrench/aws_pricing_data</tt>.
+      # @param base_url [String, nil] Where the bundles are served from. Defaults to https://instances-bundles.infrawrench.com
+      # @return [AWSPricingData]
+      # @raise [AWSPricingDataError]
+      def download_aws_pricing_data(platform, token: nil, cache_pricing_data: true, cache_path: nil, base_url: nil)
+        unless (platform.is_a?(String) || platform.is_a?(Symbol)) && platform.match?(/\A[a-z0-9]+\z/)
+          raise AWSPricingDataError, %("#{platform}" is not a platform name.)
+        end
+
+        # EC2's keys have no prefix because they were published before the other platforms.
+        prefix = platform.to_s == "ec2" ? "" : "#{platform}-"
         token = ENV.fetch("INFRAWRENCH_API_KEY", nil) if token.nil?
         if token.nil? || token.empty?
           raise AWSPricingDataError, "No Infrawrench API token: pass `token:` or set INFRAWRENCH_API_KEY."
@@ -65,15 +91,15 @@ module Infrawrench
         cache_path = (cache_path || File.join(Dir.home, ".infrawrench", "aws_pricing_data")).to_s
 
         begin
-          latest = download("#{base_url}/latest", token, &:read_body).to_s.dup.force_encoding(Encoding::UTF_8).scrub.strip
+          latest = download("#{base_url}/#{prefix}latest", token, &:read_body).to_s.dup.force_encoding(Encoding::UTF_8).scrub.strip
           unless latest.match?(/\A[A-Za-z0-9._-]+\z/)
-            raise AWSPricingDataError, %(latest holds "#{latest}", which is not a timestamp.)
+            raise AWSPricingDataError, %(#{prefix}latest holds "#{latest}", which is not a timestamp.)
           end
 
-          name = "bundle-#{latest}.json"
+          name = "#{prefix}bundle-#{latest}.json"
         rescue StandardError => e
           # A rejected token is a real answer; anything else falls back to what we already have.
-          cached = newest_cached(cache_path) if cache_pricing_data && !(e.is_a?(AWSPricingDataError) && e.status == 401)
+          cached = newest_cached(cache_path, prefix) if cache_pricing_data && !(e.is_a?(AWSPricingDataError) && e.status == 401)
           raise if cached.nil?
 
           name = cached
@@ -92,9 +118,9 @@ module Infrawrench
             tmp = File.join(cache_path, "#{name}.#{Process.pid}.tmp")
             File.binwrite(tmp, json)
             File.rename(tmp, File.join(cache_path, name))
-            # Older bundles, including compressed ones cached by earlier versions of this SDK.
+            # This platform's older bundles, including compressed ones cached by earlier versions of this SDK.
             Dir.each_child(cache_path) do |f|
-              FileUtils.rm_f(File.join(cache_path, f)) if f != name && f.match?(/\Abundle-.+\.json(\.xz)?\z/)
+              FileUtils.rm_f(File.join(cache_path, f)) if f != name && f.match?(/\A#{prefix}bundle-.+\.json(\.xz)?\z/)
             end
           end
         end
@@ -135,9 +161,9 @@ module Infrawrench
         raise AWSPricingDataError, "GET #{url} failed: #{e.message}"
       end
 
-      # The newest bundle already in the cache directory, if any.
-      def newest_cached(cache_path)
-        Dir.children(cache_path).grep(/\Abundle-.+\.json\z/).max
+      # The newest bundle for a platform already in the cache directory, if any.
+      def newest_cached(cache_path, prefix)
+        Dir.children(cache_path).grep(/\A#{prefix}bundle-.+\.json\z/).max
       rescue SystemCallError
         nil
       end

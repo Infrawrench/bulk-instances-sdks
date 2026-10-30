@@ -1,14 +1,13 @@
-import { downloadAwsEc2PricingData, AWSPricingDataError } from "../../../ts/dist/index.js";
+import { downloadAwsEc2PricingData, downloadAwsPricingData, AWSPricingDataError } from "../../../ts/dist/index.js";
 
-const [baseUrl, cachePath, token, cache] = process.argv.slice(2);
+const [baseUrl, cachePath, token, cache, platform] = process.argv.slice(2);
 const ts = (d) => (d === null ? null : d.getTime() / 1000);
 const loc = (r) => ({ region: r.region, regionCode: r.regionCode ?? null });
 
 let data;
 try {
-  data = await downloadAwsEc2PricingData({
-    baseUrl, cachePath, cachePricingData: cache === "1", ...(token === "-" ? {} : { token }),
-  });
+  const options = { baseUrl, cachePath, cachePricingData: cache === "1", ...(token === "-" ? {} : { token }) };
+  data = platform === undefined ? await downloadAwsEc2PricingData(options) : await downloadAwsPricingData(platform, options);
 } catch (e) {
   if (e instanceof AWSPricingDataError) {
     console.log(JSON.stringify({ error: { status: e.status ?? null, message: e.message } }));
@@ -19,6 +18,8 @@ try {
 
 const regions = Object.fromEntries([...data.regions].map(([k, v]) => [k, { ...v }]));
 const out = {
+  offer: data.offer,
+  variantKeys: [...data.variantKeys],
   snapshots: data.snapshots.map(ts),
   regions,
   keys: data.keys().sort(),

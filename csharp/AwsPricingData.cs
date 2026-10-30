@@ -10,7 +10,7 @@ using System.Text.Json;
 namespace Infrawrench.BulkInstances;
 
 /// <summary>
-/// The AWS EC2 pricing data, keyed by instance type.
+/// One AWS platform's pricing data, keyed by instance type.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -37,14 +37,15 @@ public sealed class AwsPricingData
     private readonly ConcurrentDictionary<string, AwsInstance> _instances = new(StringComparer.Ordinal);
     private IReadOnlyList<DateTimeOffset>? _snapshots;
     private IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>>? _regions;
-    private Variant[]? _variants;
+    private VariantFields[]? _variants;
     private ReservedTerm[]? _terms;
 
     /// <summary>Parses a bundle as instances-bundler writes it; every string is an index into <c>compression_table</c>.</summary>
     internal AwsPricingData(byte[] utf8Json)
     {
         _utf8 = utf8Json;
-        string[]? table = null;
+        string[]? table = null, variantKeys = null;
+        string? offer = null;
         JsonElement? snapshots = null, regions = null, variants = null, terms = null;
         Dictionary<string, (int, int)>? instances = null;
         var keys = new List<string>();
@@ -58,7 +59,13 @@ public sealed class AwsPricingData
             switch (property)
             {
                 case "compression_table":
-                    table = ReadStrings(ref reader);
+                    table = ReadStrings(ref reader, property);
+                    break;
+                case "offer":
+                    offer = reader.TokenType == JsonTokenType.Null ? null : reader.GetString();
+                    break;
+                case "variant_keys":
+                    variantKeys = reader.TokenType == JsonTokenType.Null ? null : ReadStrings(ref reader, property);
                     break;
                 case "snapshots":
                     snapshots = JsonElement.ParseValue(ref reader);
@@ -90,7 +97,19 @@ public sealed class AwsPricingData
         _termsRaw = terms ?? throw Missing("reserved_terms");
         _rawInstances = instances ?? throw Missing("instances");
         Keys = keys.AsReadOnly();
+        // EC2 bundles leave out both.
+        Offer = offer ?? "AmazonEC2";
+        VariantKeys = variantKeys is null ? BulkInstances.Ec2VariantKeys : Array.AsReadOnly(variantKeys);
     }
+
+    /// <summary>The AWS offer code, e.g. <c>AmazonEC2</c> or <c>AmazonRDS</c>.</summary>
+    public string Offer { get; }
+
+    /// <summary>
+    /// The names of the fields that pick a price, which every price's <c>Variant</c> is keyed by.
+    /// EC2 bundles don't list them, so they are <see cref="BulkInstances.Ec2VariantKeys"/>.
+    /// </summary>
+    public IReadOnlyList<string> VariantKeys { get; }
 
     /// <summary>Every instance type in the bundle, including ones AWS no longer lists (see <see cref="AwsInstance.DeletedAt"/>).</summary>
     public IReadOnlyList<string> Keys { get; }
@@ -165,12 +184,34 @@ public sealed class AwsPricingData
         return (region, regionCode);
     }
 
-    internal Variant Variant(JsonElement i)
+    internal VariantFields Variant(JsonElement i)
     {
-        _variants ??= _variantsRaw.EnumerateArray()
-            .Select(v => new Variant(Str(v[0]), Str(v[1]), Str(v[2]), Str(v[3]), Str(v[4])))
-            .ToArray();
+        _variants ??= DecodeVariants();
         return _variants[i.GetInt32()];
+    }
+
+    private VariantFields[] DecodeVariants()
+    {
+        var keys = VariantKeys;
+        var layout = new VariantLayout(keys);
+        return _variantsRaw.EnumerateArray()
+            .Select(fields =>
+            {
+                var length = fields.GetArrayLength();
+                if (length != keys.Count) throw new InvalidDataException($"variant has {length} fields, expected {keys.Count}");
+                // A repeated key keeps its first position and its last value.
+                var values = new string[layout.Keys.Length];
+                for (var j = 0; j < length; j++) values[layout.Index[keys[j]]] = Str(fields[j]);
+                var variant = new VariantMap(layout, values);
+                return new VariantFields(
+                    variant,
+                    variant.GetOrEmpty("operatingSystem"),
+                    variant.GetOrEmpty("tenancy"),
+                    variant.GetOrEmpty("licenseModel"),
+                    variant.GetOrEmpty("preInstalledSw"),
+                    variant.GetOrEmpty("capacitystatus"));
+            })
+            .ToArray();
     }
 
     internal ReservedTerm Term(JsonElement i)
@@ -188,13 +229,13 @@ public sealed class AwsPricingData
 
     private static JsonException Missing(string property) => new($"The bundle has no {property}.");
 
-    private static string[] ReadStrings(ref Utf8JsonReader reader)
+    private static string[] ReadStrings(ref Utf8JsonReader reader, string property)
     {
-        if (reader.TokenType != JsonTokenType.StartArray) throw new JsonException("compression_table is not an array.");
+        if (reader.TokenType != JsonTokenType.StartArray) throw new JsonException($"{property} is not an array.");
         var strings = new List<string>();
         while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
         {
-            strings.Add(reader.GetString() ?? throw new JsonException("compression_table holds a null."));
+            strings.Add(reader.GetString() ?? throw new JsonException($"{property} holds a null."));
         }
         return strings.ToArray();
     }

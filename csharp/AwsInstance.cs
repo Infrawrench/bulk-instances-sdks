@@ -111,6 +111,7 @@ public sealed class AwsInstance
                     {
                         Region = r.Region,
                         RegionCode = r.RegionCode,
+                        Variant = r.Variant,
                         OperatingSystem = r.OperatingSystem,
                         Tenancy = r.Tenancy,
                         LicenseModel = r.LicenseModel,
@@ -125,6 +126,7 @@ public sealed class AwsInstance
                     {
                         Region = r.Region,
                         RegionCode = r.RegionCode,
+                        Variant = r.Variant,
                         OperatingSystem = r.OperatingSystem,
                         Tenancy = r.Tenancy,
                         LicenseModel = r.LicenseModel,
@@ -163,6 +165,7 @@ public sealed class AwsInstance
                             At = AwsPricingData.Date(row[0]),
                             Region = region,
                             RegionCode = regionCode,
+                            Variant = v.Fields,
                             OperatingSystem = v.OperatingSystem,
                             Tenancy = v.Tenancy,
                             LicenseModel = v.LicenseModel,
@@ -185,6 +188,7 @@ public sealed class AwsInstance
                             At = AwsPricingData.Date(row[0]),
                             Region = region,
                             RegionCode = regionCode,
+                            Variant = v.Fields,
                             OperatingSystem = v.OperatingSystem,
                             Tenancy = v.Tenancy,
                             LicenseModel = v.LicenseModel,
@@ -222,11 +226,13 @@ public sealed class AwsInstance
         return latest;
     }
 
-    private static string OnDemandKey(OnDemandPriceChange r) =>
-        string.Join('\0', r.Region, r.OperatingSystem, r.Tenancy, r.LicenseModel, r.PreInstalledSw, r.Capacitystatus);
+    // The whole variant, not just EC2's fields: RDS's Single-AZ and Multi-AZ prices differ only in deploymentOption.
+    private static string OnDemandKey(OnDemandPriceChange r) => VariantKey(r.Region, r.Variant);
 
-    private static string OnDemandKey(ReservedPriceChange r) =>
-        string.Join('\0', r.Region, r.OperatingSystem, r.Tenancy, r.LicenseModel, r.PreInstalledSw, r.Capacitystatus);
+    private static string OnDemandKey(ReservedPriceChange r) => VariantKey(r.Region, r.Variant);
+
+    private static string VariantKey(string region, IReadOnlyDictionary<string, string> variant) =>
+        string.Join('\0', variant.Values.Prepend(region));
 
     /// <summary>Element <paramref name="i"/> of a row, or <c>null</c> if the row is shorter or holds <c>null</c> there.</summary>
     private static JsonElement? Optional(JsonElement row, int i) =>

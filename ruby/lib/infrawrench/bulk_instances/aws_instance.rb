@@ -138,7 +138,7 @@ module Infrawrench
       private
 
       def od_key(r)
-        [r.region, r.operating_system, r.tenancy, r.license_model, r.pre_installed_sw, r.capacitystatus]
+        [r.region, *r.variant.values]
       end
     end
   end

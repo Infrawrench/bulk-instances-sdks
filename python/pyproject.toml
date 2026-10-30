@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "infrawrench-bulk-instances"
 version = "1.0.0"
-description = "AWS EC2 instance attributes and pricing, with full history, from Infrawrench."
+description = "AWS instance attributes and pricing (EC2, RDS, ElastiCache and more), with full history, from Infrawrench."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"

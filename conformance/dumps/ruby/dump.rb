@@ -5,13 +5,16 @@ require "infrawrench/bulk_instances"
 
 AWSPricingDataError = Infrawrench::BulkInstances::AWSPricingDataError
 
-base_url, cache_path, token, cache = ARGV
+base_url, cache_path, token, cache, platform = ARGV
 ts = ->(t) { t&.to_i }
 
 begin
-  data = Infrawrench::BulkInstances.download_aws_ec2_pricing_data(
-    base_url:, cache_path:, cache_pricing_data: cache == "1", token: token == "-" ? nil : token,
-  )
+  options = { base_url:, cache_path:, cache_pricing_data: cache == "1", token: token == "-" ? nil : token }
+  data = if platform.nil?
+           Infrawrench::BulkInstances.download_aws_ec2_pricing_data(**options)
+         else
+           Infrawrench::BulkInstances.download_aws_pricing_data(platform, **options)
+         end
 rescue AWSPricingDataError => e
   puts JSON.generate({ error: { status: e.status, message: e.message } })
   exit 3
@@ -23,6 +26,8 @@ camel = ->(h) { h.to_h { |k, v| [k.to_s.gsub(/_(\w)/) { Regexp.last_match(1).upc
 regions = data.regions
 locations = regions.keys + %w[Mystery Nowhere]
 out = {
+  offer: data.offer,
+  variantKeys: data.variant_keys,
   snapshots: data.snapshots.map(&ts),
   regions:,
   keys: data.keys.sort,

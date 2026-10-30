@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Infrawrench\BulkInstances;
 
 /**
- * The AWS EC2 pricing data, keyed by instance type.
+ * One AWS platform's pricing data, keyed by instance type.
  *
  * Nothing is decoded until it is asked for: `get()` parses and wraps one instance's
  * raw rows, and each method on the returned {@see AWSInstance} decodes its part on
@@ -15,7 +15,7 @@ namespace Infrawrench\BulkInstances;
  * @phpstan-type OnDemandRow array{0: int, 1: int, 2: int, 3?: int|float|null}
  * @phpstan-type ReservedRow array{0: int, 1: int, 2: int, 3: int, 4?: int|float|null, 5?: int|float|null}
  * @phpstan-type RawInstance array{0: list<array{int, int}>, 1: list<AttributeChangeRow>, 2: int|float, 3: list<OnDemandRow>, 4: list<ReservedRow>, 5: int, 6: int|null}
- * @phpstan-type BundleFile array{compression_table: list<string>, snapshots: list<int>, regions: list<array{int, list<array{int, int}>}>, variants: list<list<int>>, reserved_terms: list<list<int>>, instances: array<string, RawInstance>}
+ * @phpstan-type BundleFile array{offer?: string, compression_table: list<string>, snapshots: list<int>, regions: list<array{int, list<array{int, int}>}>, variant_keys?: list<string>, variants: list<list<int>>, reserved_terms: list<list<int>>, instances: array<string, RawInstance>}
  */
 final class AWSPricingData
 {
@@ -98,6 +98,23 @@ final class AWSPricingData
         return $this->instances[$instanceType] ?? null;
     }
 
+    /** The AWS offer code, e.g. `AmazonEC2` or `AmazonRDS`. EC2 bundles leave it out. */
+    public function offer(): string
+    {
+        return $this->raw['offer'] ?? 'AmazonEC2';
+    }
+
+    /**
+     * The names of the fields that pick a price, which every price's `$variant` is keyed by.
+     * EC2 bundles leave them out (see {@see BulkInstances::EC2_VARIANT_KEYS}).
+     *
+     * @return list<string>
+     */
+    public function variantKeys(): array
+    {
+        return $this->raw['variant_keys'] ?? BulkInstances::EC2_VARIANT_KEYS;
+    }
+
     /**
      * The publication date of every AWS price list in the bundle, oldest first.
      *
@@ -144,19 +161,35 @@ final class AWSPricingData
         return [$region, $this->regions()[$region]['regionCode'] ?? null];
     }
 
-    /** @internal */
+    /**
+     * @internal
+     * @throws \UnexpectedValueException if the variant does not have a field for each of {@see variantKeys()}
+     */
     public function variant(int $i): Variant
     {
-        $this->variants ??= array_map(
-            fn (array $v) => new Variant(
-                operatingSystem: $this->str($v[0]),
-                tenancy: $this->str($v[1]),
-                licenseModel: $this->str($v[2]),
-                preInstalledSw: $this->str($v[3]),
-                capacitystatus: $this->str($v[4]),
-            ),
-            $this->raw['variants'],
-        );
+        if ($this->variants === null) {
+            $keys = $this->variantKeys();
+            $this->variants = array_map(
+                function (array $fields) use ($keys): Variant {
+                    if (count($fields) !== count($keys)) {
+                        throw new \UnexpectedValueException('variant has ' . count($fields) . ' fields, expected ' . count($keys));
+                    }
+                    $variant = [];
+                    foreach ($keys as $j => $k) {
+                        $variant[$k] = $this->str($fields[$j]);
+                    }
+                    return new Variant(
+                        operatingSystem: $variant['operatingSystem'] ?? '',
+                        tenancy: $variant['tenancy'] ?? '',
+                        licenseModel: $variant['licenseModel'] ?? '',
+                        preInstalledSw: $variant['preInstalledSw'] ?? '',
+                        capacitystatus: $variant['capacitystatus'] ?? '',
+                        variant: $variant,
+                    );
+                },
+                $this->raw['variants'],
+            );
+        }
         return $this->variants[$i] ?? throw new \OutOfRangeException("variant index $i out of range");
     }
 

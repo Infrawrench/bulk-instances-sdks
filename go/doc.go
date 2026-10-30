@@ -1,9 +1,16 @@
-// Package bulkinstances provides AWS EC2 instance attributes and pricing, with full
-// history, from Infrawrench.
+// Package bulkinstances provides AWS instance attributes and pricing (EC2, RDS,
+// ElastiCache and more), with full history, from Infrawrench.
 //
-// [DownloadAWSEC2PricingData] fetches the bundle Infrawrench publishes at
+// [DownloadAWSEC2PricingData] fetches the EC2 bundle Infrawrench publishes at
 // instances-bundles.infrawrench.com and returns it as an [AWSPricingData], keyed
-// by instance type.
+// by instance type. [DownloadAWSPricingData] fetches any other platform's bundle,
+// such as "rds" (see [AWSPlatforms]). Each platform's bundle is cached under its
+// own name, so loading one never evicts another.
+//
+// The fields that pick a price differ by platform: [AWSPricingData.VariantKeys]
+// names them, and every price's [Variant.Fields] is keyed by them. The other
+// [Variant] fields are EC2's, and are "" on other platforms unless the platform
+// has a field with that name (RDS has licenseModel).
 //
 // Nothing is decoded until it is asked for. Every value an accessor returns is
 // shared between calls: treat returned slices, maps and pointers as read-only.

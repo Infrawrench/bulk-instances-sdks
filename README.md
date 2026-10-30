@@ -1,9 +1,11 @@
 # Infrawrench bulk-instances SDKs
 
-AWS EC2 instance attributes and prices, with their full history, from the bundle
-Infrawrench publishes at `instances-bundles.infrawrench.com`. Each SDK downloads the
-bundle, caches it in `~/.infrawrench/aws_pricing_data`, and decodes instances lazily.
-They share the cache format, so one downloaded bundle serves all of them.
+AWS instance attributes and prices, with their full history, from the bundles
+Infrawrench publishes at `instances-bundles.infrawrench.com`: EC2, RDS, ElastiCache,
+OpenSearch, Redshift, DocumentDB, Neptune, MemoryDB, DAX, SageMaker, EMR and GameLift.
+Each SDK downloads a platform's bundle, caches it in `~/.infrawrench/aws_pricing_data`,
+and decodes instances lazily. They share the cache format, so one downloaded bundle
+serves all of them.
 
 | Language   | Directory          | Install                                                    |
 | ---------- | ------------------ | ---------------------------------------------------------- |

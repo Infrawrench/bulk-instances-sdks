@@ -11,6 +11,7 @@ final readonly class OnDemandPriceChange
         public string $region,
         /** e.g. `us-east-1`. `null` for locations the price list never gave a code. */
         public ?string $regionCode,
+        /** EC2's variant fields. For other platforms these are `""` unless the platform shares the field. */
         public string $operatingSystem,
         public string $tenancy,
         public string $licenseModel,
@@ -19,6 +20,13 @@ final readonly class OnDemandPriceChange
         public \DateTimeImmutable $at,
         /** `null` means no longer offered from `$at` on. */
         public ?float $hourly,
+        /**
+         * Every field that picks the price, keyed by name, in {@see AWSPricingData::variantKeys()} order:
+         * for RDS, `databaseEngine`, `deploymentOption` and so on.
+         *
+         * @var array<string, string>
+         */
+        public array $variant = [],
     ) {
     }
 }

@@ -1,12 +1,14 @@
 import json
 import sys
-from dataclasses import asdict
+from collections.abc import Mapping
+from dataclasses import fields
 from datetime import datetime
 from typing import Any
 
-from infrawrench_bulk_instances import AWSPricingDataError, download_aws_ec2_pricing_data
+from infrawrench_bulk_instances import AWSPricingDataError, download_aws_ec2_pricing_data, download_aws_pricing_data
 
 base_url, cache_path, token, cache = sys.argv[1:5]
+platform = sys.argv[5] if len(sys.argv) > 5 else None
 
 
 def ts(d: datetime | None) -> int | None:
@@ -24,17 +26,22 @@ CAMEL = {
 }
 
 
+def value(v: Any) -> Any:
+    return ts(v) if isinstance(v, datetime) else dict(v) if isinstance(v, Mapping) else v
+
+
 def row(r: Any) -> dict[str, Any]:
-    return {CAMEL.get(k, k): (ts(v) if isinstance(v, datetime) else v) for k, v in asdict(r).items()}
+    return {CAMEL.get(f.name, f.name): value(getattr(r, f.name)) for f in fields(r)}
 
 
 try:
-    data = download_aws_ec2_pricing_data(
-        base_url=base_url,
-        cache_path=cache_path,
-        cache_pricing_data=cache == "1",
-        token=None if token == "-" else token,
-    )
+    options: dict[str, Any] = {
+        "base_url": base_url,
+        "cache_path": cache_path,
+        "cache_pricing_data": cache == "1",
+        "token": None if token == "-" else token,
+    }
+    data = download_aws_ec2_pricing_data(**options) if platform is None else download_aws_pricing_data(platform, **options)
 except AWSPricingDataError as e:
     print(json.dumps({"error": {"status": e.status, "message": str(e)}}))
     sys.exit(3)
@@ -42,6 +49,8 @@ except AWSPricingDataError as e:
 regions = {k: dict(v) for k, v in data.regions.items()}
 missing = data.get("nope")
 out: dict[str, Any] = {
+    "offer": data.offer,
+    "variantKeys": list(data.variant_keys),
     "snapshots": [ts(d) for d in data.snapshots],
     "regions": regions,
     "keys": sorted(data.keys()),

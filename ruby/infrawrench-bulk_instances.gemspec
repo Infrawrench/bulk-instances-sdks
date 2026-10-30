@@ -7,7 +7,7 @@ Gem::Specification.new do |spec|
   spec.version = Infrawrench::BulkInstances::VERSION
   spec.authors = ["Infrawrench LLC"]
   spec.email = ["astrid@infrawrench.com"]
-  spec.summary = "AWS EC2 instance attributes and pricing, with full history, from Infrawrench."
+  spec.summary = "AWS instance attributes and pricing (EC2, RDS, ElastiCache and more), with full history, from Infrawrench."
   spec.homepage = "https://infrawrench.com"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.2"
