@@ -10,7 +10,7 @@
     <AssemblyName>Infrawrench.BulkInstances</AssemblyName>
 
     <PackageId>Infrawrench.BulkInstances</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <Description>AWS instance attributes and pricing (EC2, RDS, ElastiCache and more), with full history, from Infrawrench.</Description>
     <Authors>Infrawrench LLC</Authors>
     <Company>Infrawrench LLC</Company>
