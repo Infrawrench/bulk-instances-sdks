@@ -58,20 +58,43 @@ async function download(url: string, token: string): Promise<Response> {
   }
 }
 
-/** The newest bundle already in the cache directory, if any. */
-async function newestCached(cachePath: string): Promise<string | undefined> {
+/** The newest bundle for a platform already in the cache directory, if any. */
+async function newestCached(cachePath: string, prefix: string): Promise<string | undefined> {
   const files = await readdir(cachePath).catch(() => []);
-  return files.filter((f) => /^bundle-.+\.json$/.test(f)).sort().at(-1);
+  return files.filter((f) => f.startsWith(prefix) && /^bundle-.+\.json$/.test(f.slice(prefix.length))).sort().at(-1);
 }
 
 /**
- * Downloads the AWS EC2 pricing data compressed blob and decompresses it.
- *
- * The bucket's `latest` object names the newest bundle. With caching on, a bundle
- * is only downloaded when `latest` names one that is not in the cache yet, and if
- * `latest` cannot be fetched at all (offline, outage) the newest cached bundle is used.
+ * The AWS platforms Infrawrench publishes a bundle for. Any other lowercase name is
+ * requested as is, so a platform added later works without a new SDK.
  */
-export async function downloadAwsEc2PricingData(options: AWSPricingDataOptions = {}): Promise<AWSPricingData> {
+export const AWS_PLATFORMS = [
+  "ec2", "rds", "elasticache", "opensearch", "redshift", "docdb", "neptune", "memorydb", "dax", "sagemaker", "emr", "gamelift",
+] as const;
+
+export type AWSPlatform = (typeof AWS_PLATFORMS)[number];
+
+/** Downloads the AWS EC2 pricing data. The same as `downloadAwsPricingData("ec2", options)`. */
+export function downloadAwsEc2PricingData(options: AWSPricingDataOptions = {}): Promise<AWSPricingData> {
+  return downloadAwsPricingData("ec2", options);
+}
+
+/**
+ * Downloads one AWS platform's pricing data compressed blob and decompresses it.
+ *
+ * The bucket's `<platform>-latest` object (`latest` for EC2) names the newest bundle. With
+ * caching on, a bundle is only downloaded when that names one that is not in the cache yet,
+ * and if it cannot be fetched at all (offline, outage) the newest cached bundle is used.
+ */
+export async function downloadAwsPricingData(
+  platform: AWSPlatform | (string & {}),
+  options: AWSPricingDataOptions = {},
+): Promise<AWSPricingData> {
+  if (!/^[a-z0-9]+$/.test(platform)) {
+    throw new AWSPricingDataError(`"${platform}" is not a platform name.`);
+  }
+  // EC2's keys have no prefix because they were published before the other platforms.
+  const prefix = platform === "ec2" ? "" : `${platform}-`;
   const token = options.token ?? process.env.INFRAWRENCH_API_KEY;
   if (!token) {
     throw new AWSPricingDataError("No Infrawrench API token: pass `token` or set INFRAWRENCH_API_KEY.");
@@ -82,15 +105,15 @@ export async function downloadAwsEc2PricingData(options: AWSPricingDataOptions =
 
   let name: string;
   try {
-    const latest = (await (await download(`${baseUrl}/latest`, token)).text()).trim();
+    const latest = (await (await download(`${baseUrl}/${prefix}latest`, token)).text()).trim();
     if (!/^[A-Za-z0-9._-]+$/.test(latest)) {
-      throw new AWSPricingDataError(`latest holds "${latest}", which is not a timestamp.`);
+      throw new AWSPricingDataError(`${prefix}latest holds "${latest}", which is not a timestamp.`);
     }
-    name = `bundle-${latest}.json`;
+    name = `${prefix}bundle-${latest}.json`;
   } catch (err) {
     // A rejected token is a real answer; anything else falls back to what we already have.
     const cached = cache && !(err instanceof AWSPricingDataError && err.status === 401)
-      ? await newestCached(cachePath)
+      ? await newestCached(cachePath, prefix)
       : undefined;
     if (!cached) throw err;
     name = cached;
@@ -110,9 +133,11 @@ export async function downloadAwsEc2PricingData(options: AWSPricingDataOptions =
       const tmp = join(cachePath, `${name}.${process.pid}.tmp`);
       await writeFile(tmp, json);
       await rename(tmp, join(cachePath, name));
-      // Older bundles, including compressed ones cached by earlier versions of this SDK.
+      // This platform's older bundles, including compressed ones cached by earlier versions of this SDK.
       for (const f of await readdir(cachePath)) {
-        if (f !== name && /^bundle-.+\.json(\.xz)?$/.test(f)) await rm(join(cachePath, f), { force: true });
+        if (f !== name && f.startsWith(prefix) && /^bundle-.+\.json(\.xz)?$/.test(f.slice(prefix.length))) {
+          await rm(join(cachePath, f), { force: true });
+        }
       }
     }
   }
@@ -122,9 +147,13 @@ export async function downloadAwsEc2PricingData(options: AWSPricingDataOptions =
 
 /** The bundle as instances-bundler writes it; every string is an index into `compression_table`. */
 export type BundleFile = {
+  /** The AWS offer code. EC2 bundles leave it out. */
+  offer?: string;
   compression_table: string[];
   snapshots: number[];
   regions: [number, [number, number][]][];
+  /** The names of each variant's fields. EC2 bundles leave it out (see {@link EC2_VARIANT_KEYS}). */
+  variant_keys?: string[];
   variants: number[][];
   reserved_terms: number[][];
   instances: Record<string, RawInstance>;
@@ -140,8 +169,17 @@ type RawInstance = [
   deletedAt: number | null,
 ];
 
+/** The variant keys of EC2 bundles, which don't list their own. */
+export const EC2_VARIANT_KEYS = ["operatingSystem", "tenancy", "licenseModel", "preInstalledSw", "capacitystatus"] as const;
+
 /** The product fields that pick a price. */
 export type Variant = {
+  /**
+   * Every field that picks the price, keyed by name, in {@link AWSPricingData.variantKeys} order:
+   * for RDS, `databaseEngine`, `deploymentOption` and so on.
+   */
+  variant: Readonly<Record<string, string>>;
+  /** EC2's variant fields. For other platforms these are `""` unless the platform shares the field. */
   operatingSystem: string;
   tenancy: string;
   licenseModel: string;
@@ -214,7 +252,7 @@ export type AttributeChange = {
 const date = (ts: number) => new Date(ts * 1000);
 
 /**
- * The AWS EC2 pricing data, keyed by instance type.
+ * One AWS platform's pricing data, keyed by instance type.
  *
  * Nothing is decoded until it is asked for: `get` wraps the raw rows, and each
  * getter on the returned {@link AWSInstance} decodes its part on first access
@@ -250,6 +288,16 @@ export class AWSPricingData {
     return inst;
   }
 
+  /** The AWS offer code, e.g. `AmazonEC2` or `AmazonRDS`. */
+  get offer(): string {
+    return this.#raw.offer ?? "AmazonEC2";
+  }
+
+  /** The names of the fields that pick a price, which every price's `variant` is keyed by. */
+  get variantKeys(): readonly string[] {
+    return this.#raw.variant_keys ?? EC2_VARIANT_KEYS;
+  }
+
   /** The publication date of every AWS price list in the bundle, oldest first. */
   get snapshots(): Date[] {
     return this.#raw.snapshots.map(date);
@@ -281,13 +329,22 @@ export class AWSPricingData {
 
   /** @internal */
   variant(i: number): Variant {
-    this.#variants ??= this.#raw.variants.map(([os, tenancy, license, sw, capacity]) => ({
-      operatingSystem: this.str(os),
-      tenancy: this.str(tenancy),
-      licenseModel: this.str(license),
-      preInstalledSw: this.str(sw),
-      capacitystatus: this.str(capacity),
-    }));
+    this.#variants ??= this.#raw.variants.map((fields) => {
+      const keys = this.variantKeys;
+      if (fields.length !== keys.length) {
+        throw new Error(`variant has ${fields.length} fields, expected ${keys.length}`);
+      }
+      const variant: Record<string, string> = {};
+      keys.forEach((k, j) => (variant[k] = this.str(fields[j])));
+      return {
+        variant,
+        operatingSystem: variant.operatingSystem ?? "",
+        tenancy: variant.tenancy ?? "",
+        licenseModel: variant.licenseModel ?? "",
+        preInstalledSw: variant.preInstalledSw ?? "",
+        capacitystatus: variant.capacitystatus ?? "",
+      };
+    });
     return this.#variants[i];
   }
 
@@ -444,5 +501,5 @@ export class AWSInstance {
 }
 
 function odKey(r: Location & Variant): string {
-  return [r.region, r.operatingSystem, r.tenancy, r.licenseModel, r.preInstalledSw, r.capacitystatus].join("\0");
+  return [r.region, ...Object.values(r.variant)].join("\0");
 }

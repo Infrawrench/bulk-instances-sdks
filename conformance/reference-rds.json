@@ -1,0 +1,492 @@
+{
+ "offer": "AmazonRDS",
+ "variantKeys": [
+  "databaseEngine",
+  "licenseModel",
+  "deploymentOption",
+  "usagetype"
+ ],
+ "snapshots": [
+  1700000000,
+  1710000000,
+  1720000000
+ ],
+ "regions": {
+  "US East (N. Virginia)": {
+   "regionCode": "us-east-1"
+  },
+  "EU (Ireland)": {
+   "regionCode": "eu-west-1"
+  }
+ },
+ "keys": [
+  "db.m5.large",
+  "db.t3.micro"
+ ],
+ "has": {
+  "m5.large": false,
+  "nope": false
+ },
+ "getMissing": null,
+ "instances": {
+  "db.m5.large": {
+   "name": "db.m5.large",
+   "createdAt": 1700000000,
+   "deletedAt": null,
+   "attributes": {
+    "vcpu": "2",
+    "memory": "8.0 GiB"
+   },
+   "attributesIn": {
+    "US East (N. Virginia)": {
+     "vcpu": "2",
+     "memory": "8.0 GiB"
+    },
+    "EU (Ireland)": {
+     "vcpu": "2",
+     "memory": "8.0 GiB"
+    },
+    "Mystery": {
+     "vcpu": "2",
+     "memory": "8.0 GiB"
+    },
+    "Nowhere": {
+     "vcpu": "2",
+     "memory": "8.0 GiB"
+    }
+   },
+   "attributesHistory": [
+    {
+     "at": 1700000000,
+     "key": "vcpu",
+     "value": "2",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "memory",
+     "value": "8 GiB",
+     "region": null
+    },
+    {
+     "at": 1710000000,
+     "key": "memory",
+     "value": "8.0 GiB",
+     "region": null
+    }
+   ],
+   "pricing": {
+    "onDemand": [
+     {
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "variant": {
+       "databaseEngine": "MySQL",
+       "licenseModel": "No license required",
+       "deploymentOption": "Single-AZ",
+       "usagetype": "InstanceUsage"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "No license required",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.171,
+      "since": 1700000000
+     },
+     {
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "variant": {
+       "databaseEngine": "MySQL",
+       "licenseModel": "No license required",
+       "deploymentOption": "Multi-AZ",
+       "usagetype": "Multi-AZUsage"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "No license required",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.35,
+      "since": 1710000000
+     },
+     {
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "variant": {
+       "databaseEngine": "PostgreSQL",
+       "licenseModel": "No license required",
+       "deploymentOption": "Single-AZ",
+       "usagetype": "InstanceUsage"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "No license required",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.178,
+      "since": 1700000000
+     },
+     {
+      "region": "EU (Ireland)",
+      "regionCode": "eu-west-1",
+      "variant": {
+       "databaseEngine": "MySQL",
+       "licenseModel": "No license required",
+       "deploymentOption": "Single-AZ",
+       "usagetype": "InstanceUsage"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "No license required",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.19,
+      "since": 1700000000
+     }
+    ],
+    "reserved": [
+     {
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "variant": {
+       "databaseEngine": "MySQL",
+       "licenseModel": "No license required",
+       "deploymentOption": "Single-AZ",
+       "usagetype": "InstanceUsage"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "No license required",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1yr",
+      "offeringClass": "standard",
+      "purchaseOption": "All Upfront",
+      "hourly": 0,
+      "upfront": 950,
+      "since": 1710000000
+     },
+     {
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "variant": {
+       "databaseEngine": "MySQL",
+       "licenseModel": "No license required",
+       "deploymentOption": "Multi-AZ",
+       "usagetype": "Multi-AZUsage"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "No license required",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1yr",
+      "offeringClass": "standard",
+      "purchaseOption": "All Upfront",
+      "hourly": 0,
+      "upfront": 2000,
+      "since": 1700000000
+     }
+    ]
+   },
+   "pricingHistory": {
+    "onDemand": [
+     {
+      "at": 1700000000,
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "variant": {
+       "databaseEngine": "MySQL",
+       "licenseModel": "No license required",
+       "deploymentOption": "Single-AZ",
+       "usagetype": "InstanceUsage"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "No license required",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.171
+     },
+     {
+      "at": 1700000000,
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "variant": {
+       "databaseEngine": "MySQL",
+       "licenseModel": "No license required",
+       "deploymentOption": "Multi-AZ",
+       "usagetype": "Multi-AZUsage"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "No license required",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.342
+     },
+     {
+      "at": 1700000000,
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "variant": {
+       "databaseEngine": "PostgreSQL",
+       "licenseModel": "No license required",
+       "deploymentOption": "Single-AZ",
+       "usagetype": "InstanceUsage"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "No license required",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.178
+     },
+     {
+      "at": 1700000000,
+      "region": "EU (Ireland)",
+      "regionCode": "eu-west-1",
+      "variant": {
+       "databaseEngine": "MySQL",
+       "licenseModel": "No license required",
+       "deploymentOption": "Single-AZ",
+       "usagetype": "InstanceUsage"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "No license required",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.19
+     },
+     {
+      "at": 1700000000,
+      "region": "EU (Ireland)",
+      "regionCode": "eu-west-1",
+      "variant": {
+       "databaseEngine": "PostgreSQL",
+       "licenseModel": "No license required",
+       "deploymentOption": "Single-AZ",
+       "usagetype": "InstanceUsage"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "No license required",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.2
+     },
+     {
+      "at": 1710000000,
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "variant": {
+       "databaseEngine": "MySQL",
+       "licenseModel": "No license required",
+       "deploymentOption": "Multi-AZ",
+       "usagetype": "Multi-AZUsage"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "No license required",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.35
+     },
+     {
+      "at": 1720000000,
+      "region": "EU (Ireland)",
+      "regionCode": "eu-west-1",
+      "variant": {
+       "databaseEngine": "PostgreSQL",
+       "licenseModel": "No license required",
+       "deploymentOption": "Single-AZ",
+       "usagetype": "InstanceUsage"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "No license required",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": null
+     }
+    ],
+    "reserved": [
+     {
+      "at": 1700000000,
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "variant": {
+       "databaseEngine": "MySQL",
+       "licenseModel": "No license required",
+       "deploymentOption": "Single-AZ",
+       "usagetype": "InstanceUsage"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "No license required",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1yr",
+      "offeringClass": "standard",
+      "purchaseOption": "All Upfront",
+      "hourly": 0,
+      "upfront": 1000
+     },
+     {
+      "at": 1700000000,
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "variant": {
+       "databaseEngine": "MySQL",
+       "licenseModel": "No license required",
+       "deploymentOption": "Multi-AZ",
+       "usagetype": "Multi-AZUsage"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "No license required",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1yr",
+      "offeringClass": "standard",
+      "purchaseOption": "All Upfront",
+      "hourly": 0,
+      "upfront": 2000
+     },
+     {
+      "at": 1710000000,
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "variant": {
+       "databaseEngine": "MySQL",
+       "licenseModel": "No license required",
+       "deploymentOption": "Single-AZ",
+       "usagetype": "InstanceUsage"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "No license required",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1yr",
+      "offeringClass": "standard",
+      "purchaseOption": "All Upfront",
+      "hourly": 0,
+      "upfront": 950
+     }
+    ]
+   }
+  },
+  "db.t3.micro": {
+   "name": "db.t3.micro",
+   "createdAt": 1700000000,
+   "deletedAt": null,
+   "attributes": {
+    "vcpu": "2"
+   },
+   "attributesIn": {
+    "US East (N. Virginia)": {
+     "vcpu": "2"
+    },
+    "EU (Ireland)": {
+     "vcpu": "2"
+    },
+    "Mystery": {
+     "vcpu": "2"
+    },
+    "Nowhere": {
+     "vcpu": "2"
+    }
+   },
+   "attributesHistory": [
+    {
+     "at": 1700000000,
+     "key": "vcpu",
+     "value": "2",
+     "region": null
+    }
+   ],
+   "pricing": {
+    "onDemand": [
+     {
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "variant": {
+       "databaseEngine": "MySQL",
+       "licenseModel": "No license required",
+       "deploymentOption": "Single-AZ",
+       "usagetype": "InstanceUsage"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "No license required",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.017,
+      "since": 1700000000
+     },
+     {
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "variant": {
+       "databaseEngine": "MySQL",
+       "licenseModel": "No license required",
+       "deploymentOption": "Multi-AZ",
+       "usagetype": "Multi-AZUsage"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "No license required",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.034,
+      "since": 1700000000
+     }
+    ],
+    "reserved": []
+   },
+   "pricingHistory": {
+    "onDemand": [
+     {
+      "at": 1700000000,
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "variant": {
+       "databaseEngine": "MySQL",
+       "licenseModel": "No license required",
+       "deploymentOption": "Single-AZ",
+       "usagetype": "InstanceUsage"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "No license required",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.017
+     },
+     {
+      "at": 1700000000,
+      "region": "US East (N. Virginia)",
+      "regionCode": "us-east-1",
+      "variant": {
+       "databaseEngine": "MySQL",
+       "licenseModel": "No license required",
+       "deploymentOption": "Multi-AZ",
+       "usagetype": "Multi-AZUsage"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "No license required",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.034
+     }
+    ],
+    "reserved": []
+   }
+  }
+ }
+}

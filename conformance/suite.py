@@ -2,7 +2,7 @@
 
     python3 suite.py <lang> -- <command...>
 
-The command is run as `<command...> <baseUrl> <cacheDir> <token|-> <cache 1|0>`, must print the dump
+The command is run as `<command...> <baseUrl> <cacheDir> <token|-> <cache 1|0> [platform]`, must print the dump
 (see README.md) on success, or `{"error": {"status": <int|null>}}` and exit 3 on AWSPricingDataError.
 """
 import json, os, shutil, subprocess, sys, tempfile, threading, time
@@ -12,6 +12,7 @@ here = os.path.dirname(os.path.abspath(__file__))
 FIX = os.path.join(here, "fixture")
 NAME = open(os.path.join(FIX, "latest")).read().strip()
 REFERENCE = json.load(open(os.path.join(here, "reference.json"), encoding="utf-8"))
+REFERENCE_RDS = json.load(open(os.path.join(here, "reference-rds.json"), encoding="utf-8"))
 
 lang = sys.argv[1]
 cmd = sys.argv[sys.argv.index("--") + 1:]
@@ -33,6 +34,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.reply(503, b"busy", {"Retry-After": "1"})
             body = State.latest_body if State.latest_body is not None else open(os.path.join(FIX, "latest"), "rb").read()
             return self.reply(200, body)
+        if self.path == "/rds-latest":
+            return self.reply(200, open(os.path.join(FIX, "rds-latest"), "rb").read())
         p = os.path.join(FIX, self.path.lstrip("/"))
         if self.path.endswith(".json.xz") and os.path.isfile(p):
             return self.reply(200, open(p, "rb").read())
@@ -49,12 +52,13 @@ threading.Thread(target=server.serve_forever, daemon=True).start()
 BASE = f"http://127.0.0.1:{server.server_address[1]}"
 DEAD = "http://127.0.0.1:9"
 
-def run(base, cache_dir, token="test-token", cache=True, env_token=None):
+def run(base, cache_dir, token="test-token", cache=True, env_token=None, platform=None):
     env = {k: v for k, v in os.environ.items() if k != "INFRAWRENCH_API_KEY"}
     if env_token: env["INFRAWRENCH_API_KEY"] = env_token
     State.log = []
     t = time.time()
-    p = subprocess.run(cmd + [base, cache_dir, token, "1" if cache else "0"], capture_output=True, text=True, env=env, encoding="utf-8")
+    args = [base, cache_dir, token, "1" if cache else "0"] + ([platform] if platform else [])
+    p = subprocess.run(cmd + args, capture_output=True, text=True, env=env, encoding="utf-8")
     try:
         out = json.loads(p.stdout)
     except Exception:
@@ -85,8 +89,8 @@ def diff(a, b, path="$"):
         return None if abs(a - b) < 1e-12 else f"{path}: {a!r} != {b!r}"
     return None if a == b else f"{path}: {a!r} != {b!r}"
 
-def dump_ok(name, p, out):
-    d = diff(out, REFERENCE) if out is not None else f"exit {p.returncode}, stdout={p.stdout[:300]!r}, stderr={p.stderr[-1500:]!r}"
+def dump_ok(name, p, out, reference=REFERENCE):
+    d = diff(out, reference) if out is not None else f"exit {p.returncode}, stdout={p.stdout[:300]!r}, stderr={p.stderr[-1500:]!r}"
     check(name, d is None, d)
 
 def error_with(name, p, out, status):
@@ -97,13 +101,13 @@ tmp = tempfile.mkdtemp()
 try:
     cache = os.path.join(tmp, "cache")
     os.makedirs(cache)
-    for f in ["bundle-20200101T000000Z.json", "bundle-20200101T000000Z.json.xz", "keep.txt"]:
+    for f in ["bundle-20200101T000000Z.json", "bundle-20200101T000000Z.json.xz", "keep.txt", "rds-bundle-20200101T000000Z.json"]:
         open(os.path.join(cache, f), "w").write("{}")
 
     p, out, _ = run(BASE, cache)
     dump_ok("fresh download decodes to the reference", p, out)
-    check("cache holds the new bundle, old bundles deleted, other files kept",
-          sorted(os.listdir(cache)) == sorted([f"bundle-{NAME}.json", "keep.txt"]), sorted(os.listdir(cache)))
+    check("cache holds the new bundle, old bundles deleted, other files and platforms kept",
+          sorted(os.listdir(cache)) == sorted([f"bundle-{NAME}.json", "keep.txt", "rds-bundle-20200101T000000Z.json"]), sorted(os.listdir(cache)))
     check("cached file is the decompressed JSON",
           open(os.path.join(cache, f"bundle-{NAME}.json"), "rb").read() == open(os.path.join(FIX, f"bundle-{NAME}.json"), "rb").read())
     uas = {ua for _, _, ua in State.log}
@@ -151,6 +155,32 @@ try:
 
     p, out, _ = run(DEAD, os.path.join(tmp, "empty2"))
     check("offline without cache fails", p.returncode != 0, p.stdout[:200])
+
+    # Other platforms: rds-latest names rds-bundle-<NAME>.json.xz, cached beside EC2's bundle.
+    p, out, _ = run(BASE, cache, platform="rds")
+    dump_ok("rds download decodes to the rds reference", p, out, REFERENCE_RDS)
+    check("rds fetches rds-latest and its bundle", [x[0] for x in State.log] == ["/rds-latest", f"/rds-bundle-{NAME}.json.xz"], State.log)
+    check("rds replaces only its own old bundle, keeping EC2's",
+          sorted(os.listdir(cache)) == sorted([f"bundle-{NAME}.json", "keep.txt", f"rds-bundle-{NAME}.json"]), sorted(os.listdir(cache)))
+    p, out, _ = run(BASE, cache, platform="rds")
+    dump_ok("rds cached load decodes to the rds reference", p, out, REFERENCE_RDS)
+    check("rds cached load only fetches rds-latest", [x[0] for x in State.log] == ["/rds-latest"], State.log)
+    p, out, _ = run(DEAD, cache, platform="rds")
+    dump_ok("rds offline falls back to the rds cache", p, out, REFERENCE_RDS)
+    p, out, _ = run(BASE, cache, platform="ec2")
+    dump_ok("platform ec2 is the EC2 bundle", p, out)
+    check("platform ec2 fetches latest", [x[0] for x in State.log] == ["/latest"], State.log)
+
+    ec2_only = os.path.join(tmp, "ec2only")
+    os.makedirs(ec2_only)
+    shutil.copy(os.path.join(cache, f"bundle-{NAME}.json"), ec2_only)
+    p, out, _ = run(DEAD, ec2_only, platform="rds")
+    check("rds offline never falls back to another platform's bundle", p.returncode != 0, p.stdout[:200])
+    p, out, _ = run(BASE, os.path.join(tmp, "unknown"), platform="nope")
+    error_with("a platform with no bundle is a 404", p, out, 404)
+    p, out, _ = run(BASE, os.path.join(tmp, "badname"), platform="../rds")
+    error_with("a malformed platform name is an AWSPricingDataError", p, out, None)
+    check("a malformed platform name makes no request", State.log == [], State.log)
 finally:
     shutil.rmtree(tmp)
     server.shutdown()

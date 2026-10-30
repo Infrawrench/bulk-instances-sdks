@@ -1,4 +1,12 @@
 {
+ "offer": "AmazonEC2",
+ "variantKeys": [
+  "operatingSystem",
+  "tenancy",
+  "licenseModel",
+  "preInstalledSw",
+  "capacitystatus"
+ ],
  "snapshots": [
   1700000000,
   1710000000,
@@ -161,6 +169,13 @@
      {
       "region": "US East (N. Virginia)",
       "regionCode": "us-east-1",
+      "variant": {
+       "operatingSystem": "Linux",
+       "tenancy": "Shared",
+       "licenseModel": "No License required",
+       "preInstalledSw": "NA",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Linux",
       "tenancy": "Shared",
       "licenseModel": "No License required",
@@ -172,6 +187,13 @@
      {
       "region": "EU (Ireland)",
       "regionCode": "eu-west-1",
+      "variant": {
+       "operatingSystem": "Linux",
+       "tenancy": "Shared",
+       "licenseModel": "No License required",
+       "preInstalledSw": "NA",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Linux",
       "tenancy": "Shared",
       "licenseModel": "No License required",
@@ -182,6 +204,13 @@
      },
      {
       "region": "Mystery",
+      "variant": {
+       "operatingSystem": "Linux",
+       "tenancy": "Shared",
+       "licenseModel": "No License required",
+       "preInstalledSw": "NA",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Linux",
       "tenancy": "Shared",
       "licenseModel": "No License required",
@@ -193,6 +222,13 @@
      },
      {
       "region": "Local Zone X",
+      "variant": {
+       "operatingSystem": "Linux",
+       "tenancy": "Dedicated",
+       "licenseModel": "No License required",
+       "preInstalledSw": "SQL Std",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Linux",
       "tenancy": "Dedicated",
       "licenseModel": "No License required",
@@ -205,6 +241,13 @@
      {
       "region": "South America (São Paulo)",
       "regionCode": "sa-east-1",
+      "variant": {
+       "operatingSystem": "Linux",
+       "tenancy": "Shared",
+       "licenseModel": "No License required",
+       "preInstalledSw": "NA",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Linux",
       "tenancy": "Shared",
       "licenseModel": "No License required",
@@ -218,6 +261,13 @@
      {
       "region": "US East (N. Virginia)",
       "regionCode": "us-east-1",
+      "variant": {
+       "operatingSystem": "Linux",
+       "tenancy": "Shared",
+       "licenseModel": "No License required",
+       "preInstalledSw": "NA",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Linux",
       "tenancy": "Shared",
       "licenseModel": "No License required",
@@ -233,6 +283,13 @@
      {
       "region": "EU (Ireland)",
       "regionCode": "eu-west-1",
+      "variant": {
+       "operatingSystem": "Linux",
+       "tenancy": "Shared",
+       "licenseModel": "No License required",
+       "preInstalledSw": "NA",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Linux",
       "tenancy": "Shared",
       "licenseModel": "No License required",
@@ -247,6 +304,13 @@
      },
      {
       "region": "Local Zone X",
+      "variant": {
+       "operatingSystem": "Linux",
+       "tenancy": "Dedicated",
+       "licenseModel": "No License required",
+       "preInstalledSw": "SQL Std",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Linux",
       "tenancy": "Dedicated",
       "licenseModel": "No License required",
@@ -268,6 +332,13 @@
       "at": 1700000000,
       "region": "US East (N. Virginia)",
       "regionCode": "us-east-1",
+      "variant": {
+       "operatingSystem": "Linux",
+       "tenancy": "Shared",
+       "licenseModel": "No License required",
+       "preInstalledSw": "NA",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Linux",
       "tenancy": "Shared",
       "licenseModel": "No License required",
@@ -279,6 +350,13 @@
       "at": 1700000000,
       "region": "EU (Ireland)",
       "regionCode": "eu-west-1",
+      "variant": {
+       "operatingSystem": "Linux",
+       "tenancy": "Shared",
+       "licenseModel": "No License required",
+       "preInstalledSw": "NA",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Linux",
       "tenancy": "Shared",
       "licenseModel": "No License required",
@@ -289,6 +367,13 @@
      {
       "at": 1700000000,
       "region": "Mystery",
+      "variant": {
+       "operatingSystem": "Linux",
+       "tenancy": "Shared",
+       "licenseModel": "No License required",
+       "preInstalledSw": "NA",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Linux",
       "tenancy": "Shared",
       "licenseModel": "No License required",
@@ -301,6 +386,13 @@
       "at": 1710000000,
       "region": "US East (N. Virginia)",
       "regionCode": "us-east-1",
+      "variant": {
+       "operatingSystem": "Windows",
+       "tenancy": "Shared",
+       "licenseModel": "License Included",
+       "preInstalledSw": "NA",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Windows",
       "tenancy": "Shared",
       "licenseModel": "License Included",
@@ -311,6 +403,13 @@
      {
       "at": 1710000000,
       "region": "Local Zone X",
+      "variant": {
+       "operatingSystem": "Linux",
+       "tenancy": "Dedicated",
+       "licenseModel": "No License required",
+       "preInstalledSw": "SQL Std",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Linux",
       "tenancy": "Dedicated",
       "licenseModel": "No License required",
@@ -323,6 +422,13 @@
       "at": 1710000000,
       "region": "South America (São Paulo)",
       "regionCode": "sa-east-1",
+      "variant": {
+       "operatingSystem": "Linux",
+       "tenancy": "Shared",
+       "licenseModel": "No License required",
+       "preInstalledSw": "NA",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Linux",
       "tenancy": "Shared",
       "licenseModel": "No License required",
@@ -334,6 +440,13 @@
       "at": 1720000000,
       "region": "US East (N. Virginia)",
       "regionCode": "us-east-1",
+      "variant": {
+       "operatingSystem": "Linux",
+       "tenancy": "Shared",
+       "licenseModel": "No License required",
+       "preInstalledSw": "NA",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Linux",
       "tenancy": "Shared",
       "licenseModel": "No License required",
@@ -345,6 +458,13 @@
       "at": 1720000000,
       "region": "EU (Ireland)",
       "regionCode": "eu-west-1",
+      "variant": {
+       "operatingSystem": "Linux",
+       "tenancy": "Shared",
+       "licenseModel": "No License required",
+       "preInstalledSw": "NA",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Linux",
       "tenancy": "Shared",
       "licenseModel": "No License required",
@@ -356,6 +476,13 @@
       "at": 1720000000,
       "region": "EU (Ireland)",
       "regionCode": "eu-west-1",
+      "variant": {
+       "operatingSystem": "Linux",
+       "tenancy": "Shared",
+       "licenseModel": "No License required",
+       "preInstalledSw": "NA",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Linux",
       "tenancy": "Shared",
       "licenseModel": "No License required",
@@ -367,6 +494,13 @@
       "at": 1730000000,
       "region": "US East (N. Virginia)",
       "regionCode": "us-east-1",
+      "variant": {
+       "operatingSystem": "Windows",
+       "tenancy": "Shared",
+       "licenseModel": "License Included",
+       "preInstalledSw": "NA",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Windows",
       "tenancy": "Shared",
       "licenseModel": "License Included",
@@ -380,6 +514,13 @@
       "at": 1700000000,
       "region": "US East (N. Virginia)",
       "regionCode": "us-east-1",
+      "variant": {
+       "operatingSystem": "Linux",
+       "tenancy": "Shared",
+       "licenseModel": "No License required",
+       "preInstalledSw": "NA",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Linux",
       "tenancy": "Shared",
       "licenseModel": "No License required",
@@ -395,6 +536,13 @@
       "at": 1700000000,
       "region": "US East (N. Virginia)",
       "regionCode": "us-east-1",
+      "variant": {
+       "operatingSystem": "Linux",
+       "tenancy": "Shared",
+       "licenseModel": "No License required",
+       "preInstalledSw": "NA",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Linux",
       "tenancy": "Shared",
       "licenseModel": "No License required",
@@ -410,6 +558,13 @@
       "at": 1710000000,
       "region": "EU (Ireland)",
       "regionCode": "eu-west-1",
+      "variant": {
+       "operatingSystem": "Linux",
+       "tenancy": "Shared",
+       "licenseModel": "No License required",
+       "preInstalledSw": "NA",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Linux",
       "tenancy": "Shared",
       "licenseModel": "No License required",
@@ -424,6 +579,13 @@
      {
       "at": 1710000000,
       "region": "Local Zone X",
+      "variant": {
+       "operatingSystem": "Linux",
+       "tenancy": "Dedicated",
+       "licenseModel": "No License required",
+       "preInstalledSw": "SQL Std",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Linux",
       "tenancy": "Dedicated",
       "licenseModel": "No License required",
@@ -440,6 +602,13 @@
       "at": 1720000000,
       "region": "US East (N. Virginia)",
       "regionCode": "us-east-1",
+      "variant": {
+       "operatingSystem": "Linux",
+       "tenancy": "Shared",
+       "licenseModel": "No License required",
+       "preInstalledSw": "NA",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Linux",
       "tenancy": "Shared",
       "licenseModel": "No License required",
@@ -455,6 +624,13 @@
       "at": 1730000000,
       "region": "US East (N. Virginia)",
       "regionCode": "us-east-1",
+      "variant": {
+       "operatingSystem": "Linux",
+       "tenancy": "Shared",
+       "licenseModel": "No License required",
+       "preInstalledSw": "NA",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Linux",
       "tenancy": "Shared",
       "licenseModel": "No License required",
@@ -527,6 +703,13 @@
       "at": 1700000000,
       "region": "US East (N. Virginia)",
       "regionCode": "us-east-1",
+      "variant": {
+       "operatingSystem": "Linux",
+       "tenancy": "Shared",
+       "licenseModel": "No License required",
+       "preInstalledSw": "NA",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Linux",
       "tenancy": "Shared",
       "licenseModel": "No License required",
@@ -538,6 +721,13 @@
       "at": 1720000000,
       "region": "US East (N. Virginia)",
       "regionCode": "us-east-1",
+      "variant": {
+       "operatingSystem": "Linux",
+       "tenancy": "Shared",
+       "licenseModel": "No License required",
+       "preInstalledSw": "NA",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Linux",
       "tenancy": "Shared",
       "licenseModel": "No License required",
@@ -551,6 +741,13 @@
       "at": 1700000000,
       "region": "US East (N. Virginia)",
       "regionCode": "us-east-1",
+      "variant": {
+       "operatingSystem": "Linux",
+       "tenancy": "Shared",
+       "licenseModel": "No License required",
+       "preInstalledSw": "NA",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Linux",
       "tenancy": "Shared",
       "licenseModel": "No License required",
@@ -566,6 +763,13 @@
       "at": 1720000000,
       "region": "US East (N. Virginia)",
       "regionCode": "us-east-1",
+      "variant": {
+       "operatingSystem": "Linux",
+       "tenancy": "Shared",
+       "licenseModel": "No License required",
+       "preInstalledSw": "NA",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Linux",
       "tenancy": "Shared",
       "licenseModel": "No License required",
@@ -599,6 +803,13 @@
      {
       "region": "US East (N. Virginia)",
       "regionCode": "us-east-1",
+      "variant": {
+       "operatingSystem": "Linux",
+       "tenancy": "Shared",
+       "licenseModel": "No License required",
+       "preInstalledSw": "NA",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Linux",
       "tenancy": "Shared",
       "licenseModel": "No License required",
@@ -616,6 +827,13 @@
       "at": 1710000000,
       "region": "US East (N. Virginia)",
       "regionCode": "us-east-1",
+      "variant": {
+       "operatingSystem": "Linux",
+       "tenancy": "Shared",
+       "licenseModel": "No License required",
+       "preInstalledSw": "NA",
+       "capacitystatus": "Used"
+      },
       "operatingSystem": "Linux",
       "tenancy": "Shared",
       "licenseModel": "No License required",

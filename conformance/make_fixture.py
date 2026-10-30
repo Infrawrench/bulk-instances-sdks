@@ -1,4 +1,8 @@
-"""Writes fixture/bundle-<NAME>.json(.xz) and fixture/latest: a small bundle that exercises every decoding rule."""
+"""Writes small bundles that exercise every decoding rule.
+
+fixture/bundle-<NAME>.json(.xz) and fixture/latest are an EC2 bundle. fixture/rds-bundle-<NAME>.json(.xz) and
+fixture/rds-latest are an RDS one, which names its own variant keys.
+"""
 import json, lzma, os, sys
 
 NAME = "20261001T000000Z"
@@ -84,11 +88,61 @@ bundle["instances"]["t2.micro"] = [
 ]
 bundle["instances"]["x1.weird"] = [[], [], 2, [[t2, USE, 0]], [], t2, None]
 
-text = json.dumps(bundle, ensure_ascii=False, separators=(",", ":"))
-with open(os.path.join(out, f"bundle-{NAME}.json"), "w", encoding="utf-8") as f:
-    f.write(text)
-with open(os.path.join(out, f"bundle-{NAME}.json.xz"), "wb") as f:
-    f.write(lzma.compress(text.encode("utf-8"), format=lzma.FORMAT_XZ))
-with open(os.path.join(out, "latest"), "w") as f:
-    f.write(NAME + "\n")
+def write(prefix, bundle):
+    text = json.dumps(bundle, ensure_ascii=False, separators=(",", ":"))
+    with open(os.path.join(out, f"{prefix}bundle-{NAME}.json"), "w", encoding="utf-8") as f:
+        f.write(text)
+    with open(os.path.join(out, f"{prefix}bundle-{NAME}.json.xz"), "wb") as f:
+        f.write(lzma.compress(text.encode("utf-8"), format=lzma.FORMAT_XZ))
+    with open(os.path.join(out, f"{prefix}latest"), "w") as f:
+        f.write(NAME + "\n")
+
+write("", bundle)
+
+# RDS: variants are named by variant_keys, and several share a region, so prices must be told apart
+# by every variant field. licenseModel is also one of EC2's fields.
+table = []
+USE, EU = s("US East (N. Virginia)"), s("EU (Ireland)")
+MYSQL, MULTI = s("MySQL"), s("Multi-AZ")
+rds = {
+    "offer": "AmazonRDS",
+    "compression_table": table,
+    "snapshots": [t1, t2, t3],
+    "regions": [
+        [USE, [[s("regionCode"), s("us-east-1")]]],
+        [EU, [[s("regionCode"), s("eu-west-1")]]],
+    ],
+    "variant_keys": ["databaseEngine", "licenseModel", "deploymentOption", "usagetype"],
+    "variants": [
+        [MYSQL, s("No license required"), s("Single-AZ"), s("InstanceUsage")],
+        [MYSQL, s("No license required"), MULTI, s("Multi-AZUsage")],
+        [s("PostgreSQL"), s("No license required"), s("Single-AZ"), s("InstanceUsage")],
+    ],
+    "reserved_terms": [[s("1yr"), s("standard"), s("All Upfront")]],
+    "instances": {
+        "db.m5.large": [
+            [[s("vcpu"), s("2")], [s("memory"), s("8 GiB")]],
+            [[t2, s("memory"), s("8.0 GiB")]],
+            0.171,
+            [
+                [t1, USE, 0],
+                [t1, USE, 1, 0.342],
+                [t1, USE, 2, 0.178],
+                [t2, USE, 1, 0.35],
+                [t1, EU, 0, 0.19],
+                [t1, EU, 2, 0.2],
+                [t3, EU, 2, None],    # no longer offered; EU MySQL Single-AZ still is
+            ],
+            [
+                [t1, USE, 0, 0, 0, 1000],
+                [t1, USE, 1, 0, 0, 2000],
+                [t2, USE, 0, 0, 0, 950],
+            ],
+            t1,
+            None,
+        ],
+        "db.t3.micro": [[[s("vcpu"), s("2")]], [], 0.017, [[t1, USE, 0], [t1, USE, 1, 0.034]], [], t1, None],
+    },
+}
+write("rds-", rds)
 print(out)
