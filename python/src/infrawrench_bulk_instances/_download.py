@@ -85,7 +85,7 @@ def _newest_cached(cache_path: Path, prefix: str) -> str | None:
 
 AWS_PLATFORMS: Final[tuple[str, ...]] = (
     "ec2", "rds", "elasticache", "opensearch", "redshift", "docdb", "neptune", "memorydb", "dax", "sagemaker", "emr",
-    "gamelift",
+    "gamelift", "spot",
 )
 """The AWS platforms Infrawrench publishes a bundle for. Any other lowercase name is
 requested as is, so a platform added later works without a new SDK."""

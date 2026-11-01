@@ -60,7 +60,7 @@ const (
 // AWSPlatforms lists the AWS platforms Infrawrench publishes a bundle for. Any other
 // lowercase name is requested as is, so a platform added later works without a new SDK.
 var AWSPlatforms = []string{
-	"ec2", "rds", "elasticache", "opensearch", "redshift", "docdb", "neptune", "memorydb", "dax", "sagemaker", "emr", "gamelift",
+	"ec2", "rds", "elasticache", "opensearch", "redshift", "docdb", "neptune", "memorydb", "dax", "sagemaker", "emr", "gamelift", "spot",
 }
 
 var (

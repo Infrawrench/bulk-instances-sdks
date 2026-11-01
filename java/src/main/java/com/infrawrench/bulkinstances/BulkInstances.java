@@ -29,7 +29,7 @@ public final class BulkInstances {
      */
     public static final List<String> AWS_PLATFORMS = List.of(
             "ec2", "rds", "elasticache", "opensearch", "redshift", "docdb", "neptune", "memorydb", "dax", "sagemaker",
-            "emr", "gamelift");
+            "emr", "gamelift", "spot");
 
     /** The variant keys of EC2 bundles, which don't list their own. */
     public static final List<String> EC2_VARIANT_KEYS =
