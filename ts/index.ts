@@ -72,7 +72,7 @@ async function newestCached(cachePath: string, prefix: string): Promise<string |
  * requested as is, so a platform added later works without a new SDK.
  */
 export const AWS_PLATFORMS = [
-  "ec2", "rds", "elasticache", "opensearch", "redshift", "docdb", "neptune", "memorydb", "dax", "sagemaker", "emr", "gamelift",
+  "ec2", "rds", "elasticache", "opensearch", "redshift", "docdb", "neptune", "memorydb", "dax", "sagemaker", "emr", "gamelift", "spot",
 ] as const;
 
 export type AWSPlatform = (typeof AWS_PLATFORMS)[number];

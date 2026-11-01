@@ -67,6 +67,7 @@ thread (e.g. `tokio::task::spawn_blocking`). The returned `AwsPricingData` is
 | `sagemaker` | SageMaker |
 | `emr` | EMR |
 | `gamelift` | GameLift |
+| `spot` | EC2 Spot (see below) |
 
 The fields that pick a price differ by platform. `data.variant_keys()` names them, and
 every price's `variant.fields` holds them as `(key, value)` pairs in that order:
@@ -96,6 +97,12 @@ fn main() -> Result<(), infrawrench_bulk_instances::Error> {
 `operating_system`, `tenancy`, `license_model`, `pre_installed_sw` and `capacitystatus` are
 EC2's variant fields. On other platforms they are `""`, unless the platform has a field with
 that name (RDS has `licenseModel`).
+
+`spot` is EC2's spot prices. They are in `pricing().on_demand`, one per region and `operating_system` (`Linux` or
+`Windows`): the lowest price across the region's availability zones, as AWS's Spot pricing page shows it.
+Its locations are region codes, so `region` and `region_code` are both `us-east-1`. Spot instances
+have no attributes; take their specs from `ec2`. The history goes back to August 2026, hourly at
+first and every 6 hours since November 2026, and prices change far more often than on-demand prices.
 
 ## One instance
 

@@ -38,7 +38,7 @@ public static class BulkInstances
     /// </summary>
     public static IReadOnlyList<string> AwsPlatforms { get; } = Array.AsReadOnly(new[]
     {
-        "ec2", "rds", "elasticache", "opensearch", "redshift", "docdb", "neptune", "memorydb", "dax", "sagemaker", "emr", "gamelift",
+        "ec2", "rds", "elasticache", "opensearch", "redshift", "docdb", "neptune", "memorydb", "dax", "sagemaker", "emr", "gamelift", "spot",
     });
 
     /// <summary>The variant keys of EC2 bundles, which don't list their own.</summary>

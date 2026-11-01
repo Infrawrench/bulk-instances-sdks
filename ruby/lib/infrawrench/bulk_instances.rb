@@ -45,7 +45,7 @@ module Infrawrench
 
     # The AWS platforms Infrawrench publishes a bundle for. Any other lowercase name is
     # requested as is, so a platform added later works without a new SDK.
-    AWS_PLATFORMS = %w[ec2 rds elasticache opensearch redshift docdb neptune memorydb dax sagemaker emr gamelift].freeze
+    AWS_PLATFORMS = %w[ec2 rds elasticache opensearch redshift docdb neptune memorydb dax sagemaker emr gamelift spot].freeze
 
     # The variant keys of EC2 bundles, which don't list their own.
     EC2_VARIANT_KEYS = %w[operatingSystem tenancy licenseModel preInstalledSw capacitystatus].freeze

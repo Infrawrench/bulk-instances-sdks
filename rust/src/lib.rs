@@ -39,6 +39,7 @@ pub const AWS_PLATFORMS: &[&str] = &[
     "sagemaker",
     "emr",
     "gamelift",
+    "spot",
 ];
 
 /// Options for [`download_aws_pricing_data`] and [`download_aws_ec2_pricing_data`].
