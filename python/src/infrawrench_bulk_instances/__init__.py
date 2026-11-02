@@ -28,7 +28,9 @@ from ._download import (
     download_aws_ec2_pricing_data,
     download_aws_pricing_data,
     download_runpod_pricing_data,
+    fetch_alibaba_instance,
     fetch_aws_instance,
+    fetch_runpod_instance,
 )
 
 __all__ = [
@@ -57,5 +59,7 @@ __all__ = [
     "download_aws_ec2_pricing_data",
     "download_aws_pricing_data",
     "download_runpod_pricing_data",
+    "fetch_alibaba_instance",
     "fetch_aws_instance",
+    "fetch_runpod_instance",
 ]
