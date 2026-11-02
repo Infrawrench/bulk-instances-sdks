@@ -7,6 +7,6 @@
         {"type": "path", "url": "../../../php", "options": {"symlink": true}}
     ],
     "require": {
-        "infrawrench/bulk-instances": "1.4.0"
+        "infrawrench/bulk-instances": "1.5.0"
     }
 }
