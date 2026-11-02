@@ -12,6 +12,8 @@ require_relative "bulk_instances/error"
 require_relative "bulk_instances/types"
 require_relative "bulk_instances/aws_pricing_data"
 require_relative "bulk_instances/aws_instance"
+require_relative "bulk_instances/runpod_pricing_data"
+require_relative "bulk_instances/alibaba_pricing_data"
 
 module Infrawrench
   # AWS instance attributes and pricing (EC2, RDS, ElastiCache and more), with full history, from Infrawrench.
@@ -77,6 +79,93 @@ module Infrawrench
       # @return [AWSPricingData]
       # @raise [AWSPricingDataError]
       def download_aws_pricing_data(platform, token: nil, cache_pricing_data: true, cache_path: nil, base_url: nil)
+        AWSPricingData.new(load_bundle(platform, token:, cache_pricing_data:, cache_path:, base_url:))
+      end
+
+      # Downloads RunPod's pricing data: GPU types (priced per GPU per hour) and CPU pods (per pod per hour).
+      # Caching and the offline fallback work as for #download_aws_pricing_data, and it takes the same options.
+      #
+      # @param token [String, nil] Your Infrawrench API token. Defaults to the +INFRAWRENCH_API_KEY+ environment variable.
+      # @param cache_pricing_data [Boolean] Whether to cache the pricing data.
+      # @param cache_path [String, nil] The cache path. Defaults to <tt>~/.infrawrench/aws_pricing_data</tt>.
+      # @param base_url [String, nil] Where the bundles are served from. Defaults to https://instances-bundles.infrawrench.com
+      # @return [RunpodPricingData]
+      # @raise [RunpodPricingDataError]
+      def download_runpod_pricing_data(token: nil, cache_pricing_data: true, cache_path: nil, base_url: nil)
+        RunpodPricingData.new(
+          load_bundle_as("runpod", RunpodPricingDataError, token:, cache_pricing_data:, cache_path:, base_url:),
+        )
+      end
+
+      # Downloads Alibaba Cloud's ECS pricing data: pay-as-you-go, subscription and reserved instance prices per
+      # region. Caching and the offline fallback work as for #download_aws_pricing_data, and it takes the same options.
+      #
+      # @param token [String, nil] Your Infrawrench API token. Defaults to the +INFRAWRENCH_API_KEY+ environment variable.
+      # @param cache_pricing_data [Boolean] Whether to cache the pricing data.
+      # @param cache_path [String, nil] The cache path. Defaults to <tt>~/.infrawrench/aws_pricing_data</tt>.
+      # @param base_url [String, nil] Where the bundles are served from. Defaults to https://instances-bundles.infrawrench.com
+      # @return [AlibabaPricingData]
+      # @raise [AlibabaPricingDataError]
+      def download_alibaba_pricing_data(token: nil, cache_pricing_data: true, cache_path: nil, base_url: nil)
+        AlibabaPricingData.new(
+          load_bundle_as("alibaba", AlibabaPricingDataError, token:, cache_pricing_data:, cache_path:, base_url:),
+        )
+      end
+
+      # Fetches one instance from the Infrawrench API, without downloading the platform's bundle.
+      # Nothing is cached.
+      #
+      # The result is the same as <tt>download_aws_pricing_data(platform).get(instance_type)</tt>, from
+      # whichever bundle the API last synced, which can trail the newest bundle by up to half an hour.
+      #
+      # @param platform [String, Symbol] One of AWS_PLATFORMS, e.g. +"rds"+, or any other lowercase platform name.
+      # @param instance_type [String] The instance type, e.g. +"m5.large"+.
+      # @param token [String, nil] Your Infrawrench API token. Defaults to the +INFRAWRENCH_API_KEY+ environment variable.
+      # @param base_url [String, nil] Where the Infrawrench API is served from. Defaults to https://app.infrawrench.com
+      # @return [AWSInstance, nil] +nil+ if the platform has no instance with that name.
+      # @raise [AWSPricingDataError]
+      def fetch_aws_instance(platform, instance_type, token: nil, base_url: nil)
+        unless (platform.is_a?(String) || platform.is_a?(Symbol)) && platform.match?(/\A[a-z0-9]+\z/)
+          raise AWSPricingDataError, %("#{platform}" is not a platform name.)
+        end
+        raise AWSPricingDataError, "The instance type is empty." if instance_type.to_s.empty?
+
+        token = ENV.fetch("INFRAWRENCH_API_KEY", nil) if token.nil?
+        if token.nil? || token.empty?
+          raise AWSPricingDataError, "No Infrawrench API token: pass `token:` or set INFRAWRENCH_API_KEY."
+        end
+
+        base_url = (base_url || DEFAULT_API_URL).sub(%r{/+\z}, "")
+        # Percent-encoded, with spaces as %20: a + in a path is a plus.
+        name = URI.encode_www_form_component(instance_type.to_s).gsub("+", "%20")
+        begin
+          json = download("#{base_url}/api/v1/aws-bulk-pricing/#{platform}/#{name}", token, &:read_body)
+        rescue AWSPricingDataError => e
+          return nil if e.status == 404
+
+          raise
+        end
+
+        # The bundle's tables cut down to what this instance uses, and its row renumbered to match.
+        value = JSON.parse(json.to_s.dup.force_encoding(Encoding::UTF_8), freeze: true)
+        bundle = value.slice("offer", "compression_table", "regions", "variant_keys", "variants", "reserved_terms")
+        bundle["snapshots"] = []
+        bundle["instances"] = { value["name"] => value["instance"] }
+        AWSPricingData.new(bundle).get(value["name"])
+      end
+
+      private
+
+      # load_bundle, failing with the provider's own error class.
+      def load_bundle_as(platform, error_class, **options)
+        load_bundle(platform, **options)
+      rescue AWSPricingDataError => e
+        # Caused by what the AWS error was caused by (or nothing), so it reads as if raised here.
+        raise error_class.new(e.message, status: e.status), cause: e.cause
+      end
+
+      # Downloads (or reads from the cache) one platform's bundle, parsed.
+      def load_bundle(platform, token:, cache_pricing_data:, cache_path:, base_url:)
         unless (platform.is_a?(String) || platform.is_a?(Symbol)) && platform.match?(/\A[a-z0-9]+\z/)
           raise AWSPricingDataError, %("#{platform}" is not a platform name.)
         end
@@ -126,52 +215,8 @@ module Infrawrench
           end
         end
 
-        AWSPricingData.new(JSON.parse(json, freeze: true))
+        JSON.parse(json, freeze: true)
       end
-
-      # Fetches one instance from the Infrawrench API, without downloading the platform's bundle.
-      # Nothing is cached.
-      #
-      # The result is the same as <tt>download_aws_pricing_data(platform).get(instance_type)</tt>, from
-      # whichever bundle the API last synced, which can trail the newest bundle by up to half an hour.
-      #
-      # @param platform [String, Symbol] One of AWS_PLATFORMS, e.g. +"rds"+, or any other lowercase platform name.
-      # @param instance_type [String] The instance type, e.g. +"m5.large"+.
-      # @param token [String, nil] Your Infrawrench API token. Defaults to the +INFRAWRENCH_API_KEY+ environment variable.
-      # @param base_url [String, nil] Where the Infrawrench API is served from. Defaults to https://app.infrawrench.com
-      # @return [AWSInstance, nil] +nil+ if the platform has no instance with that name.
-      # @raise [AWSPricingDataError]
-      def fetch_aws_instance(platform, instance_type, token: nil, base_url: nil)
-        unless (platform.is_a?(String) || platform.is_a?(Symbol)) && platform.match?(/\A[a-z0-9]+\z/)
-          raise AWSPricingDataError, %("#{platform}" is not a platform name.)
-        end
-        raise AWSPricingDataError, "The instance type is empty." if instance_type.to_s.empty?
-
-        token = ENV.fetch("INFRAWRENCH_API_KEY", nil) if token.nil?
-        if token.nil? || token.empty?
-          raise AWSPricingDataError, "No Infrawrench API token: pass `token:` or set INFRAWRENCH_API_KEY."
-        end
-
-        base_url = (base_url || DEFAULT_API_URL).sub(%r{/+\z}, "")
-        # Percent-encoded, with spaces as %20: a + in a path is a plus.
-        name = URI.encode_www_form_component(instance_type.to_s).gsub("+", "%20")
-        begin
-          json = download("#{base_url}/api/v1/aws-bulk-pricing/#{platform}/#{name}", token, &:read_body)
-        rescue AWSPricingDataError => e
-          return nil if e.status == 404
-
-          raise
-        end
-
-        # The bundle's tables cut down to what this instance uses, and its row renumbered to match.
-        value = JSON.parse(json.to_s.dup.force_encoding(Encoding::UTF_8), freeze: true)
-        bundle = value.slice("offer", "compression_table", "regions", "variant_keys", "variants", "reserved_terms")
-        bundle["snapshots"] = []
-        bundle["instances"] = { value["name"] => value["instance"] }
-        AWSPricingData.new(bundle).get(value["name"])
-      end
-
-      private
 
       # GETs +url+ and yields the successful response, retrying the 503 the bundles Worker
       # answers when it cannot reach the Infrawrench API (and the API answers when it cannot

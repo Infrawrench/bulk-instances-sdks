@@ -138,15 +138,49 @@ func main() {
 	}
 
 	opts := bulkinstances.Options{Token: token, BaseURL: baseURL, CachePath: cachePath, DisableCache: cache != "1"}
-	var data *bulkinstances.AWSPricingData
-	var err error
+	platform := ""
 	if len(os.Args) > 5 {
-		data, err = bulkinstances.DownloadAWSPricingData(context.Background(), os.Args[5], opts)
-	} else {
+		platform = os.Args[5]
+	}
+	var data *bulkinstances.AWSPricingData
+	// get is the loaded data's own Get: RunPod and Alibaba have their own data and instance types.
+	var get func(string) (*bulkinstances.AWSInstance, bool)
+	var err error
+	switch platform {
+	case "runpod":
+		var d *bulkinstances.RunpodPricingData
+		if d, err = bulkinstances.DownloadRunpodPricingData(context.Background(), opts); err == nil {
+			data = d.AWSPricingData
+			get = func(k string) (*bulkinstances.AWSInstance, bool) {
+				i, ok := d.Get(k) // a *RunpodInstance
+				if !ok {
+					return nil, false
+				}
+				return i.AWSInstance, true
+			}
+		}
+	case "alibaba":
+		var d *bulkinstances.AlibabaPricingData
+		if d, err = bulkinstances.DownloadAlibabaPricingData(context.Background(), opts); err == nil {
+			data = d.AWSPricingData
+			get = func(k string) (*bulkinstances.AWSInstance, bool) {
+				i, ok := d.Get(k) // an *AlibabaInstance
+				if !ok {
+					return nil, false
+				}
+				return i.AWSInstance, true
+			}
+		}
+	case "":
 		data, err = bulkinstances.DownloadAWSEC2PricingData(context.Background(), opts)
+	default:
+		data, err = bulkinstances.DownloadAWSPricingData(context.Background(), platform, opts)
 	}
 	if err != nil {
 		fail(err)
+	}
+	if get == nil {
+		get = data.Get
 	}
 
 	snapshots := []int64{}
@@ -156,14 +190,14 @@ func main() {
 	regions := data.Regions()
 	keys := data.Keys()
 	slices.Sort(keys)
-	_, missing := data.Get("nope")
+	_, missing := get("nope")
 	var getMissing any
 	if missing {
 		getMissing = "present"
 	}
 	instances := obj{}
 	for _, k := range data.Keys() {
-		i, _ := data.Get(k)
+		i, _ := get(k)
 		instances[k] = dumpInstance(i, slices.Sorted(maps.Keys(regions)))
 	}
 	printJSON(obj{

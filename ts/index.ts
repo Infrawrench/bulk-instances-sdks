@@ -93,6 +93,63 @@ export async function downloadAwsPricingData(
   platform: AWSPlatform | (string & {}),
   options: AWSPricingDataOptions = {},
 ): Promise<AWSPricingData> {
+  return new AWSPricingData(await loadBundle(platform, options));
+}
+
+/** Options for {@link downloadRunpodPricingData}: the same as for the AWS platforms. */
+export type RunpodPricingDataOptions = AWSPricingDataOptions;
+
+/** Thrown when RunPod's pricing data cannot be downloaded. `status` is the HTTP status, if there was a response. */
+export class RunpodPricingDataError extends AWSPricingDataError {
+  constructor(message: string, status?: number) {
+    super(message, status);
+    this.name = "RunpodPricingDataError";
+  }
+}
+
+/**
+ * Downloads RunPod's pricing data: GPU types (priced per GPU per hour) and CPU pods (per pod per hour).
+ * Caching and the offline fallback work as for {@link downloadAwsPricingData}.
+ */
+export async function downloadRunpodPricingData(options: RunpodPricingDataOptions = {}): Promise<RunpodPricingData> {
+  return new RunpodPricingData(await loadBundleAs("runpod", options, RunpodPricingDataError));
+}
+
+/** Options for {@link downloadAlibabaPricingData}: the same as for the AWS platforms. */
+export type AlibabaPricingDataOptions = AWSPricingDataOptions;
+
+/** Thrown when Alibaba Cloud's pricing data cannot be downloaded. `status` is the HTTP status, if there was a response. */
+export class AlibabaPricingDataError extends AWSPricingDataError {
+  constructor(message: string, status?: number) {
+    super(message, status);
+    this.name = "AlibabaPricingDataError";
+  }
+}
+
+/**
+ * Downloads Alibaba Cloud's ECS pricing data: pay-as-you-go, subscription and reserved instance prices per
+ * region. Caching and the offline fallback work as for {@link downloadAwsPricingData}.
+ */
+export async function downloadAlibabaPricingData(options: AlibabaPricingDataOptions = {}): Promise<AlibabaPricingData> {
+  return new AlibabaPricingData(await loadBundleAs("alibaba", options, AlibabaPricingDataError));
+}
+
+/** loadBundle, failing with the provider's own error class. */
+async function loadBundleAs(
+  platform: string,
+  options: AWSPricingDataOptions,
+  ProviderError: new (message: string, status?: number) => AWSPricingDataError,
+): Promise<BundleFile> {
+  try {
+    return await loadBundle(platform, options);
+  } catch (err) {
+    if (err instanceof AWSPricingDataError) throw new ProviderError(err.message, err.status);
+    throw err;
+  }
+}
+
+/** Downloads (or reads from the cache) one platform's bundle. */
+async function loadBundle(platform: string, options: AWSPricingDataOptions): Promise<BundleFile> {
   if (!/^[a-z0-9]+$/.test(platform)) {
     throw new AWSPricingDataError(`"${platform}" is not a platform name.`);
   }
@@ -145,7 +202,7 @@ export async function downloadAwsPricingData(
     }
   }
 
-  return new AWSPricingData(JSON.parse(json));
+  return JSON.parse(json) as BundleFile;
 }
 
 const DEFAULT_API_URL = "https://app.infrawrench.com";
@@ -339,13 +396,18 @@ export class AWSPricingData {
   get(instanceType: string): AWSInstance | undefined {
     let inst = this.#instances.get(instanceType);
     if (!inst && this.has(instanceType)) {
-      inst = new AWSInstance(instanceType, this.#raw.instances[instanceType], this);
+      inst = this.newInstance(instanceType, this.#raw.instances[instanceType]);
       this.#instances.set(instanceType, inst);
     }
     return inst;
   }
 
-  /** The AWS offer code, e.g. `AmazonEC2` or `AmazonRDS`. */
+  /** Makes the object `get` returns; each provider's subclass returns its own instance class. */
+  protected newInstance(name: string, raw: RawInstance): AWSInstance {
+    return new AWSInstance(name, raw, this);
+  }
+
+  /** The offer code, e.g. `AmazonEC2`, `AmazonRDS`, `RunpodPods` or `AlibabaECS`. */
   get offer(): string {
     return this.#raw.offer ?? "AmazonEC2";
   }
@@ -560,3 +622,39 @@ export class AWSInstance {
 function odKey(r: Location & Variant): string {
   return [r.region, ...Object.values(r.variant)].join("\0");
 }
+
+/**
+ * RunPod's pricing data, keyed by GPU type id (`NVIDIA H100 80GB HBM3`) or CPU pod id (`cpu3c-2-4`).
+ * It decodes the same way as {@link AWSPricingData}; see the README for what RunPod's data holds.
+ */
+export class RunpodPricingData extends AWSPricingData {
+  /** The GPU type or CPU pod with this id, or `undefined` if the bundle has never listed it. */
+  override get(id: string): RunpodInstance | undefined {
+    return super.get(id) as RunpodInstance | undefined;
+  }
+
+  protected override newInstance(name: string, raw: RawInstance): RunpodInstance {
+    return new RunpodInstance(name, raw, this);
+  }
+}
+
+/** One RunPod GPU type or CPU pod. */
+export class RunpodInstance extends AWSInstance {}
+
+/**
+ * Alibaba Cloud's ECS pricing data, keyed by instance type (`ecs.g6.large`).
+ * It decodes the same way as {@link AWSPricingData}; see the README for what Alibaba's data holds.
+ */
+export class AlibabaPricingData extends AWSPricingData {
+  /** The instance type with this name, or `undefined` if the bundle has never listed it. */
+  override get(instanceType: string): AlibabaInstance | undefined {
+    return super.get(instanceType) as AlibabaInstance | undefined;
+  }
+
+  protected override newInstance(name: string, raw: RawInstance): AlibabaInstance {
+    return new AlibabaInstance(name, raw, this);
+  }
+}
+
+/** One Alibaba Cloud ECS instance type. */
+export class AlibabaInstance extends AWSInstance {}

@@ -84,6 +84,57 @@ Its locations are region codes, so `region` and `regionCode` are both `us-east-1
 have no attributes; take their specs from `ec2`. The history goes back to August 2026, hourly at
 first and every 6 hours since November 2026, and prices change far more often than on-demand prices.
 
+## RunPod
+
+`BulkInstances::downloadRunpodPricingData(...)` loads RunPod's GPU and CPU pod prices. It takes the same
+named parameters as the AWS methods (minus `$platform`), caches the same way, and throws a
+`RunpodPricingDataException`, a subclass of `AWSPricingDataException`. It returns a `RunpodPricingData`, whose
+`get()` returns a `RunpodInstance`; they have the same members as `AWSPricingData` and `AWSInstance`.
+
+```php
+$runpod = BulkInstances::downloadRunpodPricingData();
+foreach ($runpod->get('NVIDIA H100 80GB HBM3')?->pricing()->onDemand ?? [] as $p) {
+    if ($p->variant['cloudType'] === 'Secure Cloud') {
+        echo $p->hourly;
+    }
+}
+```
+
+It has GPU types by RunPod's id (`NVIDIA H100 80GB HBM3`), priced per GPU per hour, and CPU pods by pod id
+(`cpu3c-2-4`: flavor, vCPUs, GB of memory), priced per pod per hour; the `productFamily` attribute is `GPU` or
+`CPU`. Prices are the same in every data center, so every price is in the location `global`. The only variant
+key is `cloudType`, `Secure Cloud` or `Community Cloud`. Savings plans are in `pricing()->reserved` with the term
+`3mo` or `6mo`, `Savings Plan`, `All Upfront`, and `hourly` is the plan's effective hourly rate. Stock levels
+and spot prices are not included. The history starts in November 2026.
+
+## Alibaba Cloud
+
+`BulkInstances::downloadAlibabaPricingData(...)` loads Alibaba Cloud ECS prices. It takes the same named
+parameters as the AWS methods (minus `$platform`), caches the same way, and throws an
+`AlibabaPricingDataException`, a subclass of `AWSPricingDataException`. It returns an `AlibabaPricingData`, whose
+`get()` returns an `AlibabaInstance`; they have the same members as `AWSPricingData` and `AWSInstance`.
+
+```php
+$alibaba = BulkInstances::downloadAlibabaPricingData();
+foreach ($alibaba->get('ecs.g6.large')?->pricing()->onDemand ?? [] as $p) {
+    if ($p->regionCode === 'cn-hangzhou' && $p->variant['operatingSystem'] === 'Linux'
+        && $p->variant['networkType'] === 'VPC') {
+        echo $p->hourly;
+    }
+}
+```
+
+Its locations are region ids (`cn-hangzhou`), so the location and its region code are the same, and `regions()`
+gives each an English `name`. Its variant keys are `operatingSystem` (`Linux` or `Windows`) and `networkType`
+(`VPC`, or `Classic` in older history). `pricing()->onDemand` has pay-as-you-go prices. `pricing()->reserved` has
+subscriptions, with the term `1mo` or `1yr` to `5yr`, `Subscription`, `All Upfront`: they are paid in full
+when bought, so `hourly` is 0 and `upfront` is the price. It also has reserved instances, with the term `1yr` or
+`3yr`, `Reserved Instance`, and a purchase option. Attributes are Alibaba's instance type definitions
+(`CpuCoreCount`, `MemorySize`, `CpuOptions.ThreadsPerCore`, ...), from May 2023 on. The history starts in
+May 2018.
+
+`fetchAwsInstance` doesn't cover RunPod or Alibaba; download their bundles instead.
+
 ## One instance
 
 `BulkInstances::fetchAwsInstance($platform, $instanceType, ...)` fetches a single instance from the

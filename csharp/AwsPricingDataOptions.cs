@@ -1,7 +1,11 @@
 namespace Infrawrench.BulkInstances;
 
 /// <summary>Options for <see cref="BulkInstances.DownloadAwsPricingDataAsync"/> and <see cref="BulkInstances.DownloadAwsEc2PricingDataAsync"/>.</summary>
-public sealed record AwsPricingDataOptions
+/// <remarks>
+/// RunPod's and Alibaba Cloud's methods take the subclasses <see cref="RunpodPricingDataOptions"/> and
+/// <see cref="AlibabaPricingDataOptions"/>, which have the same options.
+/// </remarks>
+public record AwsPricingDataOptions
 {
     /// <summary>Defines your Infrawrench API token. Defaults to the <c>INFRAWRENCH_API_KEY</c> environment variable.</summary>
     public string? Token { get; init; }

@@ -76,6 +76,52 @@ Its locations are region codes, so `Region` and `RegionCode` are both `us-east-1
 have no attributes; take their specs from `ec2`. The history goes back to August 2026, hourly at
 first and every 6 hours since November 2026, and prices change far more often than on-demand prices.
 
+## RunPod
+
+`BulkInstances.DownloadRunpodPricingDataAsync(options)` loads RunPod's GPU and CPU pod prices. It takes the same
+options as the AWS methods (`RunpodPricingDataOptions`, a subclass of `AwsPricingDataOptions`), caches the same
+way, and fails with a `RunpodPricingDataException`, a subclass of `AwsPricingDataException`. It returns a
+`RunpodPricingData`, whose `Get` and `TryGet` give a `RunpodInstance`; they are subclasses of `AwsPricingData`
+and `AwsInstance`, with the same members.
+
+```csharp
+var runpod = await BulkInstances.DownloadRunpodPricingDataAsync();
+var secure = runpod.Get("NVIDIA H100 80GB HBM3")?.Pricing.OnDemand.FirstOrDefault(
+    p => p.Variant["cloudType"] == "Secure Cloud")?.Hourly;
+```
+
+It has GPU types by RunPod's id (`NVIDIA H100 80GB HBM3`), priced per GPU per hour, and CPU pods by pod id
+(`cpu3c-2-4`: flavor, vCPUs, GB of memory), priced per pod per hour; the `productFamily` attribute is `GPU` or
+`CPU`. Prices are the same in every data center, so every price is in the location `global`. The only variant
+key is `cloudType`, `Secure Cloud` or `Community Cloud`. Savings plans are in `Pricing.Reserved` with the term
+`3mo` or `6mo`, `Savings Plan`, `All Upfront`, and `Hourly` is the plan's effective hourly rate. Stock levels
+and spot prices are not included. The history starts in November 2026.
+
+## Alibaba Cloud
+
+`BulkInstances.DownloadAlibabaPricingDataAsync(options)` loads Alibaba Cloud ECS prices. It takes the same
+options as the AWS methods (`AlibabaPricingDataOptions`, a subclass of `AwsPricingDataOptions`), caches the same
+way, and fails with an `AlibabaPricingDataException`, a subclass of `AwsPricingDataException`. It returns an
+`AlibabaPricingData`, whose `Get` and `TryGet` give an `AlibabaInstance`; they are subclasses of
+`AwsPricingData` and `AwsInstance`, with the same members.
+
+```csharp
+var alibaba = await BulkInstances.DownloadAlibabaPricingDataAsync();
+var hangzhou = alibaba.Get("ecs.g6.large")?.Pricing.OnDemand.FirstOrDefault(
+    p => p.RegionCode == "cn-hangzhou" && p.OperatingSystem == "Linux" && p.Variant["networkType"] == "VPC")?.Hourly;
+```
+
+Its locations are region ids (`cn-hangzhou`), so `Region` and `RegionCode` are the same, and `Regions` gives
+each an English `name`. Its variant keys are `operatingSystem` (`Linux` or `Windows`) and `networkType` (`VPC`,
+or `Classic` in older history). `Pricing.OnDemand` has pay-as-you-go prices. `Pricing.Reserved` has
+subscriptions, with the term `1mo` or `1yr` to `5yr`, `Subscription`, `All Upfront`: they are paid in full when
+bought, so `Hourly` is 0 and `Upfront` is the price. It also has reserved instances, with the term `1yr` or
+`3yr`, `Reserved Instance`, and a purchase option. Attributes are Alibaba's instance type definitions
+(`CpuCoreCount`, `MemorySize`, `CpuOptions.ThreadsPerCore`, ...), from May 2023 on. The history starts in
+May 2018.
+
+`FetchAwsInstanceAsync` doesn't cover RunPod or Alibaba; download their bundles instead.
+
 ## One instance
 
 `BulkInstances.FetchAwsInstanceAsync(platform, instanceType, options, cancellationToken)` fetches a

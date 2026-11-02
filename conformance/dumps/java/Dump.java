@@ -1,6 +1,10 @@
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.infrawrench.bulkinstances.AWSInstance;
+import com.infrawrench.bulkinstances.AlibabaInstance;
+import com.infrawrench.bulkinstances.AlibabaPricingData;
+import com.infrawrench.bulkinstances.AlibabaPricingDataException;
+import com.infrawrench.bulkinstances.AlibabaPricingDataOptions;
 import com.infrawrench.bulkinstances.AWSInstanceOptions;
 import com.infrawrench.bulkinstances.AWSPricingData;
 import com.infrawrench.bulkinstances.AWSPricingDataException;
@@ -10,9 +14,14 @@ import com.infrawrench.bulkinstances.BulkInstances;
 import com.infrawrench.bulkinstances.Location;
 import com.infrawrench.bulkinstances.OnDemandPrice;
 import com.infrawrench.bulkinstances.OnDemandPriceChange;
+import com.infrawrench.bulkinstances.PricingData;
 import com.infrawrench.bulkinstances.ReservedPrice;
 import com.infrawrench.bulkinstances.ReservedPriceChange;
 import com.infrawrench.bulkinstances.ReservedTerm;
+import com.infrawrench.bulkinstances.RunpodInstance;
+import com.infrawrench.bulkinstances.RunpodPricingData;
+import com.infrawrench.bulkinstances.RunpodPricingDataException;
+import com.infrawrench.bulkinstances.RunpodPricingDataOptions;
 import com.infrawrench.bulkinstances.Variant;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -60,14 +69,38 @@ public final class Dump {
             return;
         }
 
-        AWSPricingData data;
+        PricingData<?> data;
         try {
-            AWSPricingDataOptions.Builder b = AWSPricingDataOptions.builder()
-                    .baseUrl(baseUrl).cachePath(Path.of(cachePath)).cachePricingData(cache.equals("1"));
-            if (!token.equals("-")) b.token(token);
-            data = platform == null
-                    ? BulkInstances.downloadAwsEc2PricingData(b.build())
-                    : BulkInstances.downloadAwsPricingData(platform, b.build());
+            // RunPod and Alibaba have their own functions and types, and their own exceptions.
+            if ("runpod".equals(platform)) {
+                RunpodPricingData d;
+                try {
+                    d = BulkInstances.downloadRunpodPricingData(
+                            options(RunpodPricingDataOptions.builder(), baseUrl, cachePath, token, cache).build());
+                } catch (AWSPricingDataException e) {
+                    throw providerException(e, RunpodPricingDataException.class);
+                }
+                RunpodInstance first = d.keys().isEmpty() ? null : d.get(d.keys().get(0)).orElseThrow();
+                expectTypes(d, first, RunpodPricingData.class, RunpodInstance.class);
+                data = d;
+            } else if ("alibaba".equals(platform)) {
+                AlibabaPricingData d;
+                try {
+                    d = BulkInstances.downloadAlibabaPricingData(
+                            options(AlibabaPricingDataOptions.builder(), baseUrl, cachePath, token, cache).build());
+                } catch (AWSPricingDataException e) {
+                    throw providerException(e, AlibabaPricingDataException.class);
+                }
+                AlibabaInstance first = d.keys().isEmpty() ? null : d.get(d.keys().get(0)).orElseThrow();
+                expectTypes(d, first, AlibabaPricingData.class, AlibabaInstance.class);
+                data = d;
+            } else {
+                AWSPricingDataOptions o = options(AWSPricingDataOptions.builder(), baseUrl, cachePath, token, cache).build();
+                AWSPricingData d = platform == null
+                        ? BulkInstances.downloadAwsEc2PricingData(o)
+                        : BulkInstances.downloadAwsPricingData(platform, o);
+                data = d;
+            }
         } catch (AWSPricingDataException e) {
             error(g, e);
             return;
@@ -111,6 +144,31 @@ public final class Dump {
         g.writeEndObject();
         g.flush();
         System.out.println();
+    }
+
+    static <B extends AWSPricingDataOptions.Builder> B options(
+            B b, String baseUrl, String cachePath, String token, String cache) {
+        b.baseUrl(baseUrl).cachePath(Path.of(cachePath)).cachePricingData(cache.equals("1"));
+        if (!token.equals("-")) b.token(token);
+        return b;
+    }
+
+    /** {@code e}, if it is the provider's exception; exits 1 if it is another {@link AWSPricingDataException}. */
+    static AWSPricingDataException providerException(
+            AWSPricingDataException e, Class<? extends AWSPricingDataException> expected) {
+        if (!expected.isInstance(e)) {
+            System.err.println("expected a " + expected.getSimpleName() + ", got " + e.getClass().getSimpleName());
+            System.exit(1);
+        }
+        return e;
+    }
+
+    /** Exits 1 unless the data and its first instance are exactly the provider's classes. */
+    static void expectTypes(PricingData<?> d, AWSInstance first, Class<?> data, Class<?> instance) {
+        if (d.getClass() != data || (first != null && first.getClass() != instance)) {
+            System.err.println("expected " + data.getSimpleName() + " and " + instance.getSimpleName());
+            System.exit(1);
+        }
     }
 
     static void error(JsonGenerator g, AWSPricingDataException e) throws IOException {

@@ -8,6 +8,10 @@
 // own name, so loading one never evicts another. [FetchAWSInstance] fetches a
 // single instance from the Infrawrench API instead, without the whole bundle.
 //
+// [DownloadRunpodPricingData] and [DownloadAlibabaPricingData] load RunPod's and
+// Alibaba Cloud's bundles, which have the same format, as a [RunpodPricingData] and
+// an [AlibabaPricingData].
+//
 // The fields that pick a price differ by platform: [AWSPricingData.VariantKeys]
 // names them, and every price's [Variant.Fields] is keyed by them. The other
 // [Variant] fields are EC2's, and are "" on other platforms unless the platform

@@ -6,7 +6,10 @@ using System.Text.Json;
 namespace Infrawrench.BulkInstances;
 
 /// <summary>One instance type. Each property decodes on first access and caches the result.</summary>
-public sealed class AwsInstance
+/// <remarks>
+/// <see cref="RunpodInstance"/> and <see cref="AlibabaInstance"/> are the same for RunPod's and Alibaba Cloud's data.
+/// </remarks>
+public class AwsInstance
 {
     // [attrs, attrChanges, basePrice, onDemand, reserved, createdAt, deletedAt]
     private readonly JsonElement _raw;

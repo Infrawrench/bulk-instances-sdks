@@ -11,7 +11,9 @@ using SharpCompress.Compressors.Xz;
 
 namespace Infrawrench.BulkInstances;
 
-/// <summary>Downloads the Infrawrench AWS pricing bundles: EC2 and the other AWS platforms.</summary>
+/// <summary>
+/// Downloads the Infrawrench pricing bundles: EC2 and the other AWS platforms, RunPod and Alibaba Cloud.
+/// </summary>
 public static class BulkInstances
 {
     private const string DefaultBaseUrl = "https://instances-bundles.infrawrench.com";
@@ -75,6 +77,54 @@ public static class BulkInstances
         string platform, AwsPricingDataOptions? options = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(platform);
+        return new AwsPricingData(await LoadBundleAsync(platform, options, cancellationToken).ConfigureAwait(false));
+    }
+
+    /// <summary>
+    /// Downloads RunPod's pricing data: GPU types (priced per GPU per hour) and CPU pods (per pod per hour).
+    /// Caching and the offline fallback work as for <see cref="DownloadAwsPricingDataAsync"/>.
+    /// </summary>
+    /// <param name="options">Token, caching and server options; all optional.</param>
+    /// <param name="cancellationToken">Cancels the download.</param>
+    /// <exception cref="RunpodPricingDataException">The token is missing or rejected, or the bundle cannot be downloaded.</exception>
+    public static async Task<RunpodPricingData> DownloadRunpodPricingDataAsync(
+        RunpodPricingDataOptions? options = null, CancellationToken cancellationToken = default) =>
+        new(await LoadBundleAsAsync(
+            "runpod", options, e => new RunpodPricingDataException(e.Message, e.Status, e.InnerException), cancellationToken)
+            .ConfigureAwait(false));
+
+    /// <summary>
+    /// Downloads Alibaba Cloud's ECS pricing data: pay-as-you-go, subscription and reserved instance prices per
+    /// region. Caching and the offline fallback work as for <see cref="DownloadAwsPricingDataAsync"/>.
+    /// </summary>
+    /// <param name="options">Token, caching and server options; all optional.</param>
+    /// <param name="cancellationToken">Cancels the download.</param>
+    /// <exception cref="AlibabaPricingDataException">The token is missing or rejected, or the bundle cannot be downloaded.</exception>
+    public static async Task<AlibabaPricingData> DownloadAlibabaPricingDataAsync(
+        AlibabaPricingDataOptions? options = null, CancellationToken cancellationToken = default) =>
+        new(await LoadBundleAsAsync(
+            "alibaba", options, e => new AlibabaPricingDataException(e.Message, e.Status, e.InnerException), cancellationToken)
+            .ConfigureAwait(false));
+
+    /// <summary><see cref="LoadBundleAsync"/>, failing with the provider's own exception class.</summary>
+    private static async Task<byte[]> LoadBundleAsAsync(
+        string platform, AwsPricingDataOptions? options, Func<AwsPricingDataException, AwsPricingDataException> providerException,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await LoadBundleAsync(platform, options, cancellationToken).ConfigureAwait(false);
+        }
+        catch (AwsPricingDataException e)
+        {
+            throw providerException(e);
+        }
+    }
+
+    /// <summary>Downloads (or reads from the cache) one platform's bundle, as UTF-8 JSON.</summary>
+    private static async Task<byte[]> LoadBundleAsync(
+        string platform, AwsPricingDataOptions? options, CancellationToken cancellationToken)
+    {
         if (!PlatformPattern.IsMatch(platform))
         {
             throw new AwsPricingDataException($"\"{platform}\" is not a platform name.");
@@ -152,7 +202,7 @@ public static class BulkInstances
             }
         }
 
-        return new AwsPricingData(json);
+        return json;
     }
 
     /// <summary>

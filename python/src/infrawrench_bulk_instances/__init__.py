@@ -3,6 +3,8 @@
 from ._data import (
     EC2_VARIANT_KEYS,
     AttributeChange,
+    AlibabaInstance,
+    AlibabaPricingData,
     AWSInstance,
     AWSPricingData,
     BundleFile,
@@ -13,13 +15,19 @@ from ._data import (
     ReservedPrice,
     ReservedPriceChange,
     ReservedTerm,
+    RunpodInstance,
+    RunpodPricingData,
     Variant,
 )
 from ._download import (
     AWS_PLATFORMS,
+    AlibabaPricingDataError,
     AWSPricingDataError,
+    RunpodPricingDataError,
+    download_alibaba_pricing_data,
     download_aws_ec2_pricing_data,
     download_aws_pricing_data,
+    download_runpod_pricing_data,
     fetch_aws_instance,
 )
 
@@ -28,6 +36,9 @@ __all__ = [
     "AWSInstance",
     "AWSPricingData",
     "AWSPricingDataError",
+    "AlibabaInstance",
+    "AlibabaPricingData",
+    "AlibabaPricingDataError",
     "AttributeChange",
     "BundleFile",
     "EC2_VARIANT_KEYS",
@@ -38,8 +49,13 @@ __all__ = [
     "ReservedPrice",
     "ReservedPriceChange",
     "ReservedTerm",
+    "RunpodInstance",
+    "RunpodPricingData",
+    "RunpodPricingDataError",
     "Variant",
+    "download_alibaba_pricing_data",
     "download_aws_ec2_pricing_data",
     "download_aws_pricing_data",
+    "download_runpod_pricing_data",
     "fetch_aws_instance",
 ]

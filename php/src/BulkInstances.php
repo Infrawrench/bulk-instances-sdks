@@ -70,6 +70,94 @@ final class BulkInstances
         ?string $cachePath = null,
         ?string $baseUrl = null,
     ): AWSPricingData {
+        return AWSPricingData::fromJson(self::loadBundle($platform, $token, $cachePricingData, $cachePath, $baseUrl));
+    }
+
+    /**
+     * Downloads RunPod's pricing data: GPU types (priced per GPU per hour) and CPU pods (per pod per hour).
+     * Caching and the offline fallback work as for {@see downloadAwsPricingData()}.
+     *
+     * @param string|null $token Defines your Infrawrench API token. Defaults to the `INFRAWRENCH_API_KEY` environment variable.
+     * @param bool $cachePricingData Whether to cache the pricing data. Defaults to true.
+     * @param string|null $cachePath The cache path. Defaults to ~/.infrawrench/aws_pricing_data
+     * @param string|null $baseUrl Where the bundles are served from. Defaults to https://instances-bundles.infrawrench.com
+     *
+     * @throws RunpodPricingDataException
+     * @throws \JsonException if the bundle is not valid
+     * @throws \RuntimeException if the cache directory cannot be written
+     */
+    public static function downloadRunpodPricingData(
+        ?string $token = null,
+        bool $cachePricingData = true,
+        ?string $cachePath = null,
+        ?string $baseUrl = null,
+    ): RunpodPricingData {
+        return RunpodPricingData::fromJson(
+            self::loadBundleAs('runpod', RunpodPricingDataException::class, $token, $cachePricingData, $cachePath, $baseUrl),
+        );
+    }
+
+    /**
+     * Downloads Alibaba Cloud's ECS pricing data: pay-as-you-go, subscription and reserved instance prices per
+     * region. Caching and the offline fallback work as for {@see downloadAwsPricingData()}.
+     *
+     * @param string|null $token Defines your Infrawrench API token. Defaults to the `INFRAWRENCH_API_KEY` environment variable.
+     * @param bool $cachePricingData Whether to cache the pricing data. Defaults to true.
+     * @param string|null $cachePath The cache path. Defaults to ~/.infrawrench/aws_pricing_data
+     * @param string|null $baseUrl Where the bundles are served from. Defaults to https://instances-bundles.infrawrench.com
+     *
+     * @throws AlibabaPricingDataException
+     * @throws \JsonException if the bundle is not valid
+     * @throws \RuntimeException if the cache directory cannot be written
+     */
+    public static function downloadAlibabaPricingData(
+        ?string $token = null,
+        bool $cachePricingData = true,
+        ?string $cachePath = null,
+        ?string $baseUrl = null,
+    ): AlibabaPricingData {
+        return AlibabaPricingData::fromJson(
+            self::loadBundleAs('alibaba', AlibabaPricingDataException::class, $token, $cachePricingData, $cachePath, $baseUrl),
+        );
+    }
+
+    /**
+     * {@see loadBundle()}, failing with the provider's own exception class.
+     *
+     * @param class-string<RunpodPricingDataException|AlibabaPricingDataException> $exception
+     *
+     * @throws AWSPricingDataException of class `$exception`
+     */
+    private static function loadBundleAs(
+        string $platform,
+        string $exception,
+        ?string $token,
+        bool $cachePricingData,
+        ?string $cachePath,
+        ?string $baseUrl,
+    ): string {
+        try {
+            return self::loadBundle($platform, $token, $cachePricingData, $cachePath, $baseUrl);
+        } catch (AWSPricingDataException $err) {
+            throw new $exception($err->getMessage(), $err->status, $err);
+        }
+    }
+
+    /**
+     * Downloads (or reads from the cache) one platform's bundle.
+     *
+     * @return string The bundle's JSON.
+     *
+     * @throws AWSPricingDataException
+     * @throws \RuntimeException if the cache directory cannot be written
+     */
+    private static function loadBundle(
+        string $platform,
+        ?string $token,
+        bool $cachePricingData,
+        ?string $cachePath,
+        ?string $baseUrl,
+    ): string {
         if (preg_match('/^[a-z0-9]+$/D', $platform) !== 1) {
             throw new AWSPricingDataException("\"$platform\" is not a platform name.");
         }
@@ -115,7 +203,7 @@ final class BulkInstances
             }
         }
 
-        return AWSPricingData::fromJson($json);
+        return $json;
     }
 
     /**

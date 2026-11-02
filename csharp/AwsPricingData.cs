@@ -24,8 +24,12 @@ namespace Infrawrench.BulkInstances;
 /// Lazy decoding is not locked: it is safe to read from several threads, but a part first accessed
 /// concurrently may be decoded more than once.
 /// </para>
+/// <para>
+/// <see cref="RunpodPricingData"/> and <see cref="AlibabaPricingData"/> are the same for RunPod's and Alibaba Cloud's
+/// data; their <c>Get</c> returns their own instance class.
+/// </para>
 /// </remarks>
-public sealed class AwsPricingData
+public class AwsPricingData
 {
     private readonly byte[] _utf8;
     private readonly string[] _table;
@@ -126,7 +130,7 @@ public sealed class AwsPricingData
         VariantKeys = variantKeys is null ? BulkInstances.Ec2VariantKeys : Array.AsReadOnly(variantKeys);
     }
 
-    /// <summary>The AWS offer code, e.g. <c>AmazonEC2</c> or <c>AmazonRDS</c>.</summary>
+    /// <summary>The offer code, e.g. <c>AmazonEC2</c>, <c>AmazonRDS</c>, <c>RunpodPods</c> or <c>AlibabaECS</c>.</summary>
     public string Offer { get; }
 
     /// <summary>
@@ -162,9 +166,12 @@ public sealed class AwsPricingData
             return false;
         }
         var raw = JsonDocument.Parse(_utf8.AsMemory(range.Start, range.Length)).RootElement;
-        instance = _instances.GetOrAdd(instanceType, new AwsInstance(instanceType, raw, this));
+        instance = _instances.GetOrAdd(instanceType, NewInstance(instanceType, raw));
         return true;
     }
+
+    /// <summary>Makes the object <see cref="Get"/> returns; each provider's subclass returns its own instance class.</summary>
+    private protected virtual AwsInstance NewInstance(string name, JsonElement raw) => new(name, raw, this);
 
     /// <summary>The publication date of every AWS price list in the bundle, oldest first.</summary>
     public IReadOnlyList<DateTimeOffset> Snapshots =>

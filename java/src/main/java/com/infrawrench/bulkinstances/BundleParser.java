@@ -28,7 +28,12 @@ final class BundleParser {
     /** One {@code regions} entry: {@code [location, [[key, value], ...]]}. */
     record RawRegion(double location, Rows pairs) {}
 
-    static AWSPricingData parse(InputStream in) throws IOException {
+    /** A parsed bundle, which {@link PricingData} and its subclasses decode. */
+    record Bundle(
+            String offer, String[] table, double[] snapshots, List<RawRegion> regions, List<String> variantKeys,
+            List<double[]> variants, Rows terms, Map<String, RawInstance> instances) {}
+
+    static Bundle parse(InputStream in) throws IOException {
         return parse(in, false);
     }
 
@@ -36,11 +41,11 @@ final class BundleParser {
      * One instance as the Infrawrench API serves it: the bundle's tables cut down to what it uses, with {@code name}
      * and {@code instance} in place of {@code instances}. The result holds just that instance.
      */
-    static AWSPricingData parseInstance(InputStream in) throws IOException {
+    static Bundle parseInstance(InputStream in) throws IOException {
         return parse(in, true);
     }
 
-    private static AWSPricingData parse(InputStream in, boolean oneInstance) throws IOException {
+    private static Bundle parse(InputStream in, boolean oneInstance) throws IOException {
         try (JsonParser p = FACTORY.createParser(in)) {
             p.nextToken();
             Rows.expect(p, START_OBJECT);
@@ -88,7 +93,7 @@ final class BundleParser {
                     throw new IOException("variant has " + v.length + " fields, expected " + variantKeys.size());
                 }
             }
-            return new AWSPricingData(offer, table, snapshots, regions, variantKeys, variants, terms, instances);
+            return new Bundle(offer, table, snapshots, regions, variantKeys, variants, terms, instances);
         }
     }
 

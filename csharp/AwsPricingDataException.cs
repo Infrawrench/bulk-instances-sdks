@@ -5,7 +5,11 @@ namespace Infrawrench.BulkInstances;
 /// <summary>
 /// Thrown when the pricing data cannot be downloaded. <see cref="Status"/> is the HTTP status, if there was a response.
 /// </summary>
-public sealed class AwsPricingDataException : Exception
+/// <remarks>
+/// RunPod's and Alibaba Cloud's methods throw the subclasses <see cref="RunpodPricingDataException"/> and
+/// <see cref="AlibabaPricingDataException"/> instead.
+/// </remarks>
+public class AwsPricingDataException : Exception
 {
     /// <summary>Creates the exception.</summary>
     /// <param name="message">What went wrong.</param>

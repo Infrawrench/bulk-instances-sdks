@@ -7,9 +7,11 @@ namespace Infrawrench\BulkInstances;
 /**
  * One instance type. Each method decodes on first access and caches the result.
  *
+ * {@see RunpodInstance} and {@see AlibabaInstance} extend it for the other clouds Infrawrench publishes.
+ *
  * @phpstan-import-type RawInstance from AWSPricingData
  */
-final class AWSInstance
+class AWSInstance
 {
     /** @var array<string, string>|null */
     private ?array $attributes = null;

@@ -1,4 +1,8 @@
-import { downloadAwsEc2PricingData, downloadAwsPricingData, fetchAwsInstance, AWSPricingDataError } from "../../../ts/dist/index.js";
+import {
+  downloadAwsEc2PricingData, downloadAwsPricingData, fetchAwsInstance, AWSPricingDataError,
+  downloadRunpodPricingData, RunpodPricingData, RunpodInstance, RunpodPricingDataError,
+  downloadAlibabaPricingData, AlibabaPricingData, AlibabaInstance, AlibabaPricingDataError,
+} from "../../../ts/dist/index.js";
 
 const [baseUrl, cachePath, token, cache, platform, instanceType] = process.argv.slice(2);
 const ts = (d) => (d === null ? null : d.getTime() / 1000);
@@ -47,9 +51,34 @@ if (instanceType !== undefined) {
 
 let data;
 try {
-  data = platform === undefined ? await downloadAwsEc2PricingData(options) : await downloadAwsPricingData(platform, options);
+  // RunPod and Alibaba have their own functions and types, and their own errors.
+  if (platform === "runpod") {
+    data = await downloadRunpodPricingData(options).catch((e) => providerError(e, RunpodPricingDataError));
+    expectTypes(data, RunpodPricingData, RunpodInstance);
+  } else if (platform === "alibaba") {
+    data = await downloadAlibabaPricingData(options).catch((e) => providerError(e, AlibabaPricingDataError));
+    expectTypes(data, AlibabaPricingData, AlibabaInstance);
+  } else {
+    data = platform === undefined ? await downloadAwsEc2PricingData(options) : await downloadAwsPricingData(platform, options);
+  }
 } catch (e) {
   error(e);
+}
+
+function providerError(e, ProviderError) {
+  if (e instanceof AWSPricingDataError && !(e instanceof ProviderError)) {
+    console.error(`expected a ${ProviderError.name}, got ${e.name}`);
+    process.exit(1);
+  }
+  throw e;
+}
+
+function expectTypes(d, Data, Instance) {
+  const first = d.keys()[0];
+  if (!(d instanceof Data) || (first !== undefined && !(d.get(first) instanceof Instance))) {
+    console.error(`expected ${Data.name} and ${Instance.name}`);
+    process.exit(1);
+  }
 }
 
 const regions = Object.fromEntries([...data.regions].map(([k, v]) => [k, { ...v }]));

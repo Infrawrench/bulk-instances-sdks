@@ -46,13 +46,13 @@ module Infrawrench
       def get(instance_type)
         inst = @instances[instance_type]
         if inst.nil? && has?(instance_type)
-          inst = @instances[instance_type] = AWSInstance.new(instance_type, @raw["instances"][instance_type], self)
+          inst = @instances[instance_type] = new_instance(instance_type, @raw["instances"][instance_type])
         end
         inst
       end
       alias [] get
 
-      # The AWS offer code, e.g. +AmazonEC2+ or +AmazonRDS+.
+      # The offer code, e.g. +AmazonEC2+, +AmazonRDS+, +RunpodPods+ or +AlibabaECS+.
       # @return [String]
       def offer
         @raw["offer"] || "AmazonEC2"
@@ -120,6 +120,14 @@ module Infrawrench
           ReservedTerm.new(lease_contract_length: str(lease), offering_class: str(offering), purchase_option: str(purchase))
         end.freeze
         @terms[i]
+      end
+
+      private
+
+      # Makes the object #get returns; each provider's subclass returns its own instance class.
+      # @return [AWSInstance]
+      def new_instance(name, raw)
+        AWSInstance.new(name, raw, self)
       end
     end
   end

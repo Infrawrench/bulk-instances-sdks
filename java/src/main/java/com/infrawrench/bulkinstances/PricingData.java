@@ -1,0 +1,188 @@
+package com.infrawrench.bulkinstances;
+
+import com.infrawrench.bulkinstances.BundleParser.Bundle;
+import com.infrawrench.bulkinstances.BundleParser.RawRegion;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * One bundle's pricing data, keyed by instance type: {@link AWSPricingData} for an AWS platform,
+ * {@link RunpodPricingData} for RunPod and {@link AlibabaPricingData} for Alibaba Cloud. They decode the same way and
+ * differ only in the instance class {@link #get} returns, {@code I}. Use this type for code that works with any of
+ * them.
+ *
+ * <p>Nothing is decoded until it is asked for: {@link #get} wraps the raw rows, and each getter on the returned
+ * instance decodes its part on first access and keeps the result. Everything returned is immutable and shared between
+ * calls, so the data is safe to use from several threads.
+ *
+ * @param <I> the instance class {@link #get} returns
+ */
+public abstract sealed class PricingData<I extends AWSInstance>
+        permits AWSPricingData, RunpodPricingData, AlibabaPricingData {
+    private final String offer;
+    private final String[] table;
+    private final double[] snapshots;
+    private final List<RawRegion> rawRegions;
+    private final List<String> variantKeys;
+    private final List<double[]> rawVariants;
+    private final Rows rawTerms;
+    private final Map<String, RawInstance> raw;
+    private final List<String> keys;
+    private final Map<String, I> instances = new ConcurrentHashMap<>();
+    private volatile List<Variant> variants;
+    private volatile List<ReservedTerm> terms;
+    private volatile Map<String, Map<String, String>> regions;
+
+    PricingData(Bundle b) {
+        this.offer = b.offer();
+        this.table = b.table();
+        this.snapshots = b.snapshots();
+        this.rawRegions = b.regions();
+        this.variantKeys = b.variantKeys();
+        this.rawVariants = b.variants();
+        this.rawTerms = b.terms();
+        this.raw = b.instances();
+        this.keys = List.copyOf(b.instances().keySet());
+    }
+
+    /** Makes the object {@link #get} returns; each provider's class returns its own instance class. */
+    abstract I newInstance(String name, RawInstance raw);
+
+    /**
+     * Every instance type in the bundle, including ones the provider no longer lists (see
+     * {@link AWSInstance#deletedAt()}).
+     *
+     * @return the instance types, in bundle order (unmodifiable)
+     */
+    public List<String> keys() {
+        return keys;
+    }
+
+    /**
+     * Whether the bundle has ever listed this instance type.
+     *
+     * @param instanceType e.g. {@code m5.large}
+     * @return whether {@link #get} finds it
+     */
+    public boolean has(String instanceType) {
+        return raw.containsKey(instanceType);
+    }
+
+    /**
+     * The instance with this type, or empty if the bundle has never listed it.
+     *
+     * @param instanceType e.g. {@code m5.large}
+     * @return the instance, the same object on every call
+     */
+    public Optional<I> get(String instanceType) {
+        RawInstance r = raw.get(instanceType);
+        if (r == null) return Optional.empty();
+        return Optional.of(instances.computeIfAbsent(instanceType, name -> newInstance(name, r)));
+    }
+
+    /**
+     * The offer code, e.g. {@code AmazonEC2}, {@code AmazonRDS}, {@code RunpodPods} or {@code AlibabaECS}.
+     *
+     * @return the offer code
+     */
+    public String offer() {
+        return offer;
+    }
+
+    /**
+     * The names of the fields that pick a price, which every price's {@link Variant#fields()} is keyed by.
+     * {@link BulkInstances#EC2_VARIANT_KEYS} for EC2.
+     *
+     * @return the variant keys (unmodifiable)
+     */
+    public List<String> variantKeys() {
+        return variantKeys;
+    }
+
+    /**
+     * The publication date of every price list in the bundle, oldest first.
+     *
+     * @return the publication dates (unmodifiable)
+     */
+    public List<Instant> snapshots() {
+        return Arrays.stream(snapshots).mapToObj(PricingData::date).toList();
+    }
+
+    /**
+     * Attributes of each location (for AWS, {@code regionCode} and {@code locationType}), keyed by location name.
+     *
+     * @return the locations (unmodifiable, as are the attribute maps)
+     */
+    public Map<String, Map<String, String>> regions() {
+        Map<String, Map<String, String>> out = regions;
+        if (out == null) {
+            Map<String, Map<String, String>> m = new LinkedHashMap<>();
+            for (RawRegion r : rawRegions) {
+                Map<String, String> attrs = new LinkedHashMap<>();
+                for (int i = 0; i < r.pairs().size(); i++) attrs.put(str(r.pairs().get(i, 0)), str(r.pairs().get(i, 1)));
+                m.put(str(r.location()), Collections.unmodifiableMap(attrs));
+            }
+            regions = out = Collections.unmodifiableMap(m);
+        }
+        return out;
+    }
+
+    static Instant date(double ts) {
+        return Instant.ofEpochMilli((long) (ts * 1000));
+    }
+
+    /** The table index {@code i} holds, or -1 if it holds none. */
+    private static int index(double i) {
+        return i == (int) i ? (int) i : -1;
+    }
+
+    String str(double i) {
+        int k = index(i);
+        if (k < 0 || k >= table.length) {
+            String shown = i == Math.rint(i) && !Double.isInfinite(i) ? Long.toString((long) i) : Double.toString(i);
+            throw new IndexOutOfBoundsException("string index " + shown + " out of range");
+        }
+        return table[k];
+    }
+
+    Location location(double i) {
+        String region = str(i);
+        Map<String, String> attrs = regions().get(region);
+        return new Location(region, Optional.ofNullable(attrs == null ? null : attrs.get("regionCode")));
+    }
+
+    Variant variant(double i) {
+        List<Variant> out = variants;
+        if (out == null) {
+            List<Variant> l = new ArrayList<>();
+            for (double[] v : rawVariants) {
+                Map<String, String> fields = new LinkedHashMap<>();
+                for (int k = 0; k < v.length; k++) fields.put(variantKeys.get(k), str(v[k]));
+                l.add(new Variant(
+                        fields, fields.getOrDefault("operatingSystem", ""), fields.getOrDefault("tenancy", ""),
+                        fields.getOrDefault("licenseModel", ""), fields.getOrDefault("preInstalledSw", ""),
+                        fields.getOrDefault("capacitystatus", "")));
+            }
+            variants = out = List.copyOf(l);
+        }
+        return out.get(index(i));
+    }
+
+    ReservedTerm term(double i) {
+        List<ReservedTerm> out = terms;
+        if (out == null) {
+            List<ReservedTerm> l = new ArrayList<>();
+            Rows t = rawTerms;
+            for (int r = 0; r < t.size(); r++) l.add(new ReservedTerm(str(t.get(r, 0)), str(t.get(r, 1)), str(t.get(r, 2))));
+            terms = out = List.copyOf(l);
+        }
+        return out.get(index(i));
+    }
+}

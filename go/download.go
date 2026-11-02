@@ -20,8 +20,9 @@ import (
 	"github.com/ulikunitz/xz"
 )
 
-// Options configures [DownloadAWSPricingData] and [DownloadAWSEC2PricingData]. The zero
-// value uses every default.
+// Options configures [DownloadAWSPricingData], [DownloadAWSEC2PricingData],
+// [DownloadRunpodPricingData] and [DownloadAlibabaPricingData]. The zero value uses
+// every default.
 type Options struct {
 	// Token is your Infrawrench API token. Defaults to the INFRAWRENCH_API_KEY environment variable.
 	Token string
@@ -191,6 +192,33 @@ func DownloadAWSEC2PricingData(ctx context.Context, opts Options) (*AWSPricingDa
 // Download failures and malformed platform names are returned as an [*Error];
 // cache, decompression and parsing failures are returned as they are.
 func DownloadAWSPricingData(ctx context.Context, platform string, opts Options) (*AWSPricingData, error) {
+	return loadBundle(ctx, platform, opts)
+}
+
+// DownloadRunpodPricingData downloads RunPod's pricing data: GPU types (priced per
+// GPU per hour) and CPU pods (per pod per hour). Caching, the offline fallback and
+// errors work as for [DownloadAWSPricingData].
+func DownloadRunpodPricingData(ctx context.Context, opts Options) (*RunpodPricingData, error) {
+	data, err := loadBundle(ctx, "runpod", opts)
+	if err != nil {
+		return nil, err
+	}
+	return &RunpodPricingData{data}, nil
+}
+
+// DownloadAlibabaPricingData downloads Alibaba Cloud's ECS pricing data:
+// pay-as-you-go, subscription and reserved instance prices per region. Caching, the
+// offline fallback and errors work as for [DownloadAWSPricingData].
+func DownloadAlibabaPricingData(ctx context.Context, opts Options) (*AlibabaPricingData, error) {
+	data, err := loadBundle(ctx, "alibaba", opts)
+	if err != nil {
+		return nil, err
+	}
+	return &AlibabaPricingData{data}, nil
+}
+
+// loadBundle downloads (or reads from the cache) one platform's bundle.
+func loadBundle(ctx context.Context, platform string, opts Options) (*AWSPricingData, error) {
 	if !platformName.MatchString(platform) {
 		return nil, &Error{Message: fmt.Sprintf("%q is not a platform name.", platform)}
 	}

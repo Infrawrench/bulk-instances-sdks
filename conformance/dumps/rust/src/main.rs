@@ -2,8 +2,10 @@ use std::collections::BTreeSet;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use infrawrench_bulk_instances::{
-    AwsInstance, AwsInstanceOptions, Error, Options, ReservedTerm, Variant,
-    download_aws_ec2_pricing_data, download_aws_pricing_data, fetch_aws_instance,
+    AlibabaInstance, AlibabaPricingData, AwsInstance, AwsInstanceOptions, AwsPricingData, Error,
+    Options, ReservedTerm, RunpodInstance, RunpodPricingData, Variant,
+    download_alibaba_pricing_data, download_aws_ec2_pricing_data, download_aws_pricing_data,
+    download_runpod_pricing_data, fetch_aws_instance,
 };
 use serde_json::{Map, Value, json};
 
@@ -144,32 +146,51 @@ fn main() {
         cache_path: Some(cache_path.into()),
         base_url: Some(base_url.clone()),
     };
-    let result = match platform {
-        None => download_aws_ec2_pricing_data(&options),
-        Some(platform) => download_aws_pricing_data(platform, &options),
+    let out = match platform.map(String::as_str) {
+        // RunPod and Alibaba have their own functions and types; `get` is theirs.
+        Some("runpod") => {
+            let data: RunpodPricingData =
+                download_runpod_pricing_data(&options).unwrap_or_else(|e| error(e));
+            dump_data(&data, |k| data.get(k).map(|i: &RunpodInstance| &**i))
+        }
+        Some("alibaba") => {
+            let data: AlibabaPricingData =
+                download_alibaba_pricing_data(&options).unwrap_or_else(|e| error(e));
+            dump_data(&data, |k| data.get(k).map(|i: &AlibabaInstance| &**i))
+        }
+        None => {
+            let data = download_aws_ec2_pricing_data(&options).unwrap_or_else(|e| error(e));
+            dump_data(&data, |k| data.get(k))
+        }
+        Some(platform) => {
+            let data = download_aws_pricing_data(platform, &options).unwrap_or_else(|e| error(e));
+            dump_data(&data, |k| data.get(k))
+        }
     };
-    let data = result.unwrap_or_else(|e| error(e));
+    println!("{}", serde_json::to_string_pretty(&out).unwrap());
+}
 
+/// Dumps the whole data, getting each instance with `get`.
+fn dump_data<'a>(data: &'a AwsPricingData, get: impl Fn(&str) -> Option<&'a AwsInstance>) -> Value {
     let regions = data.regions();
     let mut keys: Vec<&str> = data.keys().collect();
     keys.sort();
     let mut instances = Map::new();
     for k in data.keys() {
-        let i = data.get(k).unwrap();
+        let i = get(k).unwrap();
         instances.insert(
             k.into(),
             dump_instance(i, regions.keys().map(String::as_str)),
         );
     }
-    let out = json!({
+    json!({
         "offer": data.offer(),
         "variantKeys": data.variant_keys(),
         "snapshots": data.snapshots().into_iter().map(ts).collect::<Vec<_>>(),
         "regions": regions,
         "keys": keys,
         "has": { "m5.large": data.has("m5.large"), "nope": data.has("nope") },
-        "getMissing": data.get("nope").map(|i| i.name()),
+        "getMissing": get("nope").map(|i| i.name()),
         "instances": instances,
-    });
-    println!("{}", serde_json::to_string_pretty(&out).unwrap());
+    })
 }

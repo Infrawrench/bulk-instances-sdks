@@ -3,7 +3,8 @@
 require "json"
 require "infrawrench/bulk_instances"
 
-AWSPricingDataError = Infrawrench::BulkInstances::AWSPricingDataError
+BI = Infrawrench::BulkInstances
+AWSPricingDataError = BI::AWSPricingDataError
 
 base_url, cache_path, token, cache, platform, instance_type = ARGV
 ts = ->(t) { t&.to_i }
@@ -27,7 +28,7 @@ end
 
 unless instance_type.nil?
   begin
-    i = Infrawrench::BulkInstances.fetch_aws_instance(platform, instance_type, token:, base_url:)
+    i = BI.fetch_aws_instance(platform, instance_type, token:, base_url:)
   rescue AWSPricingDataError => e
     puts JSON.generate({ error: { status: e.status, message: e.message } })
     exit 3
@@ -38,12 +39,37 @@ unless instance_type.nil?
   exit 0
 end
 
+# A provider function's failure must be that provider's error.
+def expect_error(provider_error)
+  yield
+rescue AWSPricingDataError => e
+  unless e.is_a?(provider_error)
+    warn "expected a #{provider_error}, got #{e.class}"
+    exit 1
+  end
+  raise
+end
+
+def expect_types(data, data_class, instance_class)
+  first = data.keys.first
+  return data if data.is_a?(data_class) && (first.nil? || [data.get(first), data[first]].all?(instance_class))
+
+  warn "expected #{data_class} and #{instance_class}"
+  exit 1
+end
+
 begin
   options = { base_url:, cache_path:, cache_pricing_data: cache == "1", token: }
-  data = if platform.nil?
-           Infrawrench::BulkInstances.download_aws_ec2_pricing_data(**options)
-         else
-           Infrawrench::BulkInstances.download_aws_pricing_data(platform, **options)
+  # RunPod and Alibaba have their own functions and classes, and their own errors.
+  data = case platform
+         when nil then BI.download_aws_ec2_pricing_data(**options)
+         when "runpod"
+           expect_types(expect_error(BI::RunpodPricingDataError) { BI.download_runpod_pricing_data(**options) },
+                        BI::RunpodPricingData, BI::RunpodInstance)
+         when "alibaba"
+           expect_types(expect_error(BI::AlibabaPricingDataError) { BI.download_alibaba_pricing_data(**options) },
+                        BI::AlibabaPricingData, BI::AlibabaInstance)
+         else BI.download_aws_pricing_data(platform, **options)
          end
 rescue AWSPricingDataError => e
   puts JSON.generate({ error: { status: e.status, message: e.message } })
