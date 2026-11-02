@@ -5,14 +5,17 @@ import java.util.Optional;
 /**
  * Options for {@link BulkInstances#fetchAwsInstance(String, String, AWSInstanceOptions)}. Immutable; build one with
  * {@link #builder()}.
+ *
+ * <p>RunPod's and Alibaba Cloud's functions take the subclasses {@link RunpodInstanceOptions} and
+ * {@link AlibabaInstanceOptions}, which have the same options.
  */
-public final class AWSInstanceOptions {
+public sealed class AWSInstanceOptions permits RunpodInstanceOptions, AlibabaInstanceOptions {
     static final String DEFAULT_BASE_URL = "https://app.infrawrench.com";
 
     private final String token;
     private final String baseUrl;
 
-    private AWSInstanceOptions(Builder b) {
+    AWSInstanceOptions(Builder b) {
         this.token = b.token;
         this.baseUrl = b.baseUrl != null ? b.baseUrl : DEFAULT_BASE_URL;
     }
@@ -46,11 +49,11 @@ public final class AWSInstanceOptions {
     }
 
     /** Builds {@link AWSInstanceOptions}. Every option is optional; passing {@code null} restores its default. */
-    public static final class Builder {
+    public static sealed class Builder permits RunpodInstanceOptions.Builder, AlibabaInstanceOptions.Builder {
         private String token;
         private String baseUrl;
 
-        private Builder() {}
+        Builder() {}
 
         /**
          * Defines your Infrawrench API token. Defaults to the {@code INFRAWRENCH_API_KEY} environment variable.
