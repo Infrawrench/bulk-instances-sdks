@@ -219,7 +219,7 @@ class AWSPricingData:
 
     @property
     def offer(self) -> str:
-        """The offer code, e.g. ``AmazonEC2``, ``AmazonRDS``, ``RunpodPods`` or ``AlibabaECS``."""
+        """The offer code, e.g. ``AmazonEC2``, ``AmazonRDS``, ``RunpodPods``, ``AlibabaECS``, ``AzureVM`` or ``GCPCompute``."""
         offer: str | None = self._raw.get("offer")
         return "AmazonEC2" if offer is None else offer
 
@@ -500,3 +500,39 @@ class AlibabaPricingData(AWSPricingData):
 
 class AlibabaInstance(AWSInstance):
     """One Alibaba Cloud ECS instance type."""
+
+
+class AzurePricingData(AWSPricingData):
+    """Azure's virtual machine pricing data, keyed by VM size (``Standard_D2s_v3``).
+
+    It decodes the same way as :class:`AWSPricingData`; see the README for what Azure's data holds.
+    """
+
+    def get(self, instance_type: str) -> AzureInstance | None:
+        """The VM size with this name, or ``None`` if the bundle has never listed it."""
+        return cast("AzureInstance | None", super().get(instance_type))
+
+    def _new_instance(self, name: str, raw: Sequence[Any]) -> AzureInstance:
+        return AzureInstance(name, raw, self)
+
+
+class AzureInstance(AWSInstance):
+    """One Azure virtual machine size."""
+
+
+class GCPPricingData(AWSPricingData):
+    """Google Cloud's Compute Engine pricing data, keyed by machine type (``n2-standard-2``).
+
+    It decodes the same way as :class:`AWSPricingData`; see the README for what Google Cloud's data holds.
+    """
+
+    def get(self, instance_type: str) -> GCPInstance | None:
+        """The machine type with this name, or ``None`` if the bundle has never listed it."""
+        return cast("GCPInstance | None", super().get(instance_type))
+
+    def _new_instance(self, name: str, raw: Sequence[Any]) -> GCPInstance:
+        return GCPInstance(name, raw, self)
+
+
+class GCPInstance(AWSInstance):
+    """One Google Cloud Compute Engine machine type."""

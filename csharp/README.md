@@ -120,7 +120,58 @@ bought, so `Hourly` is 0 and `Upfront` is the price. It also has reserved instan
 (`CpuCoreCount`, `MemorySize`, `CpuOptions.ThreadsPerCore`, ...), from May 2023 on. The history starts in
 May 2018.
 
-`FetchAwsInstanceAsync` doesn't cover RunPod or Alibaba; download their bundles instead.
+## Azure
+
+`BulkInstances.DownloadAzurePricingDataAsync(options)` loads Azure virtual machine prices. It takes the same
+options as the AWS methods (`AzurePricingDataOptions`, a subclass of `AwsPricingDataOptions`), caches the same
+way, and fails with an `AzurePricingDataException`, a subclass of `AwsPricingDataException`. It returns an
+`AzurePricingData`, whose `Get` and `TryGet` give an `AzureInstance`; they are subclasses of
+`AwsPricingData` and `AwsInstance`, with the same members.
+
+```csharp
+var azure = await BulkInstances.DownloadAzurePricingDataAsync();
+var eastUs = azure.Get("Standard_D2s_v3")?.Pricing.OnDemand.FirstOrDefault(
+    p => p.RegionCode == "eastus" && p.OperatingSystem == "Linux" && p.Variant["priority"] == "Regular")?.Hourly;
+```
+
+It has VM sizes by ARM name (`Standard_D2s_v3`), priced per VM per hour. Its locations are ARM region names
+(`eastus`), so the location and its region code are the same, and `Regions` gives each Azure's display `name`
+(`US East`). Its variant keys are `operatingSystem` (`Linux` or `Windows`) and `priority` (`Regular`, `Spot`
+or `Low Priority`). `Pricing.OnDemand` has pay-as-you-go prices, dated by when Azure says they took effect.
+`Pricing.Reserved` has reservations, with the term `1yr`, `3yr` or `5yr`, `Reserved Instance`, `All Upfront`:
+`Hourly` is 0 and `Upfront` is the whole term's price. Azure lists reservations under `Linux` only; on Windows
+the license is billed on top. It also has savings plans, with the term `1yr` or `3yr`, `Savings Plan`,
+`No Upfront`, and `Hourly` is the plan's rate. Attributes are `skuName`, `productName` and, from Azure's
+pricing calculator, `cores`, `ram` (GB), `diskSize` (temporary disk, GB), `gpu` and `series`. About a third of
+sizes, mostly the newest and retired series, have no calculator specs. Dedicated hosts are not included. The
+history starts in November 2026.
+
+## Google Cloud
+
+`BulkInstances.DownloadGcpPricingDataAsync(options)` loads Google Cloud Compute Engine prices. It takes the same
+options as the AWS methods (`GcpPricingDataOptions`, a subclass of `AwsPricingDataOptions`), caches the same
+way, and fails with a `GcpPricingDataException`, a subclass of `AwsPricingDataException`. It returns a
+`GcpPricingData`, whose `Get` and `TryGet` give a `GcpInstance`; they are subclasses of
+`AwsPricingData` and `AwsInstance`, with the same members.
+
+```csharp
+var gcp = await BulkInstances.DownloadGcpPricingDataAsync();
+var usCentral = gcp.Get("n2-standard-2")?.Pricing.OnDemand.FirstOrDefault(
+    p => p.RegionCode == "us-central1" && p.Variant["provisioningModel"] == "Standard")?.Hourly;
+```
+
+It has machine types by name (`n2-standard-2`), priced per VM per hour. Google bills most machine types per
+vCPU and per GiB of memory at their family's rates, plus their GPUs, so each price is worked out from those
+rates and the machine type's shape. Prices leave out bundled Local SSD, OS licenses and sustained use
+discounts, and TPU, X4, X5 and A4X machine types aren't included. Its locations are regions (`us-central1`),
+so the location and its region code are the same. The only variant key is `provisioningModel`, `Standard` or
+`Spot`. `Pricing.Reserved` has committed use discounts, with the term `1yr` or `3yr`, `Committed Use`,
+`No Upfront`, and `Hourly` is the commitment's rate. Attributes are the machine type's fields from the Compute
+Engine API (`guestCpus`, `memoryMb`, `description`, `isSharedCpu`, ...), `acceleratorType` and
+`acceleratorCount` for its GPUs, and `zones`, the zones in each region that have it, which differ by region
+(see `AttributesIn(region)`). The history starts in November 2026.
+
+`FetchAwsInstanceAsync` doesn't cover RunPod, Alibaba, Azure or Google Cloud; download their bundles instead.
 
 ## One instance
 

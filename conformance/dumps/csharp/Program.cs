@@ -57,7 +57,7 @@ try
         CachePricingData = cache == "1",
         Token = token == "-" ? null : token,
     };
-    // RunPod and Alibaba have their own methods and types, and their own exceptions.
+    // RunPod, Alibaba, Azure and GCP have their own methods and types, and their own exceptions.
     if (platform == "runpod")
     {
         RunpodPricingData d;
@@ -86,6 +86,36 @@ try
         }
         AlibabaInstance? first = d.Keys.Count == 0 ? null : d.Get(d.Keys[0]);
         if (!ExpectTypes(d, first, typeof(AlibabaPricingData), typeof(AlibabaInstance))) return 1;
+        data = d;
+    }
+    else if (platform == "azure")
+    {
+        AzurePricingData d;
+        try
+        {
+            d = await BulkInstances.DownloadAzurePricingDataAsync(Options<AzurePricingDataOptions>());
+        }
+        catch (AwsPricingDataException e) when (e is not AzurePricingDataException)
+        {
+            return WrongException(e, typeof(AzurePricingDataException));
+        }
+        AzureInstance? first = d.Keys.Count == 0 ? null : d.Get(d.Keys[0]);
+        if (!ExpectTypes(d, first, typeof(AzurePricingData), typeof(AzureInstance))) return 1;
+        data = d;
+    }
+    else if (platform == "gcp")
+    {
+        GcpPricingData d;
+        try
+        {
+            d = await BulkInstances.DownloadGcpPricingDataAsync(Options<GcpPricingDataOptions>());
+        }
+        catch (AwsPricingDataException e) when (e is not GcpPricingDataException)
+        {
+            return WrongException(e, typeof(GcpPricingDataException));
+        }
+        GcpInstance? first = d.Keys.Count == 0 ? null : d.Get(d.Keys[0]);
+        if (!ExpectTypes(d, first, typeof(GcpPricingData), typeof(GcpInstance))) return 1;
         data = d;
     }
     else

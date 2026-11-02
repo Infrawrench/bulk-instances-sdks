@@ -10,7 +10,15 @@ import com.infrawrench.bulkinstances.AWSPricingData;
 import com.infrawrench.bulkinstances.AWSPricingDataException;
 import com.infrawrench.bulkinstances.AWSPricingDataOptions;
 import com.infrawrench.bulkinstances.AttributeChange;
+import com.infrawrench.bulkinstances.AzureInstance;
+import com.infrawrench.bulkinstances.AzurePricingData;
+import com.infrawrench.bulkinstances.AzurePricingDataException;
+import com.infrawrench.bulkinstances.AzurePricingDataOptions;
 import com.infrawrench.bulkinstances.BulkInstances;
+import com.infrawrench.bulkinstances.GCPInstance;
+import com.infrawrench.bulkinstances.GCPPricingData;
+import com.infrawrench.bulkinstances.GCPPricingDataException;
+import com.infrawrench.bulkinstances.GCPPricingDataOptions;
 import com.infrawrench.bulkinstances.Location;
 import com.infrawrench.bulkinstances.OnDemandPrice;
 import com.infrawrench.bulkinstances.OnDemandPriceChange;
@@ -71,7 +79,7 @@ public final class Dump {
 
         PricingData<?> data;
         try {
-            // RunPod and Alibaba have their own functions and types, and their own exceptions.
+            // RunPod, Alibaba, Azure and GCP have their own functions and types, and their own exceptions.
             if ("runpod".equals(platform)) {
                 RunpodPricingData d;
                 try {
@@ -93,6 +101,28 @@ public final class Dump {
                 }
                 AlibabaInstance first = d.keys().isEmpty() ? null : d.get(d.keys().get(0)).orElseThrow();
                 expectTypes(d, first, AlibabaPricingData.class, AlibabaInstance.class);
+                data = d;
+            } else if ("azure".equals(platform)) {
+                AzurePricingData d;
+                try {
+                    d = BulkInstances.downloadAzurePricingData(
+                            options(AzurePricingDataOptions.builder(), baseUrl, cachePath, token, cache).build());
+                } catch (AWSPricingDataException e) {
+                    throw providerException(e, AzurePricingDataException.class);
+                }
+                AzureInstance first = d.keys().isEmpty() ? null : d.get(d.keys().get(0)).orElseThrow();
+                expectTypes(d, first, AzurePricingData.class, AzureInstance.class);
+                data = d;
+            } else if ("gcp".equals(platform)) {
+                GCPPricingData d;
+                try {
+                    d = BulkInstances.downloadGcpPricingData(
+                            options(GCPPricingDataOptions.builder(), baseUrl, cachePath, token, cache).build());
+                } catch (AWSPricingDataException e) {
+                    throw providerException(e, GCPPricingDataException.class);
+                }
+                GCPInstance first = d.keys().isEmpty() ? null : d.get(d.keys().get(0)).orElseThrow();
+                expectTypes(d, first, GCPPricingData.class, GCPInstance.class);
                 data = d;
             } else {
                 AWSPricingDataOptions o = options(AWSPricingDataOptions.builder(), baseUrl, cachePath, token, cache).build();

@@ -118,7 +118,58 @@ when bought, so `hourly` is 0 and `upfront` is the price. It also has reserved i
 (`CpuCoreCount`, `MemorySize`, `CpuOptions.ThreadsPerCore`, ...), from May 2023 on. The history starts in
 May 2018.
 
-`fetch_aws_instance` doesn't cover RunPod or Alibaba; download their bundles instead.
+## Azure
+
+`download_azure_pricing_data(**options)` loads Azure virtual machine prices. It takes the same options as the
+AWS methods, caches the same way, and raises `AzurePricingDataError`, a subclass of `AWSPricingDataError`.
+It returns an `AzurePricingData`, whose `get` (and `[]`) returns an `AzureInstance`; they have the same
+methods as `AWSPricingData` and `AWSInstance`.
+
+```ruby
+azure = Infrawrench::BulkInstances.download_azure_pricing_data
+azure["Standard_D2s_v3"].pricing.on_demand.find do |p|
+  p.region_code == "eastus" && p.variant["operatingSystem"] == "Linux" && p.variant["priority"] == "Regular"
+end&.hourly
+```
+
+It has VM sizes by ARM name (`Standard_D2s_v3`), priced per VM per hour. Its locations are ARM region names
+(`eastus`), so the location and its region code are the same, and `regions` gives each Azure's display `name`
+(`US East`). Its variant keys are `operatingSystem` (`Linux` or `Windows`) and `priority` (`Regular`, `Spot`
+or `Low Priority`). `pricing.on_demand` has pay-as-you-go prices, dated by when Azure says they took effect.
+`pricing.reserved` has reservations, with the term `1yr`, `3yr` or `5yr`, `Reserved Instance`, `All Upfront`:
+`hourly` is 0 and `upfront` is the whole term's price. Azure lists reservations under `Linux` only; on Windows
+the license is billed on top. It also has savings plans, with the term `1yr` or `3yr`, `Savings Plan`,
+`No Upfront`, and `hourly` is the plan's rate. Attributes are `skuName`, `productName` and, from Azure's
+pricing calculator, `cores`, `ram` (GB), `diskSize` (temporary disk, GB), `gpu` and `series`. About a third of
+sizes, mostly the newest and retired series, have no calculator specs. Dedicated hosts are not included. The
+history starts in November 2026.
+
+## Google Cloud
+
+`download_gcp_pricing_data(**options)` loads Google Cloud Compute Engine prices. It takes the same options as the
+AWS methods, caches the same way, and raises `GCPPricingDataError`, a subclass of `AWSPricingDataError`.
+It returns a `GCPPricingData`, whose `get` (and `[]`) returns a `GCPInstance`; they have the same
+methods as `AWSPricingData` and `AWSInstance`.
+
+```ruby
+gcp = Infrawrench::BulkInstances.download_gcp_pricing_data
+gcp["n2-standard-2"].pricing.on_demand.find do |p|
+  p.region_code == "us-central1" && p.variant["provisioningModel"] == "Standard"
+end&.hourly
+```
+
+It has machine types by name (`n2-standard-2`), priced per VM per hour. Google bills most machine types per
+vCPU and per GiB of memory at their family's rates, plus their GPUs, so each price is worked out from those
+rates and the machine type's shape. Prices leave out bundled Local SSD, OS licenses and sustained use
+discounts, and TPU, X4, X5 and A4X machine types aren't included. Its locations are regions (`us-central1`),
+so the location and its region code are the same. The only variant key is `provisioningModel`, `Standard` or
+`Spot`. `pricing.reserved` has committed use discounts, with the term `1yr` or `3yr`, `Committed Use`,
+`No Upfront`, and `hourly` is the commitment's rate. Attributes are the machine type's fields from the Compute
+Engine API (`guestCpus`, `memoryMb`, `description`, `isSharedCpu`, ...), `acceleratorType` and
+`acceleratorCount` for its GPUs, and `zones`, the zones in each region that have it, which differ by region
+(see `attributes_in(region)`). The history starts in November 2026.
+
+`fetch_aws_instance` doesn't cover RunPod, Alibaba, Azure or Google Cloud; download their bundles instead.
 
 ## One instance
 

@@ -10,7 +10,13 @@ use Infrawrench\BulkInstances\AlibabaPricingDataException;
 use Infrawrench\BulkInstances\AWSInstance;
 use Infrawrench\BulkInstances\AWSPricingData;
 use Infrawrench\BulkInstances\AWSPricingDataException;
+use Infrawrench\BulkInstances\AzureInstance;
+use Infrawrench\BulkInstances\AzurePricingData;
+use Infrawrench\BulkInstances\AzurePricingDataException;
 use Infrawrench\BulkInstances\BulkInstances;
+use Infrawrench\BulkInstances\GCPInstance;
+use Infrawrench\BulkInstances\GCPPricingData;
+use Infrawrench\BulkInstances\GCPPricingDataException;
 use Infrawrench\BulkInstances\RunpodInstance;
 use Infrawrench\BulkInstances\RunpodPricingData;
 use Infrawrench\BulkInstances\RunpodPricingDataException;
@@ -84,7 +90,7 @@ if ($instanceType !== null) {
     exit(0);
 }
 
-// RunPod and Alibaba have their own methods and types, and their own exceptions.
+// RunPod, Alibaba, Azure and GCP have their own methods and types, and their own exceptions.
 /** @param class-string<AWSPricingDataException> $exception */
 $providerError = static function (AWSPricingDataException $e, string $exception) use ($error): never {
     if (!$e instanceof $exception) {
@@ -121,6 +127,20 @@ try {
             $providerError($e, AlibabaPricingDataException::class);
         }
         $expectTypes($data, AlibabaPricingData::class, AlibabaInstance::class);
+    } elseif ($platform === 'azure') {
+        try {
+            $data = BulkInstances::downloadAzurePricingData(...$options);
+        } catch (AWSPricingDataException $e) {
+            $providerError($e, AzurePricingDataException::class);
+        }
+        $expectTypes($data, AzurePricingData::class, AzureInstance::class);
+    } elseif ($platform === 'gcp') {
+        try {
+            $data = BulkInstances::downloadGcpPricingData(...$options);
+        } catch (AWSPricingDataException $e) {
+            $providerError($e, GCPPricingDataException::class);
+        }
+        $expectTypes($data, GCPPricingData::class, GCPInstance::class);
     } else {
         $data = $platform === null
             ? BulkInstances::downloadAwsEc2PricingData(...$options)

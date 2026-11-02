@@ -12,12 +12,20 @@ from infrawrench_bulk_instances import (
     AWSInstance,
     AWSPricingData,
     AWSPricingDataError,
+    AzureInstance,
+    AzurePricingData,
+    AzurePricingDataError,
+    GCPInstance,
+    GCPPricingData,
+    GCPPricingDataError,
     RunpodInstance,
     RunpodPricingData,
     RunpodPricingDataError,
     download_alibaba_pricing_data,
     download_aws_ec2_pricing_data,
     download_aws_pricing_data,
+    download_azure_pricing_data,
+    download_gcp_pricing_data,
     download_runpod_pricing_data,
     fetch_aws_instance,
 )
@@ -96,7 +104,7 @@ try:
         "cache_pricing_data": cache == "1",
         "token": None if token == "-" else token,
     }
-    # RunPod and Alibaba have their own functions and types, and their own errors.
+    # RunPod, Alibaba, Azure and GCP have their own functions and types, and their own errors.
     data: AWSPricingData
     if platform == "runpod":
         try:
@@ -112,6 +120,20 @@ try:
             expect_error(e, AlibabaPricingDataError)
             raise
         expect_types(data, AlibabaPricingData, AlibabaInstance)
+    elif platform == "azure":
+        try:
+            data = download_azure_pricing_data(**options)
+        except AWSPricingDataError as e:
+            expect_error(e, AzurePricingDataError)
+            raise
+        expect_types(data, AzurePricingData, AzureInstance)
+    elif platform == "gcp":
+        try:
+            data = download_gcp_pricing_data(**options)
+        except AWSPricingDataError as e:
+            expect_error(e, GCPPricingDataError)
+            raise
+        expect_types(data, GCPPricingData, GCPInstance)
     else:
         data = download_aws_ec2_pricing_data(**options) if platform is None else download_aws_pricing_data(platform, **options)
 except AWSPricingDataError as e:

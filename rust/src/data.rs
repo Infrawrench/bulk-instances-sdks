@@ -293,7 +293,8 @@ impl AwsPricingData {
         Some(AwsInstance::new(self.shared, index))
     }
 
-    /// The offer code, e.g. `AmazonEC2`, `AmazonRDS`, `RunpodPods` or `AlibabaECS`.
+    /// The offer code, e.g. `AmazonEC2`, `AmazonRDS`, `RunpodPods`, `AlibabaECS`, `AzureVM` or
+    /// `GCPCompute`.
     pub fn offer(&self) -> &str {
         self.shared.raw.offer.as_deref().unwrap_or("AmazonEC2")
     }
@@ -678,6 +679,128 @@ impl fmt::Debug for AlibabaInstance {
     }
 }
 
+/// Azure's virtual machine pricing data, keyed by VM size (`Standard_D2s_v3`).
+///
+/// It decodes the same way as [`AwsPricingData`], and derefs to it for everything but
+/// [`get`](Self::get); see the README for what Azure's data holds.
+pub struct AzurePricingData {
+    data: AwsPricingData,
+    instances: Box<[OnceLock<AzureInstance>]>,
+}
+
+impl AzurePricingData {
+    pub(crate) fn new(data: AwsPricingData) -> Self {
+        let instances = data.instances.iter().map(|_| OnceLock::new()).collect();
+        Self { data, instances }
+    }
+
+    /// The VM size with this name, or `None` if the bundle has never listed it.
+    pub fn get(&self, size: &str) -> Option<&AzureInstance> {
+        let &index = self.data.shared.raw.instances.index.get(size)?;
+        Some(
+            self.instances[index].get_or_init(|| {
+                AzureInstance(AwsInstance::new(Arc::clone(&self.data.shared), index))
+            }),
+        )
+    }
+}
+
+impl Deref for AzurePricingData {
+    type Target = AwsPricingData;
+
+    fn deref(&self) -> &AwsPricingData {
+        &self.data
+    }
+}
+
+impl fmt::Debug for AzurePricingData {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("AzurePricingData")
+            .field("instances", &self.instances.len())
+            .finish_non_exhaustive()
+    }
+}
+
+/// One Azure virtual machine size. It derefs to [`AwsInstance`], whose getters it has.
+pub struct AzureInstance(AwsInstance);
+
+impl Deref for AzureInstance {
+    type Target = AwsInstance;
+
+    fn deref(&self) -> &AwsInstance {
+        &self.0
+    }
+}
+
+impl fmt::Debug for AzureInstance {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("AzureInstance")
+            .field("name", &self.name())
+            .finish_non_exhaustive()
+    }
+}
+
+/// Google Cloud's Compute Engine pricing data, keyed by machine type (`n2-standard-2`).
+///
+/// It decodes the same way as [`AwsPricingData`], and derefs to it for everything but
+/// [`get`](Self::get); see the README for what Google Cloud's data holds.
+pub struct GcpPricingData {
+    data: AwsPricingData,
+    instances: Box<[OnceLock<GcpInstance>]>,
+}
+
+impl GcpPricingData {
+    pub(crate) fn new(data: AwsPricingData) -> Self {
+        let instances = data.instances.iter().map(|_| OnceLock::new()).collect();
+        Self { data, instances }
+    }
+
+    /// The machine type with this name, or `None` if the bundle has never listed it.
+    pub fn get(&self, machine_type: &str) -> Option<&GcpInstance> {
+        let &index = self.data.shared.raw.instances.index.get(machine_type)?;
+        Some(
+            self.instances[index].get_or_init(|| {
+                GcpInstance(AwsInstance::new(Arc::clone(&self.data.shared), index))
+            }),
+        )
+    }
+}
+
+impl Deref for GcpPricingData {
+    type Target = AwsPricingData;
+
+    fn deref(&self) -> &AwsPricingData {
+        &self.data
+    }
+}
+
+impl fmt::Debug for GcpPricingData {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("GcpPricingData")
+            .field("instances", &self.instances.len())
+            .finish_non_exhaustive()
+    }
+}
+
+/// One Google Cloud Compute Engine machine type. It derefs to [`AwsInstance`], whose getters it has.
+pub struct GcpInstance(AwsInstance);
+
+impl Deref for GcpInstance {
+    type Target = AwsInstance;
+
+    fn deref(&self) -> &AwsInstance {
+        &self.0
+    }
+}
+
+impl fmt::Debug for GcpInstance {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("GcpInstance")
+            .field("name", &self.name())
+            .finish_non_exhaustive()
+    }
+}
+
 /// The last change per key, keyed in order of first appearance.
 fn latest<'a, T, K: Hash + Eq>(changes: &'a [T], key: impl Fn(&'a T) -> K) -> Vec<&'a T> {
     let mut out: Vec<&T> = Vec::new();
@@ -702,4 +825,8 @@ const _: () = {
     assert_send_sync::<RunpodInstance>();
     assert_send_sync::<AlibabaPricingData>();
     assert_send_sync::<AlibabaInstance>();
+    assert_send_sync::<AzurePricingData>();
+    assert_send_sync::<AzureInstance>();
+    assert_send_sync::<GcpPricingData>();
+    assert_send_sync::<GcpInstance>();
 };

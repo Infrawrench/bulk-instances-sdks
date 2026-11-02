@@ -134,6 +134,44 @@ export async function downloadAlibabaPricingData(options: AlibabaPricingDataOpti
   return new AlibabaPricingData(await loadBundleAs("alibaba", options, AlibabaPricingDataError));
 }
 
+/** Options for {@link downloadAzurePricingData}: the same as for the AWS platforms. */
+export type AzurePricingDataOptions = AWSPricingDataOptions;
+
+/** Thrown when Azure's pricing data cannot be downloaded. `status` is the HTTP status, if there was a response. */
+export class AzurePricingDataError extends AWSPricingDataError {
+  constructor(message: string, status?: number) {
+    super(message, status);
+    this.name = "AzurePricingDataError";
+  }
+}
+
+/**
+ * Downloads Azure's virtual machine pricing data: pay-as-you-go, Spot and Low Priority prices, reservations and
+ * savings plans per region. Caching and the offline fallback work as for {@link downloadAwsPricingData}.
+ */
+export async function downloadAzurePricingData(options: AzurePricingDataOptions = {}): Promise<AzurePricingData> {
+  return new AzurePricingData(await loadBundleAs("azure", options, AzurePricingDataError));
+}
+
+/** Options for {@link downloadGcpPricingData}: the same as for the AWS platforms. */
+export type GCPPricingDataOptions = AWSPricingDataOptions;
+
+/** Thrown when Google Cloud's pricing data cannot be downloaded. `status` is the HTTP status, if there was a response. */
+export class GCPPricingDataError extends AWSPricingDataError {
+  constructor(message: string, status?: number) {
+    super(message, status);
+    this.name = "GCPPricingDataError";
+  }
+}
+
+/**
+ * Downloads Google Cloud's Compute Engine pricing data: Standard and Spot prices and committed use discounts per
+ * region, for each machine type. Caching and the offline fallback work as for {@link downloadAwsPricingData}.
+ */
+export async function downloadGcpPricingData(options: GCPPricingDataOptions = {}): Promise<GCPPricingData> {
+  return new GCPPricingData(await loadBundleAs("gcp", options, GCPPricingDataError));
+}
+
 /** loadBundle, failing with the provider's own error class. */
 async function loadBundleAs(
   platform: string,
@@ -407,7 +445,7 @@ export class AWSPricingData {
     return new AWSInstance(name, raw, this);
   }
 
-  /** The offer code, e.g. `AmazonEC2`, `AmazonRDS`, `RunpodPods` or `AlibabaECS`. */
+  /** The offer code, e.g. `AmazonEC2`, `AmazonRDS`, `RunpodPods`, `AlibabaECS`, `AzureVM` or `GCPCompute`. */
   get offer(): string {
     return this.#raw.offer ?? "AmazonEC2";
   }
@@ -658,3 +696,39 @@ export class AlibabaPricingData extends AWSPricingData {
 
 /** One Alibaba Cloud ECS instance type. */
 export class AlibabaInstance extends AWSInstance {}
+
+/**
+ * Azure's virtual machine pricing data, keyed by VM size (`Standard_D2s_v3`).
+ * It decodes the same way as {@link AWSPricingData}; see the README for what Azure's data holds.
+ */
+export class AzurePricingData extends AWSPricingData {
+  /** The VM size with this name, or `undefined` if the bundle has never listed it. */
+  override get(size: string): AzureInstance | undefined {
+    return super.get(size) as AzureInstance | undefined;
+  }
+
+  protected override newInstance(name: string, raw: RawInstance): AzureInstance {
+    return new AzureInstance(name, raw, this);
+  }
+}
+
+/** One Azure virtual machine size. */
+export class AzureInstance extends AWSInstance {}
+
+/**
+ * Google Cloud's Compute Engine pricing data, keyed by machine type (`n2-standard-2`).
+ * It decodes the same way as {@link AWSPricingData}; see the README for what Google Cloud's data holds.
+ */
+export class GCPPricingData extends AWSPricingData {
+  /** The machine type with this name, or `undefined` if the bundle has never listed it. */
+  override get(machineType: string): GCPInstance | undefined {
+    return super.get(machineType) as GCPInstance | undefined;
+  }
+
+  protected override newInstance(name: string, raw: RawInstance): GCPInstance {
+    return new GCPInstance(name, raw, this);
+  }
+}
+
+/** One Google Cloud Compute Engine machine type. */
+export class GCPInstance extends AWSInstance {}

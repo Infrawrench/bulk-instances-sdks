@@ -11,7 +11,8 @@ namespace Infrawrench\BulkInstances;
  * raw rows, and each method on the returned {@see AWSInstance} decodes its part on
  * first access and keeps the result.
  *
- * {@see RunpodPricingData} and {@see AlibabaPricingData} extend it for the other clouds Infrawrench publishes.
+ * {@see RunpodPricingData}, {@see AlibabaPricingData}, {@see AzurePricingData} and {@see GCPPricingData} extend it for the
+ * other clouds Infrawrench publishes.
  *
  * @phpstan-type AttributeChangeRow array{0: int, 1: int, 2?: int|null, 3?: int|null}
  * @phpstan-type OnDemandRow array{0: int, 1: int, 2: int, 3?: int|float|null}
@@ -110,7 +111,7 @@ class AWSPricingData
         return new AWSInstance($name, $raw, $this);
     }
 
-    /** The offer code, e.g. `AmazonEC2`, `AmazonRDS`, `RunpodPods` or `AlibabaECS`. EC2 bundles leave it out. */
+    /** The offer code, e.g. `AmazonEC2`, `AmazonRDS`, `RunpodPods`, `AlibabaECS`, `AzureVM` or `GCPCompute`. EC2 bundles leave it out. */
     public function offer(): string
     {
         return $this->raw['offer'] ?? 'AmazonEC2';

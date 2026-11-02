@@ -1,0 +1,498 @@
+{
+ "offer": "GCPCompute",
+ "variantKeys": [
+  "provisioningModel"
+ ],
+ "snapshots": [
+  1700000000,
+  1710000000,
+  1720000000
+ ],
+ "regions": {
+  "europe-west1": {
+   "locationType": "Google Cloud Region",
+   "regionCode": "europe-west1"
+  },
+  "us-central1": {
+   "locationType": "Google Cloud Region",
+   "regionCode": "us-central1"
+  }
+ },
+ "keys": [
+  "a2-highgpu-1g",
+  "n2-standard-2"
+ ],
+ "has": {
+  "m5.large": false,
+  "nope": false
+ },
+ "getMissing": null,
+ "instances": {
+  "n2-standard-2": {
+   "name": "n2-standard-2",
+   "createdAt": 1700000000,
+   "deletedAt": null,
+   "attributes": {
+    "description": "2 vCPUs 8 GB RAM",
+    "guestCpus": "2",
+    "isSharedCpu": "false",
+    "memoryMb": "8192",
+    "productFamily": "Compute Engine",
+    "zones": "us-central1-a,us-central1-b"
+   },
+   "attributesIn": {
+    "europe-west1": {
+     "description": "2 vCPUs 8 GB RAM",
+     "guestCpus": "2",
+     "isSharedCpu": "false",
+     "memoryMb": "8192",
+     "productFamily": "Compute Engine",
+     "zones": "europe-west1-b,europe-west1-c"
+    },
+    "us-central1": {
+     "description": "2 vCPUs 8 GB RAM",
+     "guestCpus": "2",
+     "isSharedCpu": "false",
+     "memoryMb": "8192",
+     "productFamily": "Compute Engine",
+     "zones": "us-central1-a"
+    },
+    "Mystery": {
+     "description": "2 vCPUs 8 GB RAM",
+     "guestCpus": "2",
+     "isSharedCpu": "false",
+     "memoryMb": "8192",
+     "productFamily": "Compute Engine",
+     "zones": "us-central1-a,us-central1-b"
+    },
+    "Nowhere": {
+     "description": "2 vCPUs 8 GB RAM",
+     "guestCpus": "2",
+     "isSharedCpu": "false",
+     "memoryMb": "8192",
+     "productFamily": "Compute Engine",
+     "zones": "us-central1-a,us-central1-b"
+    }
+   },
+   "attributesHistory": [
+    {
+     "at": 1700000000,
+     "key": "description",
+     "value": "2 vCPUs 8 GB RAM",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "guestCpus",
+     "value": "2",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "isSharedCpu",
+     "value": "false",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "memoryMb",
+     "value": "8192",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "productFamily",
+     "value": "Compute Engine",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "zones",
+     "value": "us-central1-a,us-central1-b",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "zones",
+     "value": "europe-west1-b,europe-west1-c",
+     "region": "europe-west1"
+    },
+    {
+     "at": 1720000000,
+     "key": "zones",
+     "value": "us-central1-a",
+     "region": "us-central1"
+    }
+   ],
+   "pricing": {
+    "onDemand": [
+     {
+      "region": "us-central1",
+      "regionCode": "us-central1",
+      "variant": {
+       "provisioningModel": "Standard"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.097118,
+      "since": 1700000000
+     },
+     {
+      "region": "us-central1",
+      "regionCode": "us-central1",
+      "variant": {
+       "provisioningModel": "Spot"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.0571,
+      "since": 1710000000
+     },
+     {
+      "region": "europe-west1",
+      "regionCode": "europe-west1",
+      "variant": {
+       "provisioningModel": "Standard"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.106836,
+      "since": 1700000000
+     }
+    ],
+    "reserved": [
+     {
+      "region": "us-central1",
+      "regionCode": "us-central1",
+      "variant": {
+       "provisioningModel": "Standard"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1yr",
+      "offeringClass": "Committed Use",
+      "purchaseOption": "No Upfront",
+      "hourly": 0.061182,
+      "upfront": 0,
+      "since": 1700000000
+     },
+     {
+      "region": "us-central1",
+      "regionCode": "us-central1",
+      "variant": {
+       "provisioningModel": "Standard"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "3yr",
+      "offeringClass": "Committed Use",
+      "purchaseOption": "No Upfront",
+      "hourly": 0.043706,
+      "upfront": 0,
+      "since": 1700000000
+     }
+    ]
+   },
+   "pricingHistory": {
+    "onDemand": [
+     {
+      "at": 1700000000,
+      "region": "us-central1",
+      "regionCode": "us-central1",
+      "variant": {
+       "provisioningModel": "Standard"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.097118
+     },
+     {
+      "at": 1700000000,
+      "region": "us-central1",
+      "regionCode": "us-central1",
+      "variant": {
+       "provisioningModel": "Spot"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.058256
+     },
+     {
+      "at": 1700000000,
+      "region": "europe-west1",
+      "regionCode": "europe-west1",
+      "variant": {
+       "provisioningModel": "Standard"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.106836
+     },
+     {
+      "at": 1710000000,
+      "region": "us-central1",
+      "regionCode": "us-central1",
+      "variant": {
+       "provisioningModel": "Spot"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.0571
+     }
+    ],
+    "reserved": [
+     {
+      "at": 1700000000,
+      "region": "us-central1",
+      "regionCode": "us-central1",
+      "variant": {
+       "provisioningModel": "Standard"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1yr",
+      "offeringClass": "Committed Use",
+      "purchaseOption": "No Upfront",
+      "hourly": 0.061182,
+      "upfront": 0
+     },
+     {
+      "at": 1700000000,
+      "region": "us-central1",
+      "regionCode": "us-central1",
+      "variant": {
+       "provisioningModel": "Standard"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "3yr",
+      "offeringClass": "Committed Use",
+      "purchaseOption": "No Upfront",
+      "hourly": 0.043706,
+      "upfront": 0
+     }
+    ]
+   }
+  },
+  "a2-highgpu-1g": {
+   "name": "a2-highgpu-1g",
+   "createdAt": 1700000000,
+   "deletedAt": 1720000000,
+   "attributes": {
+    "acceleratorCount": "1",
+    "acceleratorType": "nvidia-tesla-a100",
+    "guestCpus": "12",
+    "memoryMb": "87040",
+    "productFamily": "Compute Engine",
+    "zones": "us-central1-a"
+   },
+   "attributesIn": {
+    "europe-west1": {
+     "acceleratorCount": "1",
+     "acceleratorType": "nvidia-tesla-a100",
+     "guestCpus": "12",
+     "memoryMb": "87040",
+     "productFamily": "Compute Engine",
+     "zones": "us-central1-a"
+    },
+    "us-central1": {
+     "acceleratorCount": "1",
+     "acceleratorType": "nvidia-tesla-a100",
+     "guestCpus": "12",
+     "memoryMb": "87040",
+     "productFamily": "Compute Engine",
+     "zones": "us-central1-a"
+    },
+    "Mystery": {
+     "acceleratorCount": "1",
+     "acceleratorType": "nvidia-tesla-a100",
+     "guestCpus": "12",
+     "memoryMb": "87040",
+     "productFamily": "Compute Engine",
+     "zones": "us-central1-a"
+    },
+    "Nowhere": {
+     "acceleratorCount": "1",
+     "acceleratorType": "nvidia-tesla-a100",
+     "guestCpus": "12",
+     "memoryMb": "87040",
+     "productFamily": "Compute Engine",
+     "zones": "us-central1-a"
+    }
+   },
+   "attributesHistory": [
+    {
+     "at": 1700000000,
+     "key": "acceleratorCount",
+     "value": "1",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "acceleratorType",
+     "value": "nvidia-tesla-a100",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "guestCpus",
+     "value": "12",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "memoryMb",
+     "value": "87040",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "productFamily",
+     "value": "Compute Engine",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "zones",
+     "value": "us-central1-a",
+     "region": null
+    }
+   ],
+   "pricing": {
+    "onDemand": [],
+    "reserved": []
+   },
+   "pricingHistory": {
+    "onDemand": [
+     {
+      "at": 1700000000,
+      "region": "us-central1",
+      "regionCode": "us-central1",
+      "variant": {
+       "provisioningModel": "Standard"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 3.673385
+     },
+     {
+      "at": 1700000000,
+      "region": "us-central1",
+      "regionCode": "us-central1",
+      "variant": {
+       "provisioningModel": "Spot"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 1.98913
+     },
+     {
+      "at": 1720000000,
+      "region": "us-central1",
+      "regionCode": "us-central1",
+      "variant": {
+       "provisioningModel": "Standard"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": null
+     },
+     {
+      "at": 1720000000,
+      "region": "us-central1",
+      "regionCode": "us-central1",
+      "variant": {
+       "provisioningModel": "Spot"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": null
+     }
+    ],
+    "reserved": [
+     {
+      "at": 1700000000,
+      "region": "us-central1",
+      "regionCode": "us-central1",
+      "variant": {
+       "provisioningModel": "Standard"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1yr",
+      "offeringClass": "Committed Use",
+      "purchaseOption": "No Upfront",
+      "hourly": 2.31420704,
+      "upfront": 0
+     },
+     {
+      "at": 1720000000,
+      "region": "us-central1",
+      "regionCode": "us-central1",
+      "variant": {
+       "provisioningModel": "Standard"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1yr",
+      "offeringClass": "Committed Use",
+      "purchaseOption": "No Upfront",
+      "hourly": null,
+      "upfront": null
+     }
+    ]
+   }
+  }
+ }
+}

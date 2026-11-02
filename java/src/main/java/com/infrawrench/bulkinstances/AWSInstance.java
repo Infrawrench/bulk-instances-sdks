@@ -17,9 +17,10 @@ import java.util.function.DoubleFunction;
 /**
  * One instance type. Each getter decodes on first access and caches the result.
  *
- * <p>{@link RunpodInstance} and {@link AlibabaInstance} are the same for RunPod's and Alibaba Cloud's data.
+ * <p>{@link RunpodInstance}, {@link AlibabaInstance}, {@link AzureInstance} and {@link GCPInstance} are the same for
+ * RunPod's, Alibaba Cloud's, Azure's and Google Cloud's data.
  */
-public sealed class AWSInstance permits RunpodInstance, AlibabaInstance {
+public sealed class AWSInstance permits RunpodInstance, AlibabaInstance, AzureInstance, GCPInstance {
     private final String name;
     private final RawInstance raw;
     private final PricingData<?> data;

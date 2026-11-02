@@ -1,8 +1,8 @@
 """Writes small bundles that exercise every decoding rule.
 
 fixture/bundle-<NAME>.json(.xz) and fixture/latest are an EC2 bundle. fixture/rds-bundle-<NAME>.json(.xz) and
-fixture/rds-latest are an RDS one, which names its own variant keys. fixture/runpod-* and fixture/alibaba-* are
-bundles for other clouds. fixture/api/<platform>/<instance>.json is each AWS instance as the Infrawrench API serves
+fixture/rds-latest are an RDS one, which names its own variant keys. fixture/runpod-*, fixture/alibaba-*,
+fixture/azure-* and fixture/gcp-* are bundles for other clouds. fixture/api/<platform>/<instance>.json is each AWS instance as the Infrawrench API serves
 it from `/api/v1/aws-bulk-pricing/<platform>/<instance>`.
 """
 import json, lzma, os, sys
@@ -306,4 +306,91 @@ alibaba = {
     },
 }
 write("alibaba-", alibaba)
+
+# Azure: ARM region names as locations, operatingSystem and priority as variant keys, reservations as All Upfront
+# rows (hourly 0) and savings plans as No Upfront rows (upfront left out), a size with no calculator specs.
+table = []
+EUS, WEU = s("eastus"), s("westeurope")
+LINUX_REG, WIN_REG, LINUX_SPOT, WIN_LOW = 0, 1, 2, 3
+azure = {
+    "offer": "AzureVM",
+    "compression_table": table,
+    "snapshots": [t1, t2],
+    "regions": [
+        [EUS, [[s("locationType"), s("Azure Region")], [s("name"), s("US East")], [s("regionCode"), EUS]]],
+        [WEU, [[s("locationType"), s("Azure Region")], [s("name"), s("EU West")], [s("regionCode"), WEU]]],
+    ],
+    "variant_keys": ["operatingSystem", "priority"],
+    "variants": [[s("Linux"), s("Regular")], [s("Windows"), s("Regular")], [s("Linux"), s("Spot")], [s("Windows"), s("Low Priority")]],
+    "reserved_terms": [
+        [s("1yr"), s("Reserved Instance"), s("All Upfront")],
+        [s("1yr"), s("Savings Plan"), s("No Upfront")],
+        [s("3yr"), s("Savings Plan"), s("No Upfront")],
+    ],
+    "instances": {
+        "Standard_D2s_v3": [
+            [[s("cores"), s("2")], [s("diskSize"), s("16")], [s("isVcpu"), s("true")], [s("productFamily"), s("Virtual Machines")],
+             [s("productName"), s("Virtual Machines DSv3 Series")], [s("ram"), s("8.0")], [s("series"), s("Dsv3")], [s("skuName"), s("D2s v3")]],
+            [],
+            0.096,
+            [[t1 - 86400 * 365, EUS, LINUX_REG], [t1 - 86400 * 365, EUS, WIN_REG, 0.188], [t1, EUS, LINUX_SPOT, 0.01919],
+             [t1, EUS, WIN_LOW, 0.075], [t1, WEU, LINUX_REG, 0.12], [t2, EUS, LINUX_SPOT, 0.0215]],
+            [[t1, EUS, LINUX_REG, 0, 0, 500], [t1, EUS, LINUX_REG, 1, 0.06624], [t1, EUS, LINUX_REG, 2, 0.04512],
+             [t2, EUS, LINUX_REG, 0, None]],
+            t1,
+            None,
+        ],
+        "Standard_D2pds_v7": [
+            [[s("productFamily"), s("Virtual Machines")], [s("skuName"), s("D2pds v7")]],
+            [[t2, s("productName"), s("Virtual Machines Dpdsv7 Series"), EUS]],
+            0.08,
+            [[t2, EUS, LINUX_REG]],
+            [],
+            t2,
+            None,
+        ],
+    },
+}
+write("azure-", azure)
+
+# Google Cloud Compute Engine: region names as locations, provisioningModel as the one variant key, committed use
+# discounts as No Upfront rows, each region's zones as a regional attribute override, a machine type that goes away.
+table = []
+USC, EUW = s("us-central1"), s("europe-west1")
+STD, SPOT = 0, 1
+gcp = {
+    "offer": "GCPCompute",
+    "compression_table": table,
+    "snapshots": [t1, t2, t3],
+    "regions": [
+        [EUW, [[s("locationType"), s("Google Cloud Region")], [s("regionCode"), EUW]]],
+        [USC, [[s("locationType"), s("Google Cloud Region")], [s("regionCode"), USC]]],
+    ],
+    "variant_keys": ["provisioningModel"],
+    "variants": [[s("Standard")], [s("Spot")]],
+    "reserved_terms": [[s("1yr"), s("Committed Use"), s("No Upfront")], [s("3yr"), s("Committed Use"), s("No Upfront")]],
+    "instances": {
+        "n2-standard-2": [
+            [[s("description"), s("2 vCPUs 8 GB RAM")], [s("guestCpus"), s("2")], [s("isSharedCpu"), s("false")],
+             [s("memoryMb"), s("8192")], [s("productFamily"), s("Compute Engine")], [s("zones"), s("us-central1-a,us-central1-b")]],
+            [[t1, s("zones"), s("europe-west1-b,europe-west1-c"), EUW], [t3, s("zones"), s("us-central1-a"), USC]],
+            0.097118,
+            [[t1, USC, STD], [t1, USC, SPOT, 0.058256], [t1, EUW, STD, 0.106836], [t2, USC, SPOT, 0.0571]],
+            [[t1, USC, STD, 0, 0.061182], [t1, USC, STD, 1, 0.043706]],
+            t1,
+            None,
+        ],
+        "a2-highgpu-1g": [
+            [[s("acceleratorCount"), s("1")], [s("acceleratorType"), s("nvidia-tesla-a100")], [s("guestCpus"), s("12")],
+             [s("memoryMb"), s("87040")], [s("productFamily"), s("Compute Engine")], [s("zones"), s("us-central1-a")]],
+            [],
+            3.673385,
+            [[t1, USC, STD], [t1, USC, SPOT, 1.98913], [t3, USC, STD, None], [t3, USC, SPOT, None]],
+            [[t1, USC, STD, 0, 2.31420704], [t3, USC, STD, 0, None]],
+            t1,
+            t3,
+        ],
+    },
+}
+write("gcp-", gcp)
 print(out)

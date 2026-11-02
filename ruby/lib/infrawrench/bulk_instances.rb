@@ -14,6 +14,8 @@ require_relative "bulk_instances/aws_pricing_data"
 require_relative "bulk_instances/aws_instance"
 require_relative "bulk_instances/runpod_pricing_data"
 require_relative "bulk_instances/alibaba_pricing_data"
+require_relative "bulk_instances/azure_pricing_data"
+require_relative "bulk_instances/gcp_pricing_data"
 
 module Infrawrench
   # AWS instance attributes and pricing (EC2, RDS, ElastiCache and more), with full history, from Infrawrench.
@@ -109,6 +111,38 @@ module Infrawrench
       def download_alibaba_pricing_data(token: nil, cache_pricing_data: true, cache_path: nil, base_url: nil)
         AlibabaPricingData.new(
           load_bundle_as("alibaba", AlibabaPricingDataError, token:, cache_pricing_data:, cache_path:, base_url:),
+        )
+      end
+
+      # Downloads Azure's virtual machine pricing data: pay-as-you-go, Spot and Low Priority prices, reservations and
+      # savings plans per region. Caching and the offline fallback work as for #download_aws_pricing_data, and it
+      # takes the same options.
+      #
+      # @param token [String, nil] Your Infrawrench API token. Defaults to the +INFRAWRENCH_API_KEY+ environment variable.
+      # @param cache_pricing_data [Boolean] Whether to cache the pricing data.
+      # @param cache_path [String, nil] The cache path. Defaults to <tt>~/.infrawrench/aws_pricing_data</tt>.
+      # @param base_url [String, nil] Where the bundles are served from. Defaults to https://instances-bundles.infrawrench.com
+      # @return [AzurePricingData]
+      # @raise [AzurePricingDataError]
+      def download_azure_pricing_data(token: nil, cache_pricing_data: true, cache_path: nil, base_url: nil)
+        AzurePricingData.new(
+          load_bundle_as("azure", AzurePricingDataError, token:, cache_pricing_data:, cache_path:, base_url:),
+        )
+      end
+
+      # Downloads Google Cloud's Compute Engine pricing data: Standard and Spot prices and committed use discounts per
+      # region, for each machine type. Caching and the offline fallback work as for #download_aws_pricing_data, and it
+      # takes the same options.
+      #
+      # @param token [String, nil] Your Infrawrench API token. Defaults to the +INFRAWRENCH_API_KEY+ environment variable.
+      # @param cache_pricing_data [Boolean] Whether to cache the pricing data.
+      # @param cache_path [String, nil] The cache path. Defaults to <tt>~/.infrawrench/aws_pricing_data</tt>.
+      # @param base_url [String, nil] Where the bundles are served from. Defaults to https://instances-bundles.infrawrench.com
+      # @return [GCPPricingData]
+      # @raise [GCPPricingDataError]
+      def download_gcp_pricing_data(token: nil, cache_pricing_data: true, cache_path: nil, base_url: nil)
+        GCPPricingData.new(
+          load_bundle_as("gcp", GCPPricingDataError, token:, cache_pricing_data:, cache_path:, base_url:),
         )
       end
 

@@ -385,7 +385,8 @@ func (d *AWSPricingData) Get(instanceType string) (*AWSInstance, bool) {
 	return inst, true
 }
 
-// Offer returns the offer code, e.g. "AmazonEC2", "AmazonRDS", "RunpodPods" or "AlibabaECS".
+// Offer returns the offer code, e.g. "AmazonEC2", "AmazonRDS", "RunpodPods", "AlibabaECS",
+// "AzureVM" or "GCPCompute".
 func (d *AWSPricingData) Offer() string {
 	if d.raw.offer == nil {
 		return "AmazonEC2"
@@ -780,5 +781,50 @@ func (d *AlibabaPricingData) Get(instanceType string) (*AlibabaInstance, bool) {
 // AlibabaInstance is one Alibaba Cloud ECS instance type. It has the methods of
 // [AWSInstance].
 type AlibabaInstance struct {
+	*AWSInstance
+}
+
+// AzurePricingData is Azure's virtual machine pricing data, keyed by VM size
+// ("Standard_D2s_v3"). It decodes the same way as [AWSPricingData], whose methods it
+// has; see the README for what Azure's data holds.
+type AzurePricingData struct {
+	*AWSPricingData
+}
+
+// Get returns the VM size with this name, or false if the bundle has never listed it.
+func (d *AzurePricingData) Get(size string) (*AzureInstance, bool) {
+	inst, ok := d.AWSPricingData.Get(size)
+	if !ok {
+		return nil, false
+	}
+	return &AzureInstance{inst}, true
+}
+
+// AzureInstance is one Azure virtual machine size. It has the methods of
+// [AWSInstance].
+type AzureInstance struct {
+	*AWSInstance
+}
+
+// GCPPricingData is Google Cloud's Compute Engine pricing data, keyed by machine type
+// ("n2-standard-2"). It decodes the same way as [AWSPricingData], whose methods it
+// has; see the README for what Google Cloud's data holds.
+type GCPPricingData struct {
+	*AWSPricingData
+}
+
+// Get returns the machine type with this name, or false if the bundle has never
+// listed it.
+func (d *GCPPricingData) Get(machineType string) (*GCPInstance, bool) {
+	inst, ok := d.AWSPricingData.Get(machineType)
+	if !ok {
+		return nil, false
+	}
+	return &GCPInstance{inst}, true
+}
+
+// GCPInstance is one Google Cloud Compute Engine machine type. It has the methods of
+// [AWSInstance].
+type GCPInstance struct {
 	*AWSInstance
 }

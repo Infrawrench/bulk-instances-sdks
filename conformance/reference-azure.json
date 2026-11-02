@@ -1,0 +1,520 @@
+{
+ "offer": "AzureVM",
+ "variantKeys": [
+  "operatingSystem",
+  "priority"
+ ],
+ "snapshots": [
+  1700000000,
+  1710000000
+ ],
+ "regions": {
+  "eastus": {
+   "locationType": "Azure Region",
+   "name": "US East",
+   "regionCode": "eastus"
+  },
+  "westeurope": {
+   "locationType": "Azure Region",
+   "name": "EU West",
+   "regionCode": "westeurope"
+  }
+ },
+ "keys": [
+  "Standard_D2pds_v7",
+  "Standard_D2s_v3"
+ ],
+ "has": {
+  "m5.large": false,
+  "nope": false
+ },
+ "getMissing": null,
+ "instances": {
+  "Standard_D2s_v3": {
+   "name": "Standard_D2s_v3",
+   "createdAt": 1700000000,
+   "deletedAt": null,
+   "attributes": {
+    "cores": "2",
+    "diskSize": "16",
+    "isVcpu": "true",
+    "productFamily": "Virtual Machines",
+    "productName": "Virtual Machines DSv3 Series",
+    "ram": "8.0",
+    "series": "Dsv3",
+    "skuName": "D2s v3"
+   },
+   "attributesIn": {
+    "eastus": {
+     "cores": "2",
+     "diskSize": "16",
+     "isVcpu": "true",
+     "productFamily": "Virtual Machines",
+     "productName": "Virtual Machines DSv3 Series",
+     "ram": "8.0",
+     "series": "Dsv3",
+     "skuName": "D2s v3"
+    },
+    "westeurope": {
+     "cores": "2",
+     "diskSize": "16",
+     "isVcpu": "true",
+     "productFamily": "Virtual Machines",
+     "productName": "Virtual Machines DSv3 Series",
+     "ram": "8.0",
+     "series": "Dsv3",
+     "skuName": "D2s v3"
+    },
+    "Mystery": {
+     "cores": "2",
+     "diskSize": "16",
+     "isVcpu": "true",
+     "productFamily": "Virtual Machines",
+     "productName": "Virtual Machines DSv3 Series",
+     "ram": "8.0",
+     "series": "Dsv3",
+     "skuName": "D2s v3"
+    },
+    "Nowhere": {
+     "cores": "2",
+     "diskSize": "16",
+     "isVcpu": "true",
+     "productFamily": "Virtual Machines",
+     "productName": "Virtual Machines DSv3 Series",
+     "ram": "8.0",
+     "series": "Dsv3",
+     "skuName": "D2s v3"
+    }
+   },
+   "attributesHistory": [
+    {
+     "at": 1700000000,
+     "key": "cores",
+     "value": "2",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "diskSize",
+     "value": "16",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "isVcpu",
+     "value": "true",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "productFamily",
+     "value": "Virtual Machines",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "productName",
+     "value": "Virtual Machines DSv3 Series",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "ram",
+     "value": "8.0",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "series",
+     "value": "Dsv3",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "skuName",
+     "value": "D2s v3",
+     "region": null
+    }
+   ],
+   "pricing": {
+    "onDemand": [
+     {
+      "region": "eastus",
+      "regionCode": "eastus",
+      "variant": {
+       "operatingSystem": "Linux",
+       "priority": "Regular"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.096,
+      "since": 1668464000
+     },
+     {
+      "region": "eastus",
+      "regionCode": "eastus",
+      "variant": {
+       "operatingSystem": "Windows",
+       "priority": "Regular"
+      },
+      "operatingSystem": "Windows",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.188,
+      "since": 1668464000
+     },
+     {
+      "region": "eastus",
+      "regionCode": "eastus",
+      "variant": {
+       "operatingSystem": "Linux",
+       "priority": "Spot"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.0215,
+      "since": 1710000000
+     },
+     {
+      "region": "eastus",
+      "regionCode": "eastus",
+      "variant": {
+       "operatingSystem": "Windows",
+       "priority": "Low Priority"
+      },
+      "operatingSystem": "Windows",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.075,
+      "since": 1700000000
+     },
+     {
+      "region": "westeurope",
+      "regionCode": "westeurope",
+      "variant": {
+       "operatingSystem": "Linux",
+       "priority": "Regular"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.12,
+      "since": 1700000000
+     }
+    ],
+    "reserved": [
+     {
+      "region": "eastus",
+      "regionCode": "eastus",
+      "variant": {
+       "operatingSystem": "Linux",
+       "priority": "Regular"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1yr",
+      "offeringClass": "Savings Plan",
+      "purchaseOption": "No Upfront",
+      "hourly": 0.06624,
+      "upfront": 0,
+      "since": 1700000000
+     },
+     {
+      "region": "eastus",
+      "regionCode": "eastus",
+      "variant": {
+       "operatingSystem": "Linux",
+       "priority": "Regular"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "3yr",
+      "offeringClass": "Savings Plan",
+      "purchaseOption": "No Upfront",
+      "hourly": 0.04512,
+      "upfront": 0,
+      "since": 1700000000
+     }
+    ]
+   },
+   "pricingHistory": {
+    "onDemand": [
+     {
+      "at": 1668464000,
+      "region": "eastus",
+      "regionCode": "eastus",
+      "variant": {
+       "operatingSystem": "Linux",
+       "priority": "Regular"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.096
+     },
+     {
+      "at": 1668464000,
+      "region": "eastus",
+      "regionCode": "eastus",
+      "variant": {
+       "operatingSystem": "Windows",
+       "priority": "Regular"
+      },
+      "operatingSystem": "Windows",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.188
+     },
+     {
+      "at": 1700000000,
+      "region": "eastus",
+      "regionCode": "eastus",
+      "variant": {
+       "operatingSystem": "Linux",
+       "priority": "Spot"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.01919
+     },
+     {
+      "at": 1700000000,
+      "region": "eastus",
+      "regionCode": "eastus",
+      "variant": {
+       "operatingSystem": "Windows",
+       "priority": "Low Priority"
+      },
+      "operatingSystem": "Windows",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.075
+     },
+     {
+      "at": 1700000000,
+      "region": "westeurope",
+      "regionCode": "westeurope",
+      "variant": {
+       "operatingSystem": "Linux",
+       "priority": "Regular"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.12
+     },
+     {
+      "at": 1710000000,
+      "region": "eastus",
+      "regionCode": "eastus",
+      "variant": {
+       "operatingSystem": "Linux",
+       "priority": "Spot"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.0215
+     }
+    ],
+    "reserved": [
+     {
+      "at": 1700000000,
+      "region": "eastus",
+      "regionCode": "eastus",
+      "variant": {
+       "operatingSystem": "Linux",
+       "priority": "Regular"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1yr",
+      "offeringClass": "Reserved Instance",
+      "purchaseOption": "All Upfront",
+      "hourly": 0,
+      "upfront": 500
+     },
+     {
+      "at": 1700000000,
+      "region": "eastus",
+      "regionCode": "eastus",
+      "variant": {
+       "operatingSystem": "Linux",
+       "priority": "Regular"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1yr",
+      "offeringClass": "Savings Plan",
+      "purchaseOption": "No Upfront",
+      "hourly": 0.06624,
+      "upfront": 0
+     },
+     {
+      "at": 1700000000,
+      "region": "eastus",
+      "regionCode": "eastus",
+      "variant": {
+       "operatingSystem": "Linux",
+       "priority": "Regular"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "3yr",
+      "offeringClass": "Savings Plan",
+      "purchaseOption": "No Upfront",
+      "hourly": 0.04512,
+      "upfront": 0
+     },
+     {
+      "at": 1710000000,
+      "region": "eastus",
+      "regionCode": "eastus",
+      "variant": {
+       "operatingSystem": "Linux",
+       "priority": "Regular"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1yr",
+      "offeringClass": "Reserved Instance",
+      "purchaseOption": "All Upfront",
+      "hourly": null,
+      "upfront": null
+     }
+    ]
+   }
+  },
+  "Standard_D2pds_v7": {
+   "name": "Standard_D2pds_v7",
+   "createdAt": 1710000000,
+   "deletedAt": null,
+   "attributes": {
+    "productFamily": "Virtual Machines",
+    "skuName": "D2pds v7"
+   },
+   "attributesIn": {
+    "eastus": {
+     "productFamily": "Virtual Machines",
+     "skuName": "D2pds v7",
+     "productName": "Virtual Machines Dpdsv7 Series"
+    },
+    "westeurope": {
+     "productFamily": "Virtual Machines",
+     "skuName": "D2pds v7"
+    },
+    "Mystery": {
+     "productFamily": "Virtual Machines",
+     "skuName": "D2pds v7"
+    },
+    "Nowhere": {
+     "productFamily": "Virtual Machines",
+     "skuName": "D2pds v7"
+    }
+   },
+   "attributesHistory": [
+    {
+     "at": 1710000000,
+     "key": "productFamily",
+     "value": "Virtual Machines",
+     "region": null
+    },
+    {
+     "at": 1710000000,
+     "key": "skuName",
+     "value": "D2pds v7",
+     "region": null
+    },
+    {
+     "at": 1710000000,
+     "key": "productName",
+     "value": "Virtual Machines Dpdsv7 Series",
+     "region": "eastus"
+    }
+   ],
+   "pricing": {
+    "onDemand": [
+     {
+      "region": "eastus",
+      "regionCode": "eastus",
+      "variant": {
+       "operatingSystem": "Linux",
+       "priority": "Regular"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.08,
+      "since": 1710000000
+     }
+    ],
+    "reserved": []
+   },
+   "pricingHistory": {
+    "onDemand": [
+     {
+      "at": 1710000000,
+      "region": "eastus",
+      "regionCode": "eastus",
+      "variant": {
+       "operatingSystem": "Linux",
+       "priority": "Regular"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.08
+     }
+    ],
+    "reserved": []
+   }
+  }
+ }
+}

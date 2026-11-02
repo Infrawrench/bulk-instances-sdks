@@ -25,8 +25,9 @@ namespace Infrawrench.BulkInstances;
 /// concurrently may be decoded more than once.
 /// </para>
 /// <para>
-/// <see cref="RunpodPricingData"/> and <see cref="AlibabaPricingData"/> are the same for RunPod's and Alibaba Cloud's
-/// data; their <c>Get</c> returns their own instance class.
+/// <see cref="RunpodPricingData"/>, <see cref="AlibabaPricingData"/>, <see cref="AzurePricingData"/> and
+/// <see cref="GcpPricingData"/> are the same for RunPod's, Alibaba Cloud's, Azure's and Google Cloud's data; their
+/// <c>Get</c> returns their own instance class.
 /// </para>
 /// </remarks>
 public class AwsPricingData
@@ -130,7 +131,10 @@ public class AwsPricingData
         VariantKeys = variantKeys is null ? BulkInstances.Ec2VariantKeys : Array.AsReadOnly(variantKeys);
     }
 
-    /// <summary>The offer code, e.g. <c>AmazonEC2</c>, <c>AmazonRDS</c>, <c>RunpodPods</c> or <c>AlibabaECS</c>.</summary>
+    /// <summary>
+    /// The offer code, e.g. <c>AmazonEC2</c>, <c>AmazonRDS</c>, <c>RunpodPods</c>, <c>AlibabaECS</c>, <c>AzureVM</c> or
+    /// <c>GCPCompute</c>.
+    /// </summary>
     public string Offer { get; }
 
     /// <summary>

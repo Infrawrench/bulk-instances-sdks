@@ -14,8 +14,9 @@ use ureq::{Agent, Body};
 
 pub use crate::data::{
     AlibabaInstance, AlibabaPricingData, AttributeChange, AwsInstance, AwsPricingData,
-    EC2_VARIANT_KEYS, OnDemandPrice, OnDemandPriceChange, Pricing, PricingHistory, Regions,
-    ReservedPrice, ReservedPriceChange, ReservedTerm, RunpodInstance, RunpodPricingData, Variant,
+    AzureInstance, AzurePricingData, EC2_VARIANT_KEYS, GcpInstance, GcpPricingData, OnDemandPrice,
+    OnDemandPriceChange, Pricing, PricingHistory, Regions, ReservedPrice, ReservedPriceChange,
+    ReservedTerm, RunpodInstance, RunpodPricingData, Variant,
 };
 pub use crate::error::Error;
 use crate::raw::InstanceFile;
@@ -43,7 +44,8 @@ pub const AWS_PLATFORMS: &[&str] = &[
 ];
 
 /// Options for [`download_aws_pricing_data`], [`download_aws_ec2_pricing_data`],
-/// [`download_runpod_pricing_data`] and [`download_alibaba_pricing_data`].
+/// [`download_runpod_pricing_data`], [`download_alibaba_pricing_data`],
+/// [`download_azure_pricing_data`] and [`download_gcp_pricing_data`].
 ///
 /// ```
 /// let options = infrawrench_bulk_instances::Options {
@@ -279,6 +281,26 @@ pub fn download_runpod_pricing_data(options: &Options) -> Result<RunpodPricingDa
 /// with `tokio::task::spawn_blocking`.
 pub fn download_alibaba_pricing_data(options: &Options) -> Result<AlibabaPricingData, Error> {
     load_bundle("alibaba", options).map(AlibabaPricingData::new)
+}
+
+/// Downloads Azure's virtual machine pricing data: pay-as-you-go, Spot and Low Priority prices,
+/// reservations and savings plans per region. Caching and the offline fallback work as for
+/// [`download_aws_pricing_data`].
+///
+/// This blocks on network and disk I/O. From async code, run it on a blocking thread, e.g.
+/// with `tokio::task::spawn_blocking`.
+pub fn download_azure_pricing_data(options: &Options) -> Result<AzurePricingData, Error> {
+    load_bundle("azure", options).map(AzurePricingData::new)
+}
+
+/// Downloads Google Cloud's Compute Engine pricing data: Standard and Spot prices and committed
+/// use discounts per region, for each machine type. Caching and the offline fallback work as for
+/// [`download_aws_pricing_data`].
+///
+/// This blocks on network and disk I/O. From async code, run it on a blocking thread, e.g.
+/// with `tokio::task::spawn_blocking`.
+pub fn download_gcp_pricing_data(options: &Options) -> Result<GcpPricingData, Error> {
+    load_bundle("gcp", options).map(GcpPricingData::new)
 }
 
 /// Downloads (or reads from the cache) one platform's bundle.

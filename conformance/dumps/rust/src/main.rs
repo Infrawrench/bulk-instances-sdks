@@ -2,10 +2,11 @@ use std::collections::BTreeSet;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use infrawrench_bulk_instances::{
-    AlibabaInstance, AlibabaPricingData, AwsInstance, AwsInstanceOptions, AwsPricingData, Error,
-    Options, ReservedTerm, RunpodInstance, RunpodPricingData, Variant,
-    download_alibaba_pricing_data, download_aws_ec2_pricing_data, download_aws_pricing_data,
-    download_runpod_pricing_data, fetch_aws_instance,
+    AlibabaInstance, AlibabaPricingData, AwsInstance, AwsInstanceOptions, AwsPricingData,
+    AzureInstance, AzurePricingData, Error, GcpInstance, GcpPricingData, Options, ReservedTerm,
+    RunpodInstance, RunpodPricingData, Variant, download_alibaba_pricing_data,
+    download_aws_ec2_pricing_data, download_aws_pricing_data, download_azure_pricing_data,
+    download_gcp_pricing_data, download_runpod_pricing_data, fetch_aws_instance,
 };
 use serde_json::{Map, Value, json};
 
@@ -147,7 +148,7 @@ fn main() {
         base_url: Some(base_url.clone()),
     };
     let out = match platform.map(String::as_str) {
-        // RunPod and Alibaba have their own functions and types; `get` is theirs.
+        // RunPod, Alibaba, Azure and GCP have their own functions and types; `get` is theirs.
         Some("runpod") => {
             let data: RunpodPricingData =
                 download_runpod_pricing_data(&options).unwrap_or_else(|e| error(e));
@@ -157,6 +158,16 @@ fn main() {
             let data: AlibabaPricingData =
                 download_alibaba_pricing_data(&options).unwrap_or_else(|e| error(e));
             dump_data(&data, |k| data.get(k).map(|i: &AlibabaInstance| &**i))
+        }
+        Some("azure") => {
+            let data: AzurePricingData =
+                download_azure_pricing_data(&options).unwrap_or_else(|e| error(e));
+            dump_data(&data, |k| data.get(k).map(|i: &AzureInstance| &**i))
+        }
+        Some("gcp") => {
+            let data: GcpPricingData =
+                download_gcp_pricing_data(&options).unwrap_or_else(|e| error(e));
+            dump_data(&data, |k| data.get(k).map(|i: &GcpInstance| &**i))
         }
         None => {
             let data = download_aws_ec2_pricing_data(&options).unwrap_or_else(|e| error(e));

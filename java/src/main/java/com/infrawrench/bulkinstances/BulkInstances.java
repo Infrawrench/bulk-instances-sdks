@@ -22,7 +22,7 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import org.tukaani.xz.XZInputStream;
 
-/** Downloads AWS pricing data (EC2's, or any other platform's), RunPod's and Alibaba Cloud's. */
+/** Downloads AWS pricing data (EC2's, or any other platform's), RunPod's, Alibaba Cloud's, Azure's and Google Cloud's. */
 public final class BulkInstances {
     /**
      * The AWS platforms Infrawrench publishes a bundle for. Any other lowercase name is requested as is, so a
@@ -163,6 +163,60 @@ public final class BulkInstances {
      */
     public static AlibabaPricingData downloadAlibabaPricingData(AlibabaPricingDataOptions options) throws IOException {
         return new AlibabaPricingData(loadBundleAs("alibaba", options, AlibabaPricingDataException::new));
+    }
+
+    /**
+     * Downloads Azure's virtual machine pricing data with the default options.
+     *
+     * @return the pricing data
+     * @throws AzurePricingDataException if the pricing data cannot be downloaded
+     * @throws IOException if the cache cannot be read or written, or the bundle is corrupt
+     * @see #downloadAzurePricingData(AzurePricingDataOptions)
+     */
+    public static AzurePricingData downloadAzurePricingData() throws IOException {
+        return downloadAzurePricingData(AzurePricingDataOptions.builder().build());
+    }
+
+    /**
+     * Downloads Azure's virtual machine pricing data: pay-as-you-go, Spot and Low Priority prices, reservations and
+     * savings plans per region.
+     * Caching and the offline fallback work as for {@link #downloadAwsPricingData(String, AWSPricingDataOptions)}.
+     *
+     * @param options the options
+     * @return the pricing data
+     * @throws AzurePricingDataException if the pricing data cannot be downloaded
+     * @throws IOException if the cache cannot be read or written, or the bundle is corrupt
+     *     ({@link InterruptedIOException} if the thread is interrupted)
+     */
+    public static AzurePricingData downloadAzurePricingData(AzurePricingDataOptions options) throws IOException {
+        return new AzurePricingData(loadBundleAs("azure", options, AzurePricingDataException::new));
+    }
+
+    /**
+     * Downloads Google Cloud's Compute Engine pricing data with the default options.
+     *
+     * @return the pricing data
+     * @throws GCPPricingDataException if the pricing data cannot be downloaded
+     * @throws IOException if the cache cannot be read or written, or the bundle is corrupt
+     * @see #downloadGcpPricingData(GCPPricingDataOptions)
+     */
+    public static GCPPricingData downloadGcpPricingData() throws IOException {
+        return downloadGcpPricingData(GCPPricingDataOptions.builder().build());
+    }
+
+    /**
+     * Downloads Google Cloud's Compute Engine pricing data: Standard and Spot prices and committed use discounts per
+     * region, for each machine type.
+     * Caching and the offline fallback work as for {@link #downloadAwsPricingData(String, AWSPricingDataOptions)}.
+     *
+     * @param options the options
+     * @return the pricing data
+     * @throws GCPPricingDataException if the pricing data cannot be downloaded
+     * @throws IOException if the cache cannot be read or written, or the bundle is corrupt
+     *     ({@link InterruptedIOException} if the thread is interrupted)
+     */
+    public static GCPPricingData downloadGcpPricingData(GCPPricingDataOptions options) throws IOException {
+        return new GCPPricingData(loadBundleAs("gcp", options, GCPPricingDataException::new));
     }
 
     /** {@link #loadBundle}, failing with the provider's own exception class. */

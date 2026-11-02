@@ -6,11 +6,13 @@ import java.util.OptionalInt;
 /**
  * Thrown when the pricing data cannot be downloaded. {@link #status()} is the HTTP status, if there was a response.
  *
- * <p>RunPod's and Alibaba Cloud's functions throw the subclasses {@link RunpodPricingDataException} and
- * {@link AlibabaPricingDataException} instead.
+ * <p>RunPod's, Alibaba Cloud's, Azure's and Google Cloud's functions throw the subclasses
+ * {@link RunpodPricingDataException}, {@link AlibabaPricingDataException}, {@link AzurePricingDataException} and
+ * {@link GCPPricingDataException} instead.
  */
 public sealed class AWSPricingDataException extends IOException
-        permits RunpodPricingDataException, AlibabaPricingDataException {
+        permits RunpodPricingDataException, AlibabaPricingDataException, AzurePricingDataException,
+                GCPPricingDataException {
     private static final long serialVersionUID = 1L;
 
     /** The HTTP status, or 0 if there was no response. */

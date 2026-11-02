@@ -60,7 +60,7 @@ end
 
 begin
   options = { base_url:, cache_path:, cache_pricing_data: cache == "1", token: }
-  # RunPod and Alibaba have their own functions and classes, and their own errors.
+  # RunPod, Alibaba, Azure and GCP have their own functions and classes, and their own errors.
   data = case platform
          when nil then BI.download_aws_ec2_pricing_data(**options)
          when "runpod"
@@ -69,6 +69,12 @@ begin
          when "alibaba"
            expect_types(expect_error(BI::AlibabaPricingDataError) { BI.download_alibaba_pricing_data(**options) },
                         BI::AlibabaPricingData, BI::AlibabaInstance)
+         when "azure"
+           expect_types(expect_error(BI::AzurePricingDataError) { BI.download_azure_pricing_data(**options) },
+                        BI::AzurePricingData, BI::AzureInstance)
+         when "gcp"
+           expect_types(expect_error(BI::GCPPricingDataError) { BI.download_gcp_pricing_data(**options) },
+                        BI::GCPPricingData, BI::GCPInstance)
          else BI.download_aws_pricing_data(platform, **options)
          end
 rescue AWSPricingDataError => e

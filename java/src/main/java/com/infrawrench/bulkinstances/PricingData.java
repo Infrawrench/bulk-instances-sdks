@@ -14,9 +14,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * One bundle's pricing data, keyed by instance type: {@link AWSPricingData} for an AWS platform,
- * {@link RunpodPricingData} for RunPod and {@link AlibabaPricingData} for Alibaba Cloud. They decode the same way and
- * differ only in the instance class {@link #get} returns, {@code I}. Use this type for code that works with any of
- * them.
+ * {@link RunpodPricingData} for RunPod, {@link AlibabaPricingData} for Alibaba Cloud, {@link AzurePricingData} for Azure
+ * and {@link GCPPricingData} for Google Cloud. They decode the same way and differ only in the instance class
+ * {@link #get} returns, {@code I}. Use this type for code that works with any of them.
  *
  * <p>Nothing is decoded until it is asked for: {@link #get} wraps the raw rows, and each getter on the returned
  * instance decodes its part on first access and keeps the result. Everything returned is immutable and shared between
@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @param <I> the instance class {@link #get} returns
  */
 public abstract sealed class PricingData<I extends AWSInstance>
-        permits AWSPricingData, RunpodPricingData, AlibabaPricingData {
+        permits AWSPricingData, RunpodPricingData, AlibabaPricingData, AzurePricingData, GCPPricingData {
     private final String offer;
     private final String[] table;
     private final double[] snapshots;
@@ -88,7 +88,8 @@ public abstract sealed class PricingData<I extends AWSInstance>
     }
 
     /**
-     * The offer code, e.g. {@code AmazonEC2}, {@code AmazonRDS}, {@code RunpodPods} or {@code AlibabaECS}.
+     * The offer code, e.g. {@code AmazonEC2}, {@code AmazonRDS}, {@code RunpodPods}, {@code AlibabaECS},
+     * {@code AzureVM} or {@code GCPCompute}.
      *
      * @return the offer code
      */

@@ -13,7 +13,7 @@ from http.client import HTTPException
 from pathlib import Path
 from typing import Any, Final
 
-from ._data import AlibabaPricingData, AWSInstance, AWSPricingData, RunpodPricingData
+from ._data import AlibabaPricingData, AWSInstance, AWSPricingData, AzurePricingData, GCPPricingData, RunpodPricingData
 
 DEFAULT_BASE_URL = "https://instances-bundles.infrawrench.com"
 DEFAULT_API_URL = "https://app.infrawrench.com"
@@ -37,6 +37,15 @@ class RunpodPricingDataError(AWSPricingDataError):
 class AlibabaPricingDataError(AWSPricingDataError):
     """Raised when Alibaba Cloud's pricing data cannot be downloaded. ``status`` is the HTTP status, if there was
     a response."""
+
+
+class AzurePricingDataError(AWSPricingDataError):
+    """Raised when Azure's pricing data cannot be downloaded. ``status`` is the HTTP status, if there was a response."""
+
+
+class GCPPricingDataError(AWSPricingDataError):
+    """Raised when Google Cloud's pricing data cannot be downloaded. ``status`` is the HTTP status, if there was a
+    response."""
 
 
 def _retry_after(value: str | None) -> float:
@@ -176,6 +185,48 @@ def download_alibaba_pricing_data(
     """
     return AlibabaPricingData(_load_bundle_as(
         "alibaba", AlibabaPricingDataError,
+        token=token, cache_pricing_data=cache_pricing_data, cache_path=cache_path, base_url=base_url,
+    ))
+
+
+def download_azure_pricing_data(
+    *,
+    token: str | None = None,
+    cache_pricing_data: bool = True,
+    cache_path: str | os.PathLike[str] | None = None,
+    base_url: str | None = None,
+) -> AzurePricingData:
+    """Downloads Azure's virtual machine pricing data: pay-as-you-go, Spot and Low Priority prices, reservations
+    and savings plans per region.
+
+    Caching and the offline fallback work as for :func:`download_aws_pricing_data`, and it takes the same
+    keyword arguments.
+
+    :raises AzurePricingDataError: When the token is missing or rejected, or the bundle cannot be fetched.
+    """
+    return AzurePricingData(_load_bundle_as(
+        "azure", AzurePricingDataError,
+        token=token, cache_pricing_data=cache_pricing_data, cache_path=cache_path, base_url=base_url,
+    ))
+
+
+def download_gcp_pricing_data(
+    *,
+    token: str | None = None,
+    cache_pricing_data: bool = True,
+    cache_path: str | os.PathLike[str] | None = None,
+    base_url: str | None = None,
+) -> GCPPricingData:
+    """Downloads Google Cloud's Compute Engine pricing data: Standard and Spot prices and committed use discounts
+    per region, for each machine type.
+
+    Caching and the offline fallback work as for :func:`download_aws_pricing_data`, and it takes the same
+    keyword arguments.
+
+    :raises GCPPricingDataError: When the token is missing or rejected, or the bundle cannot be fetched.
+    """
+    return GCPPricingData(_load_bundle_as(
+        "gcp", GCPPricingDataError,
         token=token, cache_pricing_data=cache_pricing_data, cache_path=cache_path, base_url=base_url,
     ))
 

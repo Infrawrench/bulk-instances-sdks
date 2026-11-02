@@ -21,8 +21,8 @@ import (
 )
 
 // Options configures [DownloadAWSPricingData], [DownloadAWSEC2PricingData],
-// [DownloadRunpodPricingData] and [DownloadAlibabaPricingData]. The zero value uses
-// every default.
+// [DownloadRunpodPricingData], [DownloadAlibabaPricingData], [DownloadAzurePricingData]
+// and [DownloadGCPPricingData]. The zero value uses every default.
 type Options struct {
 	// Token is your Infrawrench API token. Defaults to the INFRAWRENCH_API_KEY environment variable.
 	Token string
@@ -215,6 +215,29 @@ func DownloadAlibabaPricingData(ctx context.Context, opts Options) (*AlibabaPric
 		return nil, err
 	}
 	return &AlibabaPricingData{data}, nil
+}
+
+// DownloadAzurePricingData downloads Azure's virtual machine pricing data:
+// pay-as-you-go, Spot and Low Priority prices, reservations and savings plans per
+// region. Caching, the offline fallback and errors work as for
+// [DownloadAWSPricingData].
+func DownloadAzurePricingData(ctx context.Context, opts Options) (*AzurePricingData, error) {
+	data, err := loadBundle(ctx, "azure", opts)
+	if err != nil {
+		return nil, err
+	}
+	return &AzurePricingData{data}, nil
+}
+
+// DownloadGCPPricingData downloads Google Cloud's Compute Engine pricing data:
+// Standard and Spot prices and committed use discounts per region, for each machine
+// type. Caching, the offline fallback and errors work as for [DownloadAWSPricingData].
+func DownloadGCPPricingData(ctx context.Context, opts Options) (*GCPPricingData, error) {
+	data, err := loadBundle(ctx, "gcp", opts)
+	if err != nil {
+		return nil, err
+	}
+	return &GCPPricingData{data}, nil
 }
 
 // loadBundle downloads (or reads from the cache) one platform's bundle.

@@ -52,7 +52,7 @@ module Infrawrench
       end
       alias [] get
 
-      # The offer code, e.g. +AmazonEC2+, +AmazonRDS+, +RunpodPods+ or +AlibabaECS+.
+      # The offer code, e.g. +AmazonEC2+, +AmazonRDS+, +RunpodPods+, +AlibabaECS+, +AzureVM+ or +GCPCompute+.
       # @return [String]
       def offer
         @raw["offer"] || "AmazonEC2"

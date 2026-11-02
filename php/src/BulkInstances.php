@@ -122,9 +122,57 @@ final class BulkInstances
     }
 
     /**
+     * Downloads Azure's virtual machine pricing data: pay-as-you-go, Spot and Low Priority prices, reservations and
+     * savings plans per region. Caching and the offline fallback work as for {@see downloadAwsPricingData()}.
+     *
+     * @param string|null $token Defines your Infrawrench API token. Defaults to the `INFRAWRENCH_API_KEY` environment variable.
+     * @param bool $cachePricingData Whether to cache the pricing data. Defaults to true.
+     * @param string|null $cachePath The cache path. Defaults to ~/.infrawrench/aws_pricing_data
+     * @param string|null $baseUrl Where the bundles are served from. Defaults to https://instances-bundles.infrawrench.com
+     *
+     * @throws AzurePricingDataException
+     * @throws \JsonException if the bundle is not valid
+     * @throws \RuntimeException if the cache directory cannot be written
+     */
+    public static function downloadAzurePricingData(
+        ?string $token = null,
+        bool $cachePricingData = true,
+        ?string $cachePath = null,
+        ?string $baseUrl = null,
+    ): AzurePricingData {
+        return AzurePricingData::fromJson(
+            self::loadBundleAs('azure', AzurePricingDataException::class, $token, $cachePricingData, $cachePath, $baseUrl),
+        );
+    }
+
+    /**
+     * Downloads Google Cloud's Compute Engine pricing data: Standard and Spot prices and committed use discounts per
+     * region, for each machine type. Caching and the offline fallback work as for {@see downloadAwsPricingData()}.
+     *
+     * @param string|null $token Defines your Infrawrench API token. Defaults to the `INFRAWRENCH_API_KEY` environment variable.
+     * @param bool $cachePricingData Whether to cache the pricing data. Defaults to true.
+     * @param string|null $cachePath The cache path. Defaults to ~/.infrawrench/aws_pricing_data
+     * @param string|null $baseUrl Where the bundles are served from. Defaults to https://instances-bundles.infrawrench.com
+     *
+     * @throws GCPPricingDataException
+     * @throws \JsonException if the bundle is not valid
+     * @throws \RuntimeException if the cache directory cannot be written
+     */
+    public static function downloadGcpPricingData(
+        ?string $token = null,
+        bool $cachePricingData = true,
+        ?string $cachePath = null,
+        ?string $baseUrl = null,
+    ): GCPPricingData {
+        return GCPPricingData::fromJson(
+            self::loadBundleAs('gcp', GCPPricingDataException::class, $token, $cachePricingData, $cachePath, $baseUrl),
+        );
+    }
+
+    /**
      * {@see loadBundle()}, failing with the provider's own exception class.
      *
-     * @param class-string<RunpodPricingDataException|AlibabaPricingDataException> $exception
+     * @param class-string<RunpodPricingDataException|AlibabaPricingDataException|AzurePricingDataException|GCPPricingDataException> $exception
      *
      * @throws AWSPricingDataException of class `$exception`
      */

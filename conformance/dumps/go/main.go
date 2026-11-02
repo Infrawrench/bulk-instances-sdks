@@ -143,7 +143,7 @@ func main() {
 		platform = os.Args[5]
 	}
 	var data *bulkinstances.AWSPricingData
-	// get is the loaded data's own Get: RunPod and Alibaba have their own data and instance types.
+	// get is the loaded data's own Get: RunPod, Alibaba, Azure and GCP have their own data and instance types.
 	var get func(string) (*bulkinstances.AWSInstance, bool)
 	var err error
 	switch platform {
@@ -165,6 +165,30 @@ func main() {
 			data = d.AWSPricingData
 			get = func(k string) (*bulkinstances.AWSInstance, bool) {
 				i, ok := d.Get(k) // an *AlibabaInstance
+				if !ok {
+					return nil, false
+				}
+				return i.AWSInstance, true
+			}
+		}
+	case "azure":
+		var d *bulkinstances.AzurePricingData
+		if d, err = bulkinstances.DownloadAzurePricingData(context.Background(), opts); err == nil {
+			data = d.AWSPricingData
+			get = func(k string) (*bulkinstances.AWSInstance, bool) {
+				i, ok := d.Get(k) // an *AzureInstance
+				if !ok {
+					return nil, false
+				}
+				return i.AWSInstance, true
+			}
+		}
+	case "gcp":
+		var d *bulkinstances.GCPPricingData
+		if d, err = bulkinstances.DownloadGCPPricingData(context.Background(), opts); err == nil {
+			data = d.AWSPricingData
+			get = func(k string) (*bulkinstances.AWSInstance, bool) {
+				i, ok := d.Get(k) // a *GCPInstance
 				if !ok {
 					return nil, false
 				}

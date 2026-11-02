@@ -10,17 +10,17 @@ conformance/run.sh <typescript|python|ruby|java|csharp|rust|php|go>
 ```
 
 `make_fixture.py` regenerates `fixture/`: an EC2 bundle, an RDS one served as `rds-latest` and
-`rds-bundle-<name>.json.xz`, RunPod and Alibaba ones written the way other-instances writes them (with a
+`rds-bundle-<name>.json.xz`, RunPod, Alibaba, Azure and GCP ones written the way other-instances writes them (with a
 `source_version` key every decoder must skip), and each AWS instance as the Infrawrench API serves it
 (`fixture/api/<platform>/<instance>.json`, the bundle's tables cut down to what the instance uses). Every SDK must
 decode those to the same values as the whole bundle. After changing it, regenerate `reference.json`,
-`reference-rds.json`, `reference-runpod.json` and `reference-alibaba.json` from the TypeScript SDK (offline, from a cache seeded with the fixture):
+`reference-rds.json` and `reference-<runpod|alibaba|azure|gcp>.json` from the TypeScript SDK (offline, from a cache seeded with the fixture):
 
 ```sh
 mkdir -p /tmp/seed && cp conformance/fixture/*bundle-*.json /tmp/seed/
 node conformance/dumps/typescript/dump.mjs http://127.0.0.1:9 /tmp/seed test-token 1 > conformance/reference.json
 node conformance/dumps/typescript/dump.mjs http://127.0.0.1:9 /tmp/seed test-token 1 rds > conformance/reference-rds.json
-for p in runpod alibaba; do
+for p in runpod alibaba azure gcp; do
   node conformance/dumps/typescript/dump.mjs http://127.0.0.1:9 /tmp/seed test-token 1 $p > conformance/reference-$p.json
 done
 ```
@@ -31,8 +31,8 @@ Invoked as `<program> <baseUrl> <cacheDir> <token> <cache> [platform [instance]]
 
 - `token` is `-` to pass no token (so the SDK falls back to `INFRAWRENCH_API_KEY`).
 - `cache` is `1` or `0` (`cachePricingData`).
-- Without `platform`, load with the SDK's EC2 function. With `runpod` or `alibaba`, load with the SDK's RunPod or
-  Alibaba function, and exit 1 (not 3) unless it returns that provider's data and instance types, and fails with
+- Without `platform`, load with the SDK's EC2 function. With `runpod`, `alibaba`, `azure` or `gcp`, load with the
+  SDK's function for that provider, and exit 1 (not 3) unless it returns that provider's data and instance types, and fails with
   that provider's error type where the SDK has one (a subclass of the AWS one). With any other platform, load with
   the SDK's function that takes a platform, passing it through unchecked.
 - With `instance`, fetch that one instance from the API at `baseUrl` with the SDK's function for it (`cacheDir` and

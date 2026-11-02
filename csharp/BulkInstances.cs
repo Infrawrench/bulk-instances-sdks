@@ -12,7 +12,8 @@ using SharpCompress.Compressors.Xz;
 namespace Infrawrench.BulkInstances;
 
 /// <summary>
-/// Downloads the Infrawrench pricing bundles: EC2 and the other AWS platforms, RunPod and Alibaba Cloud.
+/// Downloads the Infrawrench pricing bundles: EC2 and the other AWS platforms, RunPod, Alibaba Cloud, Azure and Google
+/// Cloud.
 /// </summary>
 public static class BulkInstances
 {
@@ -104,6 +105,33 @@ public static class BulkInstances
         AlibabaPricingDataOptions? options = null, CancellationToken cancellationToken = default) =>
         new(await LoadBundleAsAsync(
             "alibaba", options, e => new AlibabaPricingDataException(e.Message, e.Status, e.InnerException), cancellationToken)
+            .ConfigureAwait(false));
+
+    /// <summary>
+    /// Downloads Azure's virtual machine pricing data: pay-as-you-go, Spot and Low Priority prices, reservations and
+    /// savings plans per region. Caching and the offline fallback work as for <see cref="DownloadAwsPricingDataAsync"/>.
+    /// </summary>
+    /// <param name="options">Token, caching and server options; all optional.</param>
+    /// <param name="cancellationToken">Cancels the download.</param>
+    /// <exception cref="AzurePricingDataException">The token is missing or rejected, or the bundle cannot be downloaded.</exception>
+    public static async Task<AzurePricingData> DownloadAzurePricingDataAsync(
+        AzurePricingDataOptions? options = null, CancellationToken cancellationToken = default) =>
+        new(await LoadBundleAsAsync(
+            "azure", options, e => new AzurePricingDataException(e.Message, e.Status, e.InnerException), cancellationToken)
+            .ConfigureAwait(false));
+
+    /// <summary>
+    /// Downloads Google Cloud's Compute Engine pricing data: Standard and Spot prices and committed use discounts per
+    /// region, for each machine type. Caching and the offline fallback work as for
+    /// <see cref="DownloadAwsPricingDataAsync"/>.
+    /// </summary>
+    /// <param name="options">Token, caching and server options; all optional.</param>
+    /// <param name="cancellationToken">Cancels the download.</param>
+    /// <exception cref="GcpPricingDataException">The token is missing or rejected, or the bundle cannot be downloaded.</exception>
+    public static async Task<GcpPricingData> DownloadGcpPricingDataAsync(
+        GcpPricingDataOptions? options = null, CancellationToken cancellationToken = default) =>
+        new(await LoadBundleAsAsync(
+            "gcp", options, e => new GcpPricingDataException(e.Message, e.Status, e.InnerException), cancellationToken)
             .ConfigureAwait(false));
 
     /// <summary><see cref="LoadBundleAsync"/>, failing with the provider's own exception class.</summary>

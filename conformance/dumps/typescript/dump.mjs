@@ -2,6 +2,8 @@ import {
   downloadAwsEc2PricingData, downloadAwsPricingData, fetchAwsInstance, AWSPricingDataError,
   downloadRunpodPricingData, RunpodPricingData, RunpodInstance, RunpodPricingDataError,
   downloadAlibabaPricingData, AlibabaPricingData, AlibabaInstance, AlibabaPricingDataError,
+  downloadAzurePricingData, AzurePricingData, AzureInstance, AzurePricingDataError,
+  downloadGcpPricingData, GCPPricingData, GCPInstance, GCPPricingDataError,
 } from "../../../ts/dist/index.js";
 
 const [baseUrl, cachePath, token, cache, platform, instanceType] = process.argv.slice(2);
@@ -51,13 +53,19 @@ if (instanceType !== undefined) {
 
 let data;
 try {
-  // RunPod and Alibaba have their own functions and types, and their own errors.
+  // RunPod, Alibaba, Azure and GCP have their own functions and types, and their own errors.
   if (platform === "runpod") {
     data = await downloadRunpodPricingData(options).catch((e) => providerError(e, RunpodPricingDataError));
     expectTypes(data, RunpodPricingData, RunpodInstance);
   } else if (platform === "alibaba") {
     data = await downloadAlibabaPricingData(options).catch((e) => providerError(e, AlibabaPricingDataError));
     expectTypes(data, AlibabaPricingData, AlibabaInstance);
+  } else if (platform === "azure") {
+    data = await downloadAzurePricingData(options).catch((e) => providerError(e, AzurePricingDataError));
+    expectTypes(data, AzurePricingData, AzureInstance);
+  } else if (platform === "gcp") {
+    data = await downloadGcpPricingData(options).catch((e) => providerError(e, GCPPricingDataError));
+    expectTypes(data, GCPPricingData, GCPInstance);
   } else {
     data = platform === undefined ? await downloadAwsEc2PricingData(options) : await downloadAwsPricingData(platform, options);
   }

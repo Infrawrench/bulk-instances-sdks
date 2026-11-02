@@ -8,10 +8,12 @@ import java.util.Optional;
  * Options for {@link BulkInstances#downloadAwsEc2PricingData(AWSPricingDataOptions)}. Immutable; build one with
  * {@link #builder()}.
  *
- * <p>RunPod's and Alibaba Cloud's functions take the subclasses {@link RunpodPricingDataOptions} and
- * {@link AlibabaPricingDataOptions}, which have the same options.
+ * <p>RunPod's, Alibaba Cloud's, Azure's and Google Cloud's functions take the subclasses
+ * {@link RunpodPricingDataOptions}, {@link AlibabaPricingDataOptions}, {@link AzurePricingDataOptions} and
+ * {@link GCPPricingDataOptions}, which have the same options.
  */
-public sealed class AWSPricingDataOptions permits RunpodPricingDataOptions, AlibabaPricingDataOptions {
+public sealed class AWSPricingDataOptions
+        permits RunpodPricingDataOptions, AlibabaPricingDataOptions, AzurePricingDataOptions, GCPPricingDataOptions {
     static final String DEFAULT_BASE_URL = "https://instances-bundles.infrawrench.com";
 
     private final String token;
@@ -80,7 +82,11 @@ public sealed class AWSPricingDataOptions permits RunpodPricingDataOptions, Alib
     }
 
     /** Builds {@link AWSPricingDataOptions}. Every option is optional; passing {@code null} restores its default. */
-    public static sealed class Builder permits RunpodPricingDataOptions.Builder, AlibabaPricingDataOptions.Builder {
+    public static sealed class Builder
+            permits RunpodPricingDataOptions.Builder,
+                    AlibabaPricingDataOptions.Builder,
+                    AzurePricingDataOptions.Builder,
+                    GCPPricingDataOptions.Builder {
         private String token;
         private boolean cachePricingData = true;
         private Path cachePath;

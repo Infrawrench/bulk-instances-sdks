@@ -4,8 +4,10 @@
  *
  * <p>Start with {@link com.infrawrench.bulkinstances.BulkInstances#downloadAwsEc2PricingData()}, or
  * {@link com.infrawrench.bulkinstances.BulkInstances#downloadAwsPricingData(String)} for another platform.
- * {@link com.infrawrench.bulkinstances.BulkInstances#downloadRunpodPricingData()} and
- * {@link com.infrawrench.bulkinstances.BulkInstances#downloadAlibabaPricingData()} load RunPod's and Alibaba Cloud's
- * prices, in the same format.
+ * {@link com.infrawrench.bulkinstances.BulkInstances#downloadRunpodPricingData()},
+ * {@link com.infrawrench.bulkinstances.BulkInstances#downloadAlibabaPricingData()},
+ * {@link com.infrawrench.bulkinstances.BulkInstances#downloadAzurePricingData()} and
+ * {@link com.infrawrench.bulkinstances.BulkInstances#downloadGcpPricingData()} load RunPod's, Alibaba Cloud's, Azure's
+ * and Google Cloud's prices, in the same format.
  */
 package com.infrawrench.bulkinstances;
