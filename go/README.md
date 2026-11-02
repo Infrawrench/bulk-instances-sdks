@@ -137,6 +137,14 @@ key is `cloudType`, `Secure Cloud` or `Community Cloud`. Savings plans are in `P
 `3mo` or `6mo`, `Savings Plan`, `All Upfront`, and `Hourly` is the plan's effective hourly rate. Stock levels
 and spot prices are not included. The history starts in November 2026.
 
+`FetchRunpodInstance(ctx, id, opts)` fetches one GPU type or CPU pod from the Infrawrench API instead (see
+[One instance](#one-instance)). It returns a `*RunpodInstance`, or `nil` with no error if RunPod has no instance
+with that id:
+
+```go
+h100, err := bulkinstances.FetchRunpodInstance(ctx, "NVIDIA H100 80GB HBM3", bulkinstances.AWSInstanceOptions{})
+```
+
 ## Alibaba Cloud
 
 `DownloadAlibabaPricingData(ctx, opts)` loads Alibaba Cloud ECS prices. It takes the same `Options` as the AWS
@@ -169,7 +177,13 @@ bought, so `Hourly` is 0 and `Upfront` is the price. It also has reserved instan
 (`CpuCoreCount`, `MemorySize`, `CpuOptions.ThreadsPerCore`, ...), from May 2023 on. The history starts in
 May 2018.
 
-`FetchAWSInstance` doesn't cover RunPod or Alibaba; download their bundles instead.
+`FetchAlibabaInstance(ctx, instanceType, opts)` fetches one instance type from the Infrawrench API instead (see
+[One instance](#one-instance)). It returns an `*AlibabaInstance`, or `nil` with no error if Alibaba has no
+instance type with that name:
+
+```go
+g6, err := bulkinstances.FetchAlibabaInstance(ctx, "ecs.g6.large", bulkinstances.AWSInstanceOptions{})
+```
 
 ## One instance
 
@@ -192,6 +206,11 @@ if m5 != nil {
 where the API is served from (`https://app.infrawrench.com` by default). Nothing is cached. The
 API syncs each new bundle within about half an hour of it being published, so it can briefly
 trail `DownloadAWSPricingData`.
+
+`FetchRunpodInstance(ctx, id, opts)` and `FetchAlibabaInstance(ctx, instanceType, opts)` do the same for
+RunPod and Alibaba Cloud, with the same `AWSInstanceOptions`, the same errors and the same half-hour sync.
+They return a `*RunpodInstance` or `*AlibabaInstance` (or `nil`), which embed `*AWSInstance`. RunPod's ids have
+spaces; pass them as they are, they are escaped for you.
 
 ## Caching
 

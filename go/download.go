@@ -40,7 +40,8 @@ type Options struct {
 	HTTPClient *http.Client
 }
 
-// AWSInstanceOptions configures [FetchAWSInstance]. The zero value uses every default.
+// AWSInstanceOptions configures [FetchAWSInstance], [FetchRunpodInstance] and
+// [FetchAlibabaInstance]. The zero value uses every default.
 type AWSInstanceOptions struct {
 	// Token is your Infrawrench API token. Defaults to the INFRAWRENCH_API_KEY environment variable.
 	Token string
@@ -394,6 +395,43 @@ func tokenOrEnv(token, field string) (string, error) {
 // Request failures, malformed platform names and an empty instance type are
 // returned as an [*Error]; parsing failures are returned as they are.
 func FetchAWSInstance(ctx context.Context, platform, instanceType string, opts AWSInstanceOptions) (*AWSInstance, error) {
+	return fetchInstance(ctx, platform, instanceType, opts)
+}
+
+// FetchRunpodInstance fetches one RunPod GPU type ("NVIDIA H100 80GB HBM3") or CPU
+// pod ("cpu3c-2-4") from the Infrawrench API, without downloading RunPod's bundle.
+// It takes the same options as [FetchAWSInstance]. Nothing is cached. It returns
+// nil and no error if RunPod has no instance with that id.
+//
+// The result is the same as [DownloadRunpodPricingData] then Get(id), from
+// whichever bundle the API last synced, which can trail the newest bundle by up to
+// half an hour. Errors work as for [FetchAWSInstance].
+func FetchRunpodInstance(ctx context.Context, id string, opts AWSInstanceOptions) (*RunpodInstance, error) {
+	inst, err := fetchInstance(ctx, "runpod", id, opts)
+	if inst == nil || err != nil {
+		return nil, err
+	}
+	return &RunpodInstance{inst}, nil
+}
+
+// FetchAlibabaInstance fetches one Alibaba Cloud ECS instance type ("ecs.g6.large")
+// from the Infrawrench API, without downloading Alibaba's bundle. It takes the same
+// options as [FetchAWSInstance]. Nothing is cached. It returns nil and no error if
+// Alibaba has no instance type with that name.
+//
+// The result is the same as [DownloadAlibabaPricingData] then Get(instanceType),
+// from whichever bundle the API last synced, which can trail the newest bundle by
+// up to half an hour. Errors work as for [FetchAWSInstance].
+func FetchAlibabaInstance(ctx context.Context, instanceType string, opts AWSInstanceOptions) (*AlibabaInstance, error) {
+	inst, err := fetchInstance(ctx, "alibaba", instanceType, opts)
+	if inst == nil || err != nil {
+		return nil, err
+	}
+	return &AlibabaInstance{inst}, nil
+}
+
+// fetchInstance GETs one instance of any platform from the Infrawrench API and decodes it.
+func fetchInstance(ctx context.Context, platform, instanceType string, opts AWSInstanceOptions) (*AWSInstance, error) {
 	if !platformName.MatchString(platform) {
 		return nil, &Error{Message: fmt.Sprintf("%q is not a platform name.", platform)}
 	}
