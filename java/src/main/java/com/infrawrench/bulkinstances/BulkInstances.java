@@ -31,6 +31,12 @@ public final class BulkInstances {
             "ec2", "rds", "elasticache", "opensearch", "redshift", "docdb", "neptune", "memorydb", "dax", "sagemaker",
             "emr", "gamelift", "spot");
 
+    /**
+     * The other clouds Infrawrench publishes a bundle for, in the same format: RunPod GPU and CPU pods, and Alibaba
+     * Cloud ECS. The same methods load them.
+     */
+    public static final List<String> OTHER_PLATFORMS = List.of("runpod", "alibaba");
+
     /** The variant keys of EC2 bundles, which don't list their own. */
     public static final List<String> EC2_VARIANT_KEYS =
             List.of("operatingSystem", "tenancy", "licenseModel", "preInstalledSw", "capacitystatus");

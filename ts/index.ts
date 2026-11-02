@@ -77,6 +77,14 @@ export const AWS_PLATFORMS = [
 
 export type AWSPlatform = (typeof AWS_PLATFORMS)[number];
 
+/**
+ * The other clouds Infrawrench publishes a bundle for, in the same format: RunPod GPU and CPU pods,
+ * and Alibaba Cloud ECS. The same functions load them.
+ */
+export const OTHER_PLATFORMS = ["runpod", "alibaba"] as const;
+
+export type OtherPlatform = (typeof OTHER_PLATFORMS)[number];
+
 /** Downloads the AWS EC2 pricing data. The same as `downloadAwsPricingData("ec2", options)`. */
 export function downloadAwsEc2PricingData(options: AWSPricingDataOptions = {}): Promise<AWSPricingData> {
   return downloadAwsPricingData("ec2", options);
@@ -90,7 +98,7 @@ export function downloadAwsEc2PricingData(options: AWSPricingDataOptions = {}): 
  * and if it cannot be fetched at all (offline, outage) the newest cached bundle is used.
  */
 export async function downloadAwsPricingData(
-  platform: AWSPlatform | (string & {}),
+  platform: AWSPlatform | OtherPlatform | (string & {}),
   options: AWSPricingDataOptions = {},
 ): Promise<AWSPricingData> {
   if (!/^[a-z0-9]+$/.test(platform)) {
@@ -176,7 +184,7 @@ type InstanceFile = Pick<BundleFile, "offer" | "compression_table" | "regions" |
  * whichever bundle the API last synced, which can trail the newest bundle by up to half an hour.
  */
 export async function fetchAwsInstance(
-  platform: AWSPlatform | (string & {}),
+  platform: AWSPlatform | OtherPlatform | (string & {}),
   instanceType: string,
   options: AWSInstanceOptions = {},
 ): Promise<AWSInstance | undefined> {

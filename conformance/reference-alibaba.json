@@ -1,0 +1,405 @@
+{
+ "offer": "AlibabaECS",
+ "variantKeys": [
+  "operatingSystem",
+  "networkType"
+ ],
+ "snapshots": [
+  1700000000,
+  1710000000
+ ],
+ "regions": {
+  "cn-hangzhou": {
+   "locationType": "Alibaba Cloud Region",
+   "name": "China (Hangzhou)",
+   "regionCode": "cn-hangzhou"
+  },
+  "us-east-1": {
+   "locationType": "Alibaba Cloud Region",
+   "name": "US (Virginia)",
+   "regionCode": "us-east-1"
+  }
+ },
+ "keys": [
+  "ecs.g6.large"
+ ],
+ "has": {
+  "m5.large": false,
+  "nope": false
+ },
+ "getMissing": null,
+ "instances": {
+  "ecs.g6.large": {
+   "name": "ecs.g6.large",
+   "createdAt": 1700000000,
+   "deletedAt": null,
+   "attributes": {
+    "CpuCoreCount": "2",
+    "CpuOptions.ThreadsPerCore": "2",
+    "MemorySize": "16.0",
+    "SupportedBootModes.SupportedBootMode": "BIOS,UEFI"
+   },
+   "attributesIn": {
+    "cn-hangzhou": {
+     "CpuCoreCount": "2",
+     "CpuOptions.ThreadsPerCore": "2",
+     "MemorySize": "16.0",
+     "SupportedBootModes.SupportedBootMode": "BIOS,UEFI"
+    },
+    "us-east-1": {
+     "CpuCoreCount": "2",
+     "CpuOptions.ThreadsPerCore": "2",
+     "MemorySize": "16.0",
+     "SupportedBootModes.SupportedBootMode": "BIOS,UEFI"
+    },
+    "Mystery": {
+     "CpuCoreCount": "2",
+     "CpuOptions.ThreadsPerCore": "2",
+     "MemorySize": "16.0",
+     "SupportedBootModes.SupportedBootMode": "BIOS,UEFI"
+    },
+    "Nowhere": {
+     "CpuCoreCount": "2",
+     "CpuOptions.ThreadsPerCore": "2",
+     "MemorySize": "16.0",
+     "SupportedBootModes.SupportedBootMode": "BIOS,UEFI"
+    }
+   },
+   "attributesHistory": [
+    {
+     "at": 1700000000,
+     "key": "CpuCoreCount",
+     "value": "2",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "CpuOptions.ThreadsPerCore",
+     "value": "2",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "MemorySize",
+     "value": "8.0",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "SupportedBootModes.SupportedBootMode",
+     "value": "BIOS,UEFI",
+     "region": null
+    },
+    {
+     "at": 1710000000,
+     "key": "MemorySize",
+     "value": "16.0",
+     "region": null
+    }
+   ],
+   "pricing": {
+    "onDemand": [
+     {
+      "region": "cn-hangzhou",
+      "regionCode": "cn-hangzhou",
+      "variant": {
+       "operatingSystem": "Linux",
+       "networkType": "VPC"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.1068,
+      "since": 1700000000
+     },
+     {
+      "region": "us-east-1",
+      "regionCode": "us-east-1",
+      "variant": {
+       "operatingSystem": "Linux",
+       "networkType": "VPC"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.12,
+      "since": 1700000000
+     },
+     {
+      "region": "us-east-1",
+      "regionCode": "us-east-1",
+      "variant": {
+       "operatingSystem": "Windows",
+       "networkType": "VPC"
+      },
+      "operatingSystem": "Windows",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.2,
+      "since": 1700000000
+     }
+    ],
+    "reserved": [
+     {
+      "region": "cn-hangzhou",
+      "regionCode": "cn-hangzhou",
+      "variant": {
+       "operatingSystem": "Linux",
+       "networkType": "VPC"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1yr",
+      "offeringClass": "Subscription",
+      "purchaseOption": "All Upfront",
+      "hourly": 0,
+      "upfront": 500.5,
+      "since": 1700000000
+     },
+     {
+      "region": "cn-hangzhou",
+      "regionCode": "cn-hangzhou",
+      "variant": {
+       "operatingSystem": "Linux",
+       "networkType": "VPC"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1mo",
+      "offeringClass": "Subscription",
+      "purchaseOption": "All Upfront",
+      "hourly": 0,
+      "upfront": 50,
+      "since": 1700000000
+     },
+     {
+      "region": "us-east-1",
+      "regionCode": "us-east-1",
+      "variant": {
+       "operatingSystem": "Windows",
+       "networkType": "VPC"
+      },
+      "operatingSystem": "Windows",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "3yr",
+      "offeringClass": "Reserved Instance",
+      "purchaseOption": "Partial Upfront",
+      "hourly": 0.04,
+      "upfront": 250,
+      "since": 1710000000
+     }
+    ]
+   },
+   "pricingHistory": {
+    "onDemand": [
+     {
+      "at": 1700000000,
+      "region": "cn-hangzhou",
+      "regionCode": "cn-hangzhou",
+      "variant": {
+       "operatingSystem": "Linux",
+       "networkType": "VPC"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.1068
+     },
+     {
+      "at": 1700000000,
+      "region": "cn-hangzhou",
+      "regionCode": "cn-hangzhou",
+      "variant": {
+       "operatingSystem": "Linux",
+       "networkType": "Classic"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.1068
+     },
+     {
+      "at": 1700000000,
+      "region": "us-east-1",
+      "regionCode": "us-east-1",
+      "variant": {
+       "operatingSystem": "Linux",
+       "networkType": "VPC"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.12
+     },
+     {
+      "at": 1700000000,
+      "region": "us-east-1",
+      "regionCode": "us-east-1",
+      "variant": {
+       "operatingSystem": "Windows",
+       "networkType": "VPC"
+      },
+      "operatingSystem": "Windows",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.2
+     },
+     {
+      "at": 1710000000,
+      "region": "cn-hangzhou",
+      "regionCode": "cn-hangzhou",
+      "variant": {
+       "operatingSystem": "Linux",
+       "networkType": "Classic"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": null
+     }
+    ],
+    "reserved": [
+     {
+      "at": 1700000000,
+      "region": "cn-hangzhou",
+      "regionCode": "cn-hangzhou",
+      "variant": {
+       "operatingSystem": "Linux",
+       "networkType": "VPC"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1yr",
+      "offeringClass": "Subscription",
+      "purchaseOption": "All Upfront",
+      "hourly": 0,
+      "upfront": 500.5
+     },
+     {
+      "at": 1700000000,
+      "region": "cn-hangzhou",
+      "regionCode": "cn-hangzhou",
+      "variant": {
+       "operatingSystem": "Linux",
+       "networkType": "VPC"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1mo",
+      "offeringClass": "Subscription",
+      "purchaseOption": "All Upfront",
+      "hourly": 0,
+      "upfront": 50
+     },
+     {
+      "at": 1700000000,
+      "region": "cn-hangzhou",
+      "regionCode": "cn-hangzhou",
+      "variant": {
+       "operatingSystem": "Linux",
+       "networkType": "Classic"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1yr",
+      "offeringClass": "Subscription",
+      "purchaseOption": "All Upfront",
+      "hourly": 0,
+      "upfront": 480
+     },
+     {
+      "at": 1700000000,
+      "region": "us-east-1",
+      "regionCode": "us-east-1",
+      "variant": {
+       "operatingSystem": "Windows",
+       "networkType": "VPC"
+      },
+      "operatingSystem": "Windows",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "3yr",
+      "offeringClass": "Reserved Instance",
+      "purchaseOption": "Partial Upfront",
+      "hourly": 0.05,
+      "upfront": 300
+     },
+     {
+      "at": 1710000000,
+      "region": "us-east-1",
+      "regionCode": "us-east-1",
+      "variant": {
+       "operatingSystem": "Windows",
+       "networkType": "VPC"
+      },
+      "operatingSystem": "Windows",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "3yr",
+      "offeringClass": "Reserved Instance",
+      "purchaseOption": "Partial Upfront",
+      "hourly": 0.04,
+      "upfront": 250
+     },
+     {
+      "at": 1710000000,
+      "region": "cn-hangzhou",
+      "regionCode": "cn-hangzhou",
+      "variant": {
+       "operatingSystem": "Linux",
+       "networkType": "Classic"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1yr",
+      "offeringClass": "Subscription",
+      "purchaseOption": "All Upfront",
+      "hourly": null,
+      "upfront": null
+     }
+    ]
+   }
+  }
+ }
+}

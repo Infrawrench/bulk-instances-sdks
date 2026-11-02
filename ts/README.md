@@ -70,6 +70,41 @@ Its locations are region codes, so `region` and `regionCode` are both `us-east-1
 have no attributes; take their specs from `ec2`. The history goes back to August 2026, hourly at
 first and every 6 hours since November 2026, and prices change far more often than on-demand prices.
 
+## Other clouds
+
+Infrawrench also publishes bundles for clouds other than AWS, in the same format, and `downloadAwsPricingData` loads them
+the same way. `OTHER_PLATFORMS` lists them:
+
+| Platform | What | History from |
+| --- | --- | --- |
+| `runpod` | RunPod GPU and CPU pods | November 2026 |
+| `alibaba` | Alibaba Cloud ECS instance types | May 2018 |
+
+```ts
+import { downloadAwsPricingData } from "@infrawrench/bulk-instances";
+
+const runpod = await downloadAwsPricingData("runpod");
+runpod.get("NVIDIA H100 80GB HBM3")?.pricing.onDemand.find((p) => p.variant.cloudType === "Secure Cloud")?.hourly;
+```
+
+`runpod` has GPU types by RunPod's id (`NVIDIA H100 80GB HBM3`), priced per GPU per hour, and CPU pods by
+pod id (`cpu3c-2-4`: flavor, vCPUs, GB of memory), priced per pod per hour; the `productFamily` attribute is
+`GPU` or `CPU`. Prices are the same in every data center, so every price is in the location `global`. The
+only variant key is `cloudType`, `Secure Cloud` or `Community Cloud`. Savings plans are in `pricing.reserved`
+with the term `3mo` or `6mo`, `Savings Plan`, `All Upfront`, and `hourly` is the plan's effective hourly rate.
+Stock levels and spot prices are not included.
+
+`alibaba`'s locations are region ids (`cn-hangzhou`), so the location and its region code are the same, and
+the regions table gives each an English `name`. Its variant keys are `operatingSystem` (`Linux` or `Windows`)
+and `networkType` (`VPC`, or `Classic` in older history). `pricing.onDemand` has pay-as-you-go prices. `pricing.reserved` has
+subscriptions, with the term `1mo` or `1yr` to `5yr`, `Subscription`, `All Upfront`: they are paid in full
+when bought, so `hourly` is 0 and `upfront` is the price. It also has reserved instances, with the term `1yr` or
+`3yr`, `Reserved Instance`, and a purchase option. Attributes are Alibaba's instance type definitions
+(`CpuCoreCount`, `MemorySize`, `CpuOptions.ThreadsPerCore`, ...), from May 2023 on.
+
+`fetchAwsInstance` doesn't serve these platforms yet: the Infrawrench API has no instances for them, so it returns
+`undefined`. Download the bundle instead.
+
 ## One instance
 
 `fetchAwsInstance(platform, instanceType, options)` fetches a single instance from the Infrawrench

@@ -47,6 +47,10 @@ module Infrawrench
     # requested as is, so a platform added later works without a new SDK.
     AWS_PLATFORMS = %w[ec2 rds elasticache opensearch redshift docdb neptune memorydb dax sagemaker emr gamelift spot].freeze
 
+    # The other clouds Infrawrench publishes a bundle for, in the same format: RunPod GPU and CPU pods,
+    # and Alibaba Cloud ECS. The same functions load them.
+    OTHER_PLATFORMS = %w[runpod alibaba].freeze
+
     # The variant keys of EC2 bundles, which don't list their own.
     EC2_VARIANT_KEYS = %w[operatingSystem tenancy licenseModel preInstalledSw capacitystatus].freeze
 

@@ -9,16 +9,20 @@ TypeScript SDK's output.
 conformance/run.sh <typescript|python|ruby|java|csharp|rust|php|go>
 ```
 
-`make_fixture.py` regenerates `fixture/`: an EC2 bundle, and an RDS one served as `rds-latest` and
-`rds-bundle-<name>.json.xz`, and each of their instances as the Infrawrench API serves it
+`make_fixture.py` regenerates `fixture/`: an EC2 bundle, an RDS one served as `rds-latest` and
+`rds-bundle-<name>.json.xz`, RunPod and Alibaba ones written the way other-instances writes them (with a
+`source_version` key every decoder must skip), and each AWS instance as the Infrawrench API serves it
 (`fixture/api/<platform>/<instance>.json`, the bundle's tables cut down to what the instance uses). Every SDK must
-decode those to the same values as the whole bundle. After changing it, regenerate `reference.json` and
-`reference-rds.json` from the TypeScript SDK (offline, from a cache seeded with the fixture):
+decode those to the same values as the whole bundle. After changing it, regenerate `reference.json`,
+`reference-rds.json`, `reference-runpod.json` and `reference-alibaba.json` from the TypeScript SDK (offline, from a cache seeded with the fixture):
 
 ```sh
 mkdir -p /tmp/seed && cp conformance/fixture/*bundle-*.json /tmp/seed/
 node conformance/dumps/typescript/dump.mjs http://127.0.0.1:9 /tmp/seed test-token 1 > conformance/reference.json
 node conformance/dumps/typescript/dump.mjs http://127.0.0.1:9 /tmp/seed test-token 1 rds > conformance/reference-rds.json
+for p in runpod alibaba; do
+  node conformance/dumps/typescript/dump.mjs http://127.0.0.1:9 /tmp/seed test-token 1 $p > conformance/reference-$p.json
+done
 ```
 
 ## Dump program contract

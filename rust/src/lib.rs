@@ -42,6 +42,10 @@ pub const AWS_PLATFORMS: &[&str] = &[
     "spot",
 ];
 
+/// The other clouds Infrawrench publishes a bundle for, in the same format: RunPod GPU and CPU
+/// pods, and Alibaba Cloud ECS. The same functions load them.
+pub const OTHER_PLATFORMS: &[&str] = &["runpod", "alibaba"];
+
 /// Options for [`download_aws_pricing_data`] and [`download_aws_ec2_pricing_data`].
 ///
 /// ```

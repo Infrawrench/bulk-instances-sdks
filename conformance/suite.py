@@ -5,7 +5,7 @@
 The command is run as `<command...> <baseUrl> <cacheDir> <token|-> <cache 1|0> [platform [instance]]`, must print the
 dump (see README.md) on success, or `{"error": {"status": <int|null>}}` and exit 3 on AWSPricingDataError.
 """
-import json, os, shutil, subprocess, sys, tempfile, threading, time, urllib.parse
+import json, os, re, shutil, subprocess, sys, tempfile, threading, time, urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 here = os.path.dirname(os.path.abspath(__file__))
@@ -13,6 +13,8 @@ FIX = os.path.join(here, "fixture")
 NAME = open(os.path.join(FIX, "latest")).read().strip()
 REFERENCE = json.load(open(os.path.join(here, "reference.json"), encoding="utf-8"))
 REFERENCE_RDS = json.load(open(os.path.join(here, "reference-rds.json"), encoding="utf-8"))
+# Bundles for other clouds, loaded by platform name with the same functions.
+OTHER = {p: json.load(open(os.path.join(here, f"reference-{p}.json"), encoding="utf-8")) for p in ["runpod", "alibaba"]}
 
 lang = sys.argv[1]
 cmd = sys.argv[sys.argv.index("--") + 1:]
@@ -46,8 +48,8 @@ class Handler(BaseHTTPRequestHandler):
             if "/" not in urllib.parse.unquote(name) and os.path.isfile(p):
                 return self.reply(200, open(p, "rb").read(), {"Content-Type": "application/json"})
             return self.reply(404, b'{"error":"No such instance"}', {"Content-Type": "application/json"})
-        if self.path == "/rds-latest":
-            return self.reply(200, open(os.path.join(FIX, "rds-latest"), "rb").read())
+        if re.fullmatch(r"/[a-z0-9]+-latest", self.path) and os.path.isfile(os.path.join(FIX, self.path[1:])):
+            return self.reply(200, open(os.path.join(FIX, self.path[1:]), "rb").read())
         p = os.path.join(FIX, self.path.lstrip("/"))
         if self.path.endswith(".json.xz") and os.path.isfile(p):
             return self.reply(200, open(p, "rb").read())
@@ -179,6 +181,18 @@ try:
     check("rds cached load only fetches rds-latest", [x[0] for x in State.log] == ["/rds-latest"], State.log)
     p, out, _ = run(DEAD, cache, platform="rds")
     dump_ok("rds offline falls back to the rds cache", p, out, REFERENCE_RDS)
+
+    # Other clouds' bundles have keys AWS bundles don't (source_version), which decoders must skip.
+    other = os.path.join(tmp, "other")
+    for platform, reference in OTHER.items():
+        p, out, _ = run(BASE, other, platform=platform)
+        dump_ok(f"{platform} download decodes to the {platform} reference", p, out, reference)
+        check(f"{platform} fetches {platform}-latest and its bundle",
+              [x[0] for x in State.log] == [f"/{platform}-latest", f"/{platform}-bundle-{NAME}.json.xz"], State.log)
+        p, out, _ = run(DEAD, other, platform=platform)
+        dump_ok(f"{platform} offline falls back to the {platform} cache", p, out, reference)
+    check("other clouds are cached side by side",
+          sorted(os.listdir(other)) == sorted(f"{p}-bundle-{NAME}.json" for p in OTHER), sorted(os.listdir(other)))
     p, out, _ = run(BASE, cache, platform="ec2")
     dump_ok("platform ec2 is the EC2 bundle", p, out)
     check("platform ec2 fetches latest", [x[0] for x in State.log] == ["/latest"], State.log)

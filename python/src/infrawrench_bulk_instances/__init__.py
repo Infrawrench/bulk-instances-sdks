@@ -17,6 +17,7 @@ from ._data import (
 )
 from ._download import (
     AWS_PLATFORMS,
+    OTHER_PLATFORMS,
     AWSPricingDataError,
     download_aws_ec2_pricing_data,
     download_aws_pricing_data,
@@ -25,6 +26,7 @@ from ._download import (
 
 __all__ = [
     "AWS_PLATFORMS",
+    "OTHER_PLATFORMS",
     "AWSInstance",
     "AWSPricingData",
     "AWSPricingDataError",

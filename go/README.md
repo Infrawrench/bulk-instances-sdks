@@ -107,6 +107,50 @@ Its locations are region codes, so `Region` and `RegionCode` are both `us-east-1
 have no attributes; take their specs from `ec2`. The history goes back to August 2026, hourly at
 first and every 6 hours since November 2026, and prices change far more often than on-demand prices.
 
+## Other clouds
+
+Infrawrench also publishes bundles for clouds other than AWS, in the same format, and `DownloadAWSPricingData` loads them
+the same way. `OtherPlatforms` lists them:
+
+| Platform | What | History from |
+| --- | --- | --- |
+| `runpod` | RunPod GPU and CPU pods | November 2026 |
+| `alibaba` | Alibaba Cloud ECS instance types | May 2018 |
+
+```go
+runpod, err := bulkinstances.DownloadAWSPricingData(context.Background(), "runpod", bulkinstances.Options{})
+if err != nil {
+	log.Fatal(err)
+}
+h100, ok := runpod.Get("NVIDIA H100 80GB HBM3")
+if !ok {
+	log.Fatal("no H100")
+}
+for _, p := range h100.Pricing().OnDemand {
+	if p.Fields["cloudType"] == "Secure Cloud" {
+		fmt.Println(p.Hourly)
+	}
+}
+```
+
+`runpod` has GPU types by RunPod's id (`NVIDIA H100 80GB HBM3`), priced per GPU per hour, and CPU pods by
+pod id (`cpu3c-2-4`: flavor, vCPUs, GB of memory), priced per pod per hour; the `productFamily` attribute is
+`GPU` or `CPU`. Prices are the same in every data center, so every price is in the location `global`. The
+only variant key is `cloudType`, `Secure Cloud` or `Community Cloud`. Savings plans are in `Pricing().Reserved`
+with the term `3mo` or `6mo`, `Savings Plan`, `All Upfront`, and `Hourly` is the plan's effective hourly rate.
+Stock levels and spot prices are not included.
+
+`alibaba`'s locations are region ids (`cn-hangzhou`), so the location and its region code are the same, and
+the regions table gives each an English `name`. Its variant keys are `operatingSystem` (`Linux` or `Windows`)
+and `networkType` (`VPC`, or `Classic` in older history). `Pricing().OnDemand` has pay-as-you-go prices. `Pricing().Reserved` has
+subscriptions, with the term `1mo` or `1yr` to `5yr`, `Subscription`, `All Upfront`: they are paid in full
+when bought, so `Hourly` is 0 and `Upfront` is the price. It also has reserved instances, with the term `1yr` or
+`3yr`, `Reserved Instance`, and a purchase option. Attributes are Alibaba's instance type definitions
+(`CpuCoreCount`, `MemorySize`, `CpuOptions.ThreadsPerCore`, ...), from May 2023 on.
+
+`FetchAWSInstance` doesn't serve these platforms yet: the Infrawrench API has no instances for them, so it returns
+`nil`. Download the bundle instead.
+
 ## One instance
 
 `FetchAWSInstance(ctx, platform, instanceType, opts)` fetches a single instance from the

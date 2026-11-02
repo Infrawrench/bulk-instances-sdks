@@ -1,8 +1,9 @@
 """Writes small bundles that exercise every decoding rule.
 
 fixture/bundle-<NAME>.json(.xz) and fixture/latest are an EC2 bundle. fixture/rds-bundle-<NAME>.json(.xz) and
-fixture/rds-latest are an RDS one, which names its own variant keys. fixture/api/<platform>/<instance>.json is each
-instance as the Infrawrench API serves it from `/api/v1/aws-bulk-pricing/<platform>/<instance>`.
+fixture/rds-latest are an RDS one, which names its own variant keys. fixture/runpod-* and fixture/alibaba-* are
+bundles for other clouds. fixture/api/<platform>/<instance>.json is each AWS instance as the Infrawrench API serves
+it from `/api/v1/aws-bulk-pricing/<platform>/<instance>`.
 """
 import json, lzma, os, sys
 
@@ -224,4 +225,85 @@ rds = {
 }
 write("rds-", rds)
 write_api("rds", rds)
+
+# Other clouds, as other-instances (instances-bundler's other/) writes them. They carry source_version, a key
+# AWS bundles don't have, which every decoder must skip. The Infrawrench API doesn't serve their instances, so
+# there is nothing under fixture/api for them.
+
+# RunPod: one variant key, every price in "global", savings plans as reserved rows with no upfront.
+table = []
+G, DC = s("global"), s("US-TX-1")
+SEC, COM = s("Secure Cloud"), s("Community Cloud")
+runpod = {
+    "offer": "RunpodPods",
+    "compression_table": table,
+    "snapshots": [t1, t2, t3],
+    "regions": [
+        [DC, [[s("location"), s("United States")], [s("locationType"), s("Data Center")], [s("regionCode"), DC]]],
+        [G, [[s("locationType"), s("Global")], [s("regionCode"), G]]],
+    ],
+    "variant_keys": ["cloudType"],
+    "variants": [[SEC], [COM]],
+    "reserved_terms": [[s("3mo"), s("Savings Plan"), s("All Upfront")], [s("6mo"), s("Savings Plan"), s("All Upfront")]],
+    "instances": {
+        "NVIDIA H100 80GB HBM3": [
+            [[s("dataCenters"), DC], [s("displayName"), s("H100 SXM")], [s("memoryInGb"), s("80")],
+             [s("priceUnit"), s("GPU-Hour")], [s("productFamily"), s("GPU")]],
+            [[t2, s("dataCenters"), s("EU-RO-1,US-TX-1")]],
+            2.69,
+            [[t1, G, 1], [t1, G, 0, 3.99], [t2, G, 0, 2.99], [t3, G, 1, None]],
+            [[t1, G, 0, 0, 3.49], [t1, G, 0, 1, 3.29], [t2, G, 0, 0, 2.89]],
+            t1,
+            None,
+        ],
+        "cpu3c-2-4": [
+            [[s("memoryInGb"), s("4")], [s("priceUnit"), s("Hour")], [s("productFamily"), s("CPU")], [s("vcpu"), s("2")]],
+            [],
+            0.06,
+            [[t1, G, 0], [t3, G, 0, None]],
+            [],
+            t1,
+            t3,
+        ],
+    },
+}
+write("runpod-", runpod)
+
+# Alibaba Cloud ECS: region ids as locations, two variant keys (one of them EC2's operatingSystem),
+# subscriptions as All Upfront rows (hourly 0) and reserved instances with both parts.
+table = []
+HZ, USE = s("cn-hangzhou"), s("us-east-1")
+LINUX_VPC, WIN_VPC, LINUX_CLASSIC = 0, 1, 2
+alibaba = {
+    "offer": "AlibabaECS",
+    "source_version": "2.0.426",
+    "compression_table": table,
+    "snapshots": [t1, t2],
+    "regions": [
+        [HZ, [[s("locationType"), s("Alibaba Cloud Region")], [s("name"), s("China (Hangzhou)")], [s("regionCode"), HZ]]],
+        [USE, [[s("locationType"), s("Alibaba Cloud Region")], [s("name"), s("US (Virginia)")], [s("regionCode"), USE]]],
+    ],
+    "variant_keys": ["operatingSystem", "networkType"],
+    "variants": [[s("Linux"), s("VPC")], [s("Windows"), s("VPC")], [s("Linux"), s("Classic")]],
+    "reserved_terms": [
+        [s("1yr"), s("Subscription"), s("All Upfront")],
+        [s("1mo"), s("Subscription"), s("All Upfront")],
+        [s("3yr"), s("Reserved Instance"), s("Partial Upfront")],
+    ],
+    "instances": {
+        "ecs.g6.large": [
+            [[s("CpuCoreCount"), s("2")], [s("CpuOptions.ThreadsPerCore"), s("2")], [s("MemorySize"), s("8.0")],
+             [s("SupportedBootModes.SupportedBootMode"), s("BIOS,UEFI")]],
+            [[t2, s("MemorySize"), s("16.0")]],
+            0.1068,
+            [[t1, HZ, LINUX_VPC], [t1, HZ, LINUX_CLASSIC], [t1, USE, LINUX_VPC, 0.12], [t1, USE, WIN_VPC, 0.2],
+             [t2, HZ, LINUX_CLASSIC, None]],
+            [[t1, HZ, LINUX_VPC, 0, 0, 500.5], [t1, HZ, LINUX_VPC, 1, 0, 50], [t1, HZ, LINUX_CLASSIC, 0, 0, 480],
+             [t1, USE, WIN_VPC, 2, 0.05, 300], [t2, USE, WIN_VPC, 2, 0.04, 250], [t2, HZ, LINUX_CLASSIC, 0, None]],
+            t1,
+            None,
+        ],
+    },
+}
+write("alibaba-", alibaba)
 print(out)

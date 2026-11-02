@@ -1,0 +1,385 @@
+{
+ "offer": "RunpodPods",
+ "variantKeys": [
+  "cloudType"
+ ],
+ "snapshots": [
+  1700000000,
+  1710000000,
+  1720000000
+ ],
+ "regions": {
+  "US-TX-1": {
+   "location": "United States",
+   "locationType": "Data Center",
+   "regionCode": "US-TX-1"
+  },
+  "global": {
+   "locationType": "Global",
+   "regionCode": "global"
+  }
+ },
+ "keys": [
+  "NVIDIA H100 80GB HBM3",
+  "cpu3c-2-4"
+ ],
+ "has": {
+  "m5.large": false,
+  "nope": false
+ },
+ "getMissing": null,
+ "instances": {
+  "NVIDIA H100 80GB HBM3": {
+   "name": "NVIDIA H100 80GB HBM3",
+   "createdAt": 1700000000,
+   "deletedAt": null,
+   "attributes": {
+    "dataCenters": "EU-RO-1,US-TX-1",
+    "displayName": "H100 SXM",
+    "memoryInGb": "80",
+    "priceUnit": "GPU-Hour",
+    "productFamily": "GPU"
+   },
+   "attributesIn": {
+    "US-TX-1": {
+     "dataCenters": "EU-RO-1,US-TX-1",
+     "displayName": "H100 SXM",
+     "memoryInGb": "80",
+     "priceUnit": "GPU-Hour",
+     "productFamily": "GPU"
+    },
+    "global": {
+     "dataCenters": "EU-RO-1,US-TX-1",
+     "displayName": "H100 SXM",
+     "memoryInGb": "80",
+     "priceUnit": "GPU-Hour",
+     "productFamily": "GPU"
+    },
+    "Mystery": {
+     "dataCenters": "EU-RO-1,US-TX-1",
+     "displayName": "H100 SXM",
+     "memoryInGb": "80",
+     "priceUnit": "GPU-Hour",
+     "productFamily": "GPU"
+    },
+    "Nowhere": {
+     "dataCenters": "EU-RO-1,US-TX-1",
+     "displayName": "H100 SXM",
+     "memoryInGb": "80",
+     "priceUnit": "GPU-Hour",
+     "productFamily": "GPU"
+    }
+   },
+   "attributesHistory": [
+    {
+     "at": 1700000000,
+     "key": "dataCenters",
+     "value": "US-TX-1",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "displayName",
+     "value": "H100 SXM",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "memoryInGb",
+     "value": "80",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "priceUnit",
+     "value": "GPU-Hour",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "productFamily",
+     "value": "GPU",
+     "region": null
+    },
+    {
+     "at": 1710000000,
+     "key": "dataCenters",
+     "value": "EU-RO-1,US-TX-1",
+     "region": null
+    }
+   ],
+   "pricing": {
+    "onDemand": [
+     {
+      "region": "global",
+      "regionCode": "global",
+      "variant": {
+       "cloudType": "Secure Cloud"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 2.99,
+      "since": 1710000000
+     }
+    ],
+    "reserved": [
+     {
+      "region": "global",
+      "regionCode": "global",
+      "variant": {
+       "cloudType": "Secure Cloud"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "3mo",
+      "offeringClass": "Savings Plan",
+      "purchaseOption": "All Upfront",
+      "hourly": 2.89,
+      "upfront": 0,
+      "since": 1710000000
+     },
+     {
+      "region": "global",
+      "regionCode": "global",
+      "variant": {
+       "cloudType": "Secure Cloud"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "6mo",
+      "offeringClass": "Savings Plan",
+      "purchaseOption": "All Upfront",
+      "hourly": 3.29,
+      "upfront": 0,
+      "since": 1700000000
+     }
+    ]
+   },
+   "pricingHistory": {
+    "onDemand": [
+     {
+      "at": 1700000000,
+      "region": "global",
+      "regionCode": "global",
+      "variant": {
+       "cloudType": "Community Cloud"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 2.69
+     },
+     {
+      "at": 1700000000,
+      "region": "global",
+      "regionCode": "global",
+      "variant": {
+       "cloudType": "Secure Cloud"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 3.99
+     },
+     {
+      "at": 1710000000,
+      "region": "global",
+      "regionCode": "global",
+      "variant": {
+       "cloudType": "Secure Cloud"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 2.99
+     },
+     {
+      "at": 1720000000,
+      "region": "global",
+      "regionCode": "global",
+      "variant": {
+       "cloudType": "Community Cloud"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": null
+     }
+    ],
+    "reserved": [
+     {
+      "at": 1700000000,
+      "region": "global",
+      "regionCode": "global",
+      "variant": {
+       "cloudType": "Secure Cloud"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "3mo",
+      "offeringClass": "Savings Plan",
+      "purchaseOption": "All Upfront",
+      "hourly": 3.49,
+      "upfront": 0
+     },
+     {
+      "at": 1700000000,
+      "region": "global",
+      "regionCode": "global",
+      "variant": {
+       "cloudType": "Secure Cloud"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "6mo",
+      "offeringClass": "Savings Plan",
+      "purchaseOption": "All Upfront",
+      "hourly": 3.29,
+      "upfront": 0
+     },
+     {
+      "at": 1710000000,
+      "region": "global",
+      "regionCode": "global",
+      "variant": {
+       "cloudType": "Secure Cloud"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "3mo",
+      "offeringClass": "Savings Plan",
+      "purchaseOption": "All Upfront",
+      "hourly": 2.89,
+      "upfront": 0
+     }
+    ]
+   }
+  },
+  "cpu3c-2-4": {
+   "name": "cpu3c-2-4",
+   "createdAt": 1700000000,
+   "deletedAt": 1720000000,
+   "attributes": {
+    "memoryInGb": "4",
+    "priceUnit": "Hour",
+    "productFamily": "CPU",
+    "vcpu": "2"
+   },
+   "attributesIn": {
+    "US-TX-1": {
+     "memoryInGb": "4",
+     "priceUnit": "Hour",
+     "productFamily": "CPU",
+     "vcpu": "2"
+    },
+    "global": {
+     "memoryInGb": "4",
+     "priceUnit": "Hour",
+     "productFamily": "CPU",
+     "vcpu": "2"
+    },
+    "Mystery": {
+     "memoryInGb": "4",
+     "priceUnit": "Hour",
+     "productFamily": "CPU",
+     "vcpu": "2"
+    },
+    "Nowhere": {
+     "memoryInGb": "4",
+     "priceUnit": "Hour",
+     "productFamily": "CPU",
+     "vcpu": "2"
+    }
+   },
+   "attributesHistory": [
+    {
+     "at": 1700000000,
+     "key": "memoryInGb",
+     "value": "4",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "priceUnit",
+     "value": "Hour",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "productFamily",
+     "value": "CPU",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "vcpu",
+     "value": "2",
+     "region": null
+    }
+   ],
+   "pricing": {
+    "onDemand": [],
+    "reserved": []
+   },
+   "pricingHistory": {
+    "onDemand": [
+     {
+      "at": 1700000000,
+      "region": "global",
+      "regionCode": "global",
+      "variant": {
+       "cloudType": "Secure Cloud"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.06
+     },
+     {
+      "at": 1720000000,
+      "region": "global",
+      "regionCode": "global",
+      "variant": {
+       "cloudType": "Secure Cloud"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": null
+     }
+    ],
+    "reserved": []
+   }
+  }
+ }
+}

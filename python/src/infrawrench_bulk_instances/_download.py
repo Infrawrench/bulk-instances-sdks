@@ -90,6 +90,10 @@ AWS_PLATFORMS: Final[tuple[str, ...]] = (
 """The AWS platforms Infrawrench publishes a bundle for. Any other lowercase name is
 requested as is, so a platform added later works without a new SDK."""
 
+OTHER_PLATFORMS: Final[tuple[str, ...]] = ("runpod", "alibaba")
+"""The other clouds Infrawrench publishes a bundle for, in the same format: RunPod GPU and CPU pods,
+and Alibaba Cloud ECS. The same functions load them."""
+
 
 def download_aws_ec2_pricing_data(
     *,

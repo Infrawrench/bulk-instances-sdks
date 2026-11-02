@@ -41,6 +41,12 @@ public static class BulkInstances
         "ec2", "rds", "elasticache", "opensearch", "redshift", "docdb", "neptune", "memorydb", "dax", "sagemaker", "emr", "gamelift", "spot",
     });
 
+    /// <summary>
+    /// The other clouds Infrawrench publishes a bundle for, in the same format: RunPod GPU and CPU pods,
+    /// and Alibaba Cloud ECS. The same methods load them.
+    /// </summary>
+    public static IReadOnlyList<string> OtherPlatforms { get; } = Array.AsReadOnly(new[] { "runpod", "alibaba" });
+
     /// <summary>The variant keys of EC2 bundles, which don't list their own.</summary>
     public static IReadOnlyList<string> Ec2VariantKeys { get; } = Array.AsReadOnly(new[]
     {

@@ -63,6 +63,10 @@ var AWSPlatforms = []string{
 	"ec2", "rds", "elasticache", "opensearch", "redshift", "docdb", "neptune", "memorydb", "dax", "sagemaker", "emr", "gamelift", "spot",
 }
 
+// OtherPlatforms lists the other clouds Infrawrench publishes a bundle for, in the same format:
+// RunPod GPU and CPU pods, and Alibaba Cloud ECS. The same functions load them.
+var OtherPlatforms = []string{"runpod", "alibaba"}
+
 var (
 	platformName   = regexp.MustCompile(`^[a-z0-9]+$`)
 	latestName     = regexp.MustCompile(`^[A-Za-z0-9._-]+$`)
