@@ -159,6 +159,48 @@ module Infrawrench
       # @return [AWSInstance, nil] +nil+ if the platform has no instance with that name.
       # @raise [AWSPricingDataError]
       def fetch_aws_instance(platform, instance_type, token: nil, base_url: nil)
+        fetch_instance(platform, instance_type, AWSPricingData, token:, base_url:)
+      end
+
+      # Fetches one RunPod GPU type or CPU pod from the Infrawrench API, without downloading RunPod's bundle.
+      # Nothing is cached. It takes the same options as #fetch_aws_instance.
+      #
+      # The result is the same as <tt>download_runpod_pricing_data.get(id)</tt>, from whichever bundle the API
+      # last synced, which can trail the newest bundle by up to half an hour.
+      #
+      # @param id [String] The GPU type id (<tt>"NVIDIA H100 80GB HBM3"</tt>) or CPU pod id (+"cpu3c-2-4"+).
+      # @param token [String, nil] Your Infrawrench API token. Defaults to the +INFRAWRENCH_API_KEY+ environment variable.
+      # @param base_url [String, nil] Where the Infrawrench API is served from. Defaults to https://app.infrawrench.com
+      # @return [RunpodInstance, nil] +nil+ if RunPod has no instance with that id.
+      # @raise [RunpodPricingDataError]
+      def fetch_runpod_instance(id, token: nil, base_url: nil)
+        with_provider_error(RunpodPricingDataError) do
+          fetch_instance("runpod", id, RunpodPricingData, token:, base_url:)
+        end
+      end
+
+      # Fetches one Alibaba Cloud ECS instance type from the Infrawrench API, without downloading Alibaba's
+      # bundle. Nothing is cached. It takes the same options as #fetch_aws_instance.
+      #
+      # The result is the same as <tt>download_alibaba_pricing_data.get(instance_type)</tt>, from whichever
+      # bundle the API last synced, which can trail the newest bundle by up to half an hour.
+      #
+      # @param instance_type [String] The instance type, e.g. +"ecs.g6.large"+.
+      # @param token [String, nil] Your Infrawrench API token. Defaults to the +INFRAWRENCH_API_KEY+ environment variable.
+      # @param base_url [String, nil] Where the Infrawrench API is served from. Defaults to https://app.infrawrench.com
+      # @return [AlibabaInstance, nil] +nil+ if Alibaba has no instance type with that name.
+      # @raise [AlibabaPricingDataError]
+      def fetch_alibaba_instance(instance_type, token: nil, base_url: nil)
+        with_provider_error(AlibabaPricingDataError) do
+          fetch_instance("alibaba", instance_type, AlibabaPricingData, token:, base_url:)
+        end
+      end
+
+      private
+
+      # GETs one instance from the Infrawrench API and decodes it with +data_class+, whose +get+ gives the
+      # instance type.
+      def fetch_instance(platform, instance_type, data_class, token:, base_url:)
         unless (platform.is_a?(String) || platform.is_a?(Symbol)) && platform.match?(/\A[a-z0-9]+\z/)
           raise AWSPricingDataError, %("#{platform}" is not a platform name.)
         end
@@ -185,14 +227,17 @@ module Infrawrench
         bundle = value.slice("offer", "compression_table", "regions", "variant_keys", "variants", "reserved_terms")
         bundle["snapshots"] = []
         bundle["instances"] = { value["name"] => value["instance"] }
-        AWSPricingData.new(bundle).get(value["name"])
+        data_class.new(bundle).get(value["name"])
       end
-
-      private
 
       # load_bundle, failing with the provider's own error class.
       def load_bundle_as(platform, error_class, **options)
-        load_bundle(platform, **options)
+        with_provider_error(error_class) { load_bundle(platform, **options) }
+      end
+
+      # Runs the block, turning an AWSPricingDataError into the provider's own error class.
+      def with_provider_error(error_class)
+        yield
       rescue AWSPricingDataError => e
         # Caused by what the AWS error was caused by (or nothing), so it reads as if raised here.
         raise error_class.new(e.message, status: e.status), cause: e.cause

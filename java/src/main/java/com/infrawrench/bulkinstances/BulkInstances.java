@@ -334,6 +334,85 @@ public final class BulkInstances {
      */
     public static Optional<AWSInstance> fetchAwsInstance(
             String platform, String instanceType, AWSInstanceOptions options) throws IOException {
+        return fetchInstance(platform, instanceType, options, AWSPricingData::new);
+    }
+
+    /**
+     * Fetches one RunPod GPU type or CPU pod from the Infrawrench API with the default options.
+     *
+     * @param id e.g. {@code NVIDIA H100 80GB HBM3} or {@code cpu3c-2-4}
+     * @return the GPU type or CPU pod, or empty if RunPod has no instance with that id
+     * @throws RunpodPricingDataException if {@code id} is empty, or the instance cannot be fetched
+     * @throws IOException if the response is not an instance
+     * @see #fetchRunpodInstance(String, RunpodInstanceOptions)
+     */
+    public static Optional<RunpodInstance> fetchRunpodInstance(String id) throws IOException {
+        return fetchRunpodInstance(id, RunpodInstanceOptions.builder().build());
+    }
+
+    /**
+     * Fetches one RunPod GPU type or CPU pod from the Infrawrench API, without downloading RunPod's bundle. Nothing is
+     * cached.
+     *
+     * <p>The result is the same as {@code downloadRunpodPricingData().get(id)}, from whichever bundle the API last
+     * synced, which can trail the newest bundle by up to half an hour.
+     *
+     * @param id e.g. {@code NVIDIA H100 80GB HBM3} or {@code cpu3c-2-4}
+     * @param options the options
+     * @return the GPU type or CPU pod, or empty if RunPod has no instance with that id
+     * @throws RunpodPricingDataException if {@code id} is empty, or the instance cannot be fetched
+     * @throws IOException if the response is not an instance ({@link InterruptedIOException} if the thread is
+     *     interrupted)
+     */
+    public static Optional<RunpodInstance> fetchRunpodInstance(String id, RunpodInstanceOptions options)
+            throws IOException {
+        try {
+            return fetchInstance("runpod", id, options, RunpodPricingData::new);
+        } catch (AWSPricingDataException e) {
+            throw new RunpodPricingDataException(e);
+        }
+    }
+
+    /**
+     * Fetches one Alibaba Cloud ECS instance type from the Infrawrench API with the default options.
+     *
+     * @param instanceType e.g. {@code ecs.g6.large}
+     * @return the instance type, or empty if Alibaba has no instance type with that name
+     * @throws AlibabaPricingDataException if {@code instanceType} is empty, or the instance cannot be fetched
+     * @throws IOException if the response is not an instance
+     * @see #fetchAlibabaInstance(String, AlibabaInstanceOptions)
+     */
+    public static Optional<AlibabaInstance> fetchAlibabaInstance(String instanceType) throws IOException {
+        return fetchAlibabaInstance(instanceType, AlibabaInstanceOptions.builder().build());
+    }
+
+    /**
+     * Fetches one Alibaba Cloud ECS instance type from the Infrawrench API, without downloading Alibaba's bundle.
+     * Nothing is cached.
+     *
+     * <p>The result is the same as {@code downloadAlibabaPricingData().get(instanceType)}, from whichever bundle the
+     * API last synced, which can trail the newest bundle by up to half an hour.
+     *
+     * @param instanceType e.g. {@code ecs.g6.large}
+     * @param options the options
+     * @return the instance type, or empty if Alibaba has no instance type with that name
+     * @throws AlibabaPricingDataException if {@code instanceType} is empty, or the instance cannot be fetched
+     * @throws IOException if the response is not an instance ({@link InterruptedIOException} if the thread is
+     *     interrupted)
+     */
+    public static Optional<AlibabaInstance> fetchAlibabaInstance(String instanceType, AlibabaInstanceOptions options)
+            throws IOException {
+        try {
+            return fetchInstance("alibaba", instanceType, options, AlibabaPricingData::new);
+        } catch (AWSPricingDataException e) {
+            throw new AlibabaPricingDataException(e);
+        }
+    }
+
+    /** GETs one instance from the Infrawrench API and decodes it with {@code newData}, whose {@code get} gives it. */
+    private static <I extends AWSInstance> Optional<I> fetchInstance(
+            String platform, String instanceType, AWSInstanceOptions options,
+            Function<BundleParser.Bundle, ? extends PricingData<I>> newData) throws IOException {
         if (!PLATFORM.matcher(platform).matches()) {
             throw new AWSPricingDataException("\"" + platform + "\" is not a platform name.");
         }
@@ -354,7 +433,7 @@ public final class BulkInstances {
             throw e;
         }
         try (InputStream in = new Transport(res.body(), url)) {
-            AWSPricingData data = new AWSPricingData(BundleParser.parseInstance(in));
+            PricingData<I> data = newData.apply(BundleParser.parseInstance(in));
             return data.get(data.keys().get(0));
         }
     }

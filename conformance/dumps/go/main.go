@@ -117,8 +117,24 @@ func main() {
 	}
 
 	if len(os.Args) > 6 {
-		i, err := bulkinstances.FetchAWSInstance(context.Background(), os.Args[5], os.Args[6],
-			bulkinstances.AWSInstanceOptions{Token: token, BaseURL: baseURL})
+		apiOpts := bulkinstances.AWSInstanceOptions{Token: token, BaseURL: baseURL}
+		// RunPod and Alibaba have their own functions and instance types.
+		var i *bulkinstances.AWSInstance
+		var err error
+		switch platform, name := os.Args[5], os.Args[6]; platform {
+		case "runpod":
+			var r *bulkinstances.RunpodInstance
+			if r, err = bulkinstances.FetchRunpodInstance(context.Background(), name, apiOpts); r != nil {
+				i = r.AWSInstance
+			}
+		case "alibaba":
+			var a *bulkinstances.AlibabaInstance
+			if a, err = bulkinstances.FetchAlibabaInstance(context.Background(), name, apiOpts); a != nil {
+				i = a.AWSInstance
+			}
+		default:
+			i, err = bulkinstances.FetchAWSInstance(context.Background(), platform, name, apiOpts)
+		}
 		if err != nil {
 			fail(err)
 		}

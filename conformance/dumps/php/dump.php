@@ -71,25 +71,6 @@ $dumpInstance = static function (AWSInstance $i, array $regionNames) use ($ts, $
     return $out;
 };
 
-if ($instanceType !== null) {
-    try {
-        $i = BulkInstances::fetchAwsInstance($platform, $instanceType, token: $token === '-' ? null : $token, baseUrl: $baseUrl);
-    } catch (AWSPricingDataException $e) {
-        $error($e);
-    }
-    // The regions its attributes are overridden in; every other one is the same as `attributes`.
-    $regionNames = [];
-    foreach ($i?->attributesHistory() ?? [] as $c) {
-        if ($c->region !== null) {
-            $regionNames[$c->region] = true;
-        }
-    }
-    $regionNames = array_map(strval(...), array_keys($regionNames));
-    sort($regionNames, SORT_STRING);
-    $print(['instance' => $i === null ? null : $dumpInstance($i, $regionNames)]);
-    exit(0);
-}
-
 // RunPod, Alibaba, Azure and GCP have their own methods and types, and their own exceptions.
 /** @param class-string<AWSPricingDataException> $exception */
 $providerError = static function (AWSPricingDataException $e, string $exception) use ($error): never {
@@ -110,6 +91,50 @@ $expectTypes = static function (AWSPricingData $d, string $dataClass, string $in
         exit(1);
     }
 };
+
+/** @param class-string<AWSInstance> $instanceClass */
+$expectInstance = static function (?AWSInstance $i, string $instanceClass): void {
+    if ($i !== null && !$i instanceof $instanceClass) {
+        fwrite(STDERR, "expected $instanceClass\n");
+        exit(1);
+    }
+};
+
+if ($instanceType !== null) {
+    $apiOptions = ['token' => $token === '-' ? null : $token, 'baseUrl' => $baseUrl];
+    if ($platform === 'runpod') {
+        try {
+            $i = BulkInstances::fetchRunpodInstance($instanceType, ...$apiOptions);
+        } catch (AWSPricingDataException $e) {
+            $providerError($e, RunpodPricingDataException::class);
+        }
+        $expectInstance($i, RunpodInstance::class);
+    } elseif ($platform === 'alibaba') {
+        try {
+            $i = BulkInstances::fetchAlibabaInstance($instanceType, ...$apiOptions);
+        } catch (AWSPricingDataException $e) {
+            $providerError($e, AlibabaPricingDataException::class);
+        }
+        $expectInstance($i, AlibabaInstance::class);
+    } else {
+        try {
+            $i = BulkInstances::fetchAwsInstance($platform, $instanceType, ...$apiOptions);
+        } catch (AWSPricingDataException $e) {
+            $error($e);
+        }
+    }
+    // The regions its attributes are overridden in; every other one is the same as `attributes`.
+    $regionNames = [];
+    foreach ($i?->attributesHistory() ?? [] as $c) {
+        if ($c->region !== null) {
+            $regionNames[$c->region] = true;
+        }
+    }
+    $regionNames = array_map(strval(...), array_keys($regionNames));
+    sort($regionNames, SORT_STRING);
+    $print(['instance' => $i === null ? null : $dumpInstance($i, $regionNames)]);
+    exit(0);
+}
 
 $options = ['token' => $token === '-' ? null : $token, 'cachePricingData' => $cache === '1', 'cachePath' => $cachePath, 'baseUrl' => $baseUrl];
 try {

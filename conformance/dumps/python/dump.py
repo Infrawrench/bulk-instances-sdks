@@ -27,7 +27,9 @@ from infrawrench_bulk_instances import (
     download_azure_pricing_data,
     download_gcp_pricing_data,
     download_runpod_pricing_data,
+    fetch_alibaba_instance,
     fetch_aws_instance,
+    fetch_runpod_instance,
 )
 
 base_url, cache_path, token, cache = sys.argv[1:5]
@@ -85,10 +87,34 @@ def expect_types(d: AWSPricingData, data_class: type[AWSPricingData], instance_c
         sys.exit(1)
 
 
+def expect_instance(i: AWSInstance | None, instance_class: type[AWSInstance]) -> None:
+    if i is not None and not isinstance(i, instance_class):
+        print(f"expected {instance_class.__name__}", file=sys.stderr)
+        sys.exit(1)
+
+
 if instance_type is not None:
     assert platform is not None
+    api_token = None if token == "-" else token
+    one: AWSInstance | None
     try:
-        one = fetch_aws_instance(platform, instance_type, base_url=base_url, token=None if token == "-" else token)
+        # RunPod and Alibaba have their own functions, returning their own instance type and errors.
+        if platform == "runpod":
+            try:
+                one = fetch_runpod_instance(instance_type, base_url=base_url, token=api_token)
+            except AWSPricingDataError as e:
+                expect_error(e, RunpodPricingDataError)
+                raise
+            expect_instance(one, RunpodInstance)
+        elif platform == "alibaba":
+            try:
+                one = fetch_alibaba_instance(instance_type, base_url=base_url, token=api_token)
+            except AWSPricingDataError as e:
+                expect_error(e, AlibabaPricingDataError)
+                raise
+            expect_instance(one, AlibabaInstance)
+        else:
+            one = fetch_aws_instance(platform, instance_type, base_url=base_url, token=api_token)
     except AWSPricingDataError as e:
         print(json.dumps({"error": {"status": e.status, "message": str(e)}}))
         sys.exit(3)

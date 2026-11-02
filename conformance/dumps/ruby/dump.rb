@@ -26,19 +26,6 @@ dump_instance = lambda do |i, region_names|
   }
 end
 
-unless instance_type.nil?
-  begin
-    i = BI.fetch_aws_instance(platform, instance_type, token:, base_url:)
-  rescue AWSPricingDataError => e
-    puts JSON.generate({ error: { status: e.status, message: e.message } })
-    exit 3
-  end
-  # The regions its attributes are overridden in; every other one is the same as `attributes`.
-  region_names = i.nil? ? [] : i.attributes_history.filter_map(&:region).uniq.sort
-  puts JSON.pretty_generate({ instance: i && dump_instance.(i, region_names) })
-  exit 0
-end
-
 # A provider function's failure must be that provider's error.
 def expect_error(provider_error)
   yield
@@ -56,6 +43,35 @@ def expect_types(data, data_class, instance_class)
 
   warn "expected #{data_class} and #{instance_class}"
   exit 1
+end
+
+def expect_instance(instance, instance_class)
+  return instance if instance.nil? || instance.is_a?(instance_class)
+
+  warn "expected #{instance_class}"
+  exit 1
+end
+
+unless instance_type.nil?
+  begin
+    # RunPod and Alibaba have their own functions, returning their own classes and errors.
+    i = case platform
+        when "runpod"
+          expect_instance(expect_error(BI::RunpodPricingDataError) { BI.fetch_runpod_instance(instance_type, token:, base_url:) },
+                          BI::RunpodInstance)
+        when "alibaba"
+          expect_instance(expect_error(BI::AlibabaPricingDataError) { BI.fetch_alibaba_instance(instance_type, token:, base_url:) },
+                          BI::AlibabaInstance)
+        else BI.fetch_aws_instance(platform, instance_type, token:, base_url:)
+        end
+  rescue AWSPricingDataError => e
+    puts JSON.generate({ error: { status: e.status, message: e.message } })
+    exit 3
+  end
+  # The regions its attributes are overridden in; every other one is the same as `attributes`.
+  region_names = i.nil? ? [] : i.attributes_history.filter_map(&:region).uniq.sort
+  puts JSON.pretty_generate({ instance: i && dump_instance.(i, region_names) })
+  exit 0
 end
 
 begin

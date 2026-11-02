@@ -109,6 +109,16 @@ key is `cloudType`, `Secure Cloud` or `Community Cloud`. Savings plans are in `p
 `3mo` or `6mo`, `Savings Plan`, `All Upfront`, and `hourly` is the plan's effective hourly rate. Stock levels
 and spot prices are not included. The history starts in November 2026.
 
+`fetch_runpod_instance(id, ...)` fetches one GPU type or CPU pod from the Infrawrench API instead (see
+[One instance](#one-instance)). It returns a `RunpodInstance`, or `None` if RunPod has no instance with that
+id, and raises `RunpodPricingDataError`:
+
+```python
+from infrawrench_bulk_instances import fetch_runpod_instance
+
+h100 = fetch_runpod_instance("NVIDIA H100 80GB HBM3")
+```
+
 ## Alibaba Cloud
 
 `download_alibaba_pricing_data(...)` loads Alibaba Cloud ECS prices. It takes the same keyword arguments as
@@ -138,6 +148,16 @@ when bought, so `hourly` is 0 and `upfront` is the price. It also has reserved i
 `3yr`, `Reserved Instance`, and a purchase option. Attributes are Alibaba's instance type definitions
 (`CpuCoreCount`, `MemorySize`, `CpuOptions.ThreadsPerCore`, ...), from May 2023 on. The history starts in
 May 2018.
+
+`fetch_alibaba_instance(instance_type, ...)` fetches one instance type from the Infrawrench API instead (see
+[One instance](#one-instance)). It returns an `AlibabaInstance`, or `None` if Alibaba has no instance type with
+that name, and raises `AlibabaPricingDataError`:
+
+```python
+from infrawrench_bulk_instances import fetch_alibaba_instance
+
+g6 = fetch_alibaba_instance("ecs.g6.large")
+```
 
 ## Azure
 
@@ -202,7 +222,7 @@ Engine API (`guestCpus`, `memoryMb`, `description`, `isSharedCpu`, ...), `accele
 `acceleratorCount` for its GPUs, and `zones`, the zones in each region that have it, which differ by region
 (see `attributes_in(region)`). The history starts in November 2026.
 
-`fetch_aws_instance` doesn't cover RunPod, Alibaba, Azure or Google Cloud; download their bundles instead.
+There is no single-instance fetch for Azure or Google Cloud yet; download their bundles instead.
 
 ## One instance
 
@@ -221,6 +241,11 @@ if m5 is not None:
 It takes `token` like the bundle download, and `base_url` for where the API is served from
 (`https://app.infrawrench.com` by default). Nothing is cached. The API syncs each new bundle within
 about half an hour of it being published, so it can briefly trail `download_aws_pricing_data`.
+
+`fetch_runpod_instance(id, ...)` and `fetch_alibaba_instance(instance_type, ...)` do the same for RunPod and
+Alibaba Cloud, with the same keyword arguments and the same half-hour sync. They return a `RunpodInstance` or
+`AlibabaInstance` (or `None`) and raise the provider's error. RunPod's ids have spaces; pass them as they are,
+they are escaped for you.
 
 ## Caching
 

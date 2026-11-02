@@ -184,8 +184,28 @@ final class BulkInstances
         ?string $cachePath,
         ?string $baseUrl,
     ): string {
+        return self::withProviderException(
+            $exception,
+            static fn (): string => self::loadBundle($platform, $token, $cachePricingData, $cachePath, $baseUrl),
+        );
+    }
+
+    /**
+     * Runs `$run`, turning an {@see AWSPricingDataException} into the provider's own exception class.
+     *
+     * @template T
+     *
+     * @param class-string<RunpodPricingDataException|AlibabaPricingDataException> $exception
+     * @param \Closure(): T $run
+     *
+     * @return T
+     *
+     * @throws AWSPricingDataException of class `$exception`
+     */
+    private static function withProviderException(string $exception, \Closure $run): mixed
+    {
         try {
-            return self::loadBundle($platform, $token, $cachePricingData, $cachePath, $baseUrl);
+            return $run();
         } catch (AWSPricingDataException $err) {
             throw new $exception($err->getMessage(), $err->status, $err);
         }
@@ -277,6 +297,80 @@ final class BulkInstances
         ?string $token = null,
         ?string $baseUrl = null,
     ): ?AWSInstance {
+        return self::fetchInstance($platform, $instanceType, $token, $baseUrl, AWSPricingData::class);
+    }
+
+    /**
+     * Fetches one RunPod GPU type or CPU pod from the Infrawrench API, without downloading RunPod's bundle.
+     * Nothing is cached. It takes the same options as {@see fetchAwsInstance()}.
+     *
+     * The result is the same as `downloadRunpodPricingData()->get($id)`, from whichever bundle the API last
+     * synced, which can trail the newest bundle by up to half an hour.
+     *
+     * @param string $id The GPU type id (`NVIDIA H100 80GB HBM3`) or CPU pod id (`cpu3c-2-4`).
+     * @param string|null $token Defines your Infrawrench API token. Defaults to the `INFRAWRENCH_API_KEY` environment variable.
+     * @param string|null $baseUrl Where the Infrawrench API is served from. Defaults to https://app.infrawrench.com
+     *
+     * @return RunpodInstance|null `null` if RunPod has no instance with that id.
+     *
+     * @throws RunpodPricingDataException
+     * @throws \JsonException if the response is not valid JSON
+     */
+    public static function fetchRunpodInstance(string $id, ?string $token = null, ?string $baseUrl = null): ?RunpodInstance
+    {
+        $instance = self::withProviderException(
+            RunpodPricingDataException::class,
+            static fn (): ?AWSInstance => self::fetchInstance('runpod', $id, $token, $baseUrl, RunpodPricingData::class),
+        );
+        assert($instance === null || $instance instanceof RunpodInstance);
+        return $instance;
+    }
+
+    /**
+     * Fetches one Alibaba Cloud ECS instance type from the Infrawrench API, without downloading Alibaba's
+     * bundle. Nothing is cached. It takes the same options as {@see fetchAwsInstance()}.
+     *
+     * The result is the same as `downloadAlibabaPricingData()->get($instanceType)`, from whichever bundle the
+     * API last synced, which can trail the newest bundle by up to half an hour.
+     *
+     * @param string $instanceType The instance type, e.g. `ecs.g6.large`.
+     * @param string|null $token Defines your Infrawrench API token. Defaults to the `INFRAWRENCH_API_KEY` environment variable.
+     * @param string|null $baseUrl Where the Infrawrench API is served from. Defaults to https://app.infrawrench.com
+     *
+     * @return AlibabaInstance|null `null` if Alibaba has no instance type with that name.
+     *
+     * @throws AlibabaPricingDataException
+     * @throws \JsonException if the response is not valid JSON
+     */
+    public static function fetchAlibabaInstance(
+        string $instanceType,
+        ?string $token = null,
+        ?string $baseUrl = null,
+    ): ?AlibabaInstance {
+        $instance = self::withProviderException(
+            AlibabaPricingDataException::class,
+            static fn (): ?AWSInstance => self::fetchInstance('alibaba', $instanceType, $token, $baseUrl, AlibabaPricingData::class),
+        );
+        assert($instance === null || $instance instanceof AlibabaInstance);
+        return $instance;
+    }
+
+    /**
+     * GETs one instance from the Infrawrench API and decodes it with `$dataClass`, whose `get()` gives the
+     * provider's instance class.
+     *
+     * @param class-string<AWSPricingData> $dataClass
+     *
+     * @throws AWSPricingDataException
+     * @throws \JsonException if the response is not valid JSON
+     */
+    private static function fetchInstance(
+        string $platform,
+        string $instanceType,
+        ?string $token,
+        ?string $baseUrl,
+        string $dataClass,
+    ): ?AWSInstance {
         if (preg_match('/^[a-z0-9]+$/D', $platform) !== 1) {
             throw new AWSPricingDataException("\"$platform\" is not a platform name.");
         }
@@ -312,7 +406,7 @@ final class BulkInstances
             'reserved_terms' => $value['reserved_terms'],
             'instances' => [$value['name'] => $value['instance']],
         ];
-        return (new AWSPricingData($raw))->get($value['name']);
+        return (new $dataClass($raw))->get($value['name']);
     }
 
     /**

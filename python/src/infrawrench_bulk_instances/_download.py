@@ -9,11 +9,22 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from http.client import HTTPException
 from pathlib import Path
-from typing import Any, Final
+from typing import Any, Final, cast
 
-from ._data import AlibabaPricingData, AWSInstance, AWSPricingData, AzurePricingData, GCPPricingData, RunpodPricingData
+from ._data import (
+    AlibabaInstance,
+    AlibabaPricingData,
+    AWSInstance,
+    AWSPricingData,
+    AzurePricingData,
+    GCPPricingData,
+    RunpodInstance,
+    RunpodPricingData,
+)
 
 DEFAULT_BASE_URL = "https://instances-bundles.infrawrench.com"
 DEFAULT_API_URL = "https://app.infrawrench.com"
@@ -241,10 +252,17 @@ def _load_bundle_as(
     base_url: str | None,
 ) -> Any:
     """:func:`_load_bundle`, failing with the provider's own error class."""
-    try:
+    with _provider_error(error):
         return _load_bundle(
             platform, token=token, cache_pricing_data=cache_pricing_data, cache_path=cache_path, base_url=base_url
         )
+
+
+@contextmanager
+def _provider_error(error: type[AWSPricingDataError]) -> Iterator[None]:
+    """Turns an :class:`AWSPricingDataError` raised inside it into the provider's own error class."""
+    try:
+        yield
     except AWSPricingDataError as err:
         # Chained to what the AWS error was chained to (or nothing), so the traceback reads as if raised here.
         raise error(str(err), err.status) from err.__cause__
@@ -333,6 +351,55 @@ def fetch_aws_instance(
     :raises AWSPricingDataError: When the platform name is malformed, the instance type is empty, the token
         is missing or rejected, or the instance cannot be fetched.
     """
+    return _fetch_instance(platform, instance_type, AWSPricingData, token=token, base_url=base_url)
+
+
+def fetch_runpod_instance(id: str, *, token: str | None = None, base_url: str | None = None) -> RunpodInstance | None:
+    """Fetches one RunPod GPU type or CPU pod from the Infrawrench API, without downloading RunPod's bundle.
+
+    Nothing is cached. The result is the same as ``download_runpod_pricing_data().get(id)``, from whichever
+    bundle the API last synced, which can trail the newest bundle by up to half an hour. It takes the same keyword
+    arguments as :func:`fetch_aws_instance`.
+
+    :param id: The GPU type id (``"NVIDIA H100 80GB HBM3"``) or CPU pod id (``"cpu3c-2-4"``).
+    :returns: The instance, or ``None`` if RunPod has no instance with that id.
+    :raises RunpodPricingDataError: When the id is empty, the token is missing or rejected, or the instance
+        cannot be fetched.
+    """
+    with _provider_error(RunpodPricingDataError):
+        one = _fetch_instance("runpod", id, RunpodPricingData, token=token, base_url=base_url)
+    return cast("RunpodInstance | None", one)
+
+
+def fetch_alibaba_instance(
+    instance_type: str, *, token: str | None = None, base_url: str | None = None
+) -> AlibabaInstance | None:
+    """Fetches one Alibaba Cloud ECS instance type from the Infrawrench API, without downloading Alibaba's bundle.
+
+    Nothing is cached. The result is the same as ``download_alibaba_pricing_data().get(instance_type)``, from
+    whichever bundle the API last synced, which can trail the newest bundle by up to half an hour. It takes the
+    same keyword arguments as :func:`fetch_aws_instance`.
+
+    :param instance_type: The instance type, e.g. ``"ecs.g6.large"``.
+    :returns: The instance, or ``None`` if Alibaba has no instance type with that name.
+    :raises AlibabaPricingDataError: When the instance type is empty, the token is missing or rejected, or the
+        instance cannot be fetched.
+    """
+    with _provider_error(AlibabaPricingDataError):
+        one = _fetch_instance("alibaba", instance_type, AlibabaPricingData, token=token, base_url=base_url)
+    return cast("AlibabaInstance | None", one)
+
+
+def _fetch_instance(
+    platform: str,
+    instance_type: str,
+    data_class: Callable[[Any], AWSPricingData],
+    *,
+    token: str | None,
+    base_url: str | None,
+) -> AWSInstance | None:
+    """GETs one instance from the Infrawrench API and decodes it with ``data_class``, whose ``get`` gives
+    the instance type."""
     if not re.fullmatch(r"[a-z0-9]+", platform):
         raise AWSPricingDataError(f'"{platform}" is not a platform name.')
     if instance_type == "":
@@ -352,4 +419,4 @@ def fetch_aws_instance(
     # The bundle's tables cut down to what this instance uses, and its row renumbered to match.
     value = json.loads(body)
     name = value["name"]
-    return AWSPricingData({**value, "snapshots": [], "instances": {name: value["instance"]}}).get(name)
+    return data_class({**value, "snapshots": [], "instances": {name: value["instance"]}}).get(name)

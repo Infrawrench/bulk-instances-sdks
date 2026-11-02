@@ -6,7 +6,8 @@ use infrawrench_bulk_instances::{
     AzureInstance, AzurePricingData, Error, GcpInstance, GcpPricingData, Options, ReservedTerm,
     RunpodInstance, RunpodPricingData, Variant, download_alibaba_pricing_data,
     download_aws_ec2_pricing_data, download_aws_pricing_data, download_azure_pricing_data,
-    download_gcp_pricing_data, download_runpod_pricing_data, fetch_aws_instance,
+    download_gcp_pricing_data, download_runpod_pricing_data, fetch_alibaba_instance,
+    fetch_aws_instance, fetch_runpod_instance,
 };
 use serde_json::{Map, Value, json};
 
@@ -124,7 +125,22 @@ fn main() {
             token,
             base_url: Some(base_url.clone()),
         };
-        let i = fetch_aws_instance(platform, instance, &options).unwrap_or_else(|e| error(e));
+        // RunPod and Alibaba have their own functions and types.
+        let (runpod, alibaba, aws);
+        let i: Option<&AwsInstance> = match platform.as_str() {
+            "runpod" => {
+                runpod = fetch_runpod_instance(instance, &options).unwrap_or_else(|e| error(e));
+                runpod.as_ref().map(|i: &RunpodInstance| &**i)
+            }
+            "alibaba" => {
+                alibaba = fetch_alibaba_instance(instance, &options).unwrap_or_else(|e| error(e));
+                alibaba.as_ref().map(|i: &AlibabaInstance| &**i)
+            }
+            _ => {
+                aws = fetch_aws_instance(platform, instance, &options).unwrap_or_else(|e| error(e));
+                aws.as_ref()
+            }
+        };
         let dumped = i.map(|i| {
             // The regions its attributes are overridden in; every other one is the same as `attributes`.
             let regions: BTreeSet<&str> = i
@@ -132,7 +148,7 @@ fn main() {
                 .iter()
                 .filter_map(|c| c.region.as_deref())
                 .collect();
-            dump_instance(&i, regions.into_iter())
+            dump_instance(i, regions.into_iter())
         });
         println!(
             "{}",

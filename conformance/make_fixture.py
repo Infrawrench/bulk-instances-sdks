@@ -2,8 +2,8 @@
 
 fixture/bundle-<NAME>.json(.xz) and fixture/latest are an EC2 bundle. fixture/rds-bundle-<NAME>.json(.xz) and
 fixture/rds-latest are an RDS one, which names its own variant keys. fixture/runpod-*, fixture/alibaba-*,
-fixture/azure-* and fixture/gcp-* are bundles for other clouds. fixture/api/<platform>/<instance>.json is each AWS instance as the Infrawrench API serves
-it from `/api/v1/aws-bulk-pricing/<platform>/<instance>`.
+fixture/azure-* and fixture/gcp-* are bundles for other clouds. fixture/api/<platform>/<instance>.json is each
+instance, of every platform the Infrawrench API serves, as it serves it from `/api/v1/aws-bulk-pricing/<platform>/<instance>`.
 """
 import json, lzma, os, sys
 
@@ -227,8 +227,8 @@ write("rds-", rds)
 write_api("rds", rds)
 
 # Other clouds, as other-instances (instances-bundler's other/) writes them. They carry source_version, a key
-# AWS bundles don't have, which every decoder must skip. The Infrawrench API doesn't serve their instances, so
-# there is nothing under fixture/api for them.
+# AWS bundles don't have, which every decoder must skip. The Infrawrench API serves their instances the same way
+# as AWS ones (without source_version); RunPod's ids have spaces, which the SDKs must escape.
 
 # RunPod: one variant key, every price in "global", savings plans as reserved rows with no upfront.
 table = []
@@ -268,6 +268,7 @@ runpod = {
     },
 }
 write("runpod-", runpod)
+write_api("runpod", runpod)
 
 # Alibaba Cloud ECS: region ids as locations, two variant keys (one of them EC2's operatingSystem),
 # subscriptions as All Upfront rows (hourly 0) and reserved instances with both parts.
@@ -306,6 +307,7 @@ alibaba = {
     },
 }
 write("alibaba-", alibaba)
+write_api("alibaba", alibaba)
 
 # Azure: ARM region names as locations, operatingSystem and priority as variant keys, reservations as All Upfront
 # rows (hourly 0) and savings plans as No Upfront rows (upfront left out), a size with no calculator specs.

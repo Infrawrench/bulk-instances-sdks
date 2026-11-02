@@ -2,6 +2,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.infrawrench.bulkinstances.AWSInstance;
 import com.infrawrench.bulkinstances.AlibabaInstance;
+import com.infrawrench.bulkinstances.AlibabaInstanceOptions;
 import com.infrawrench.bulkinstances.AlibabaPricingData;
 import com.infrawrench.bulkinstances.AlibabaPricingDataException;
 import com.infrawrench.bulkinstances.AlibabaPricingDataOptions;
@@ -27,6 +28,7 @@ import com.infrawrench.bulkinstances.ReservedPrice;
 import com.infrawrench.bulkinstances.ReservedPriceChange;
 import com.infrawrench.bulkinstances.ReservedTerm;
 import com.infrawrench.bulkinstances.RunpodInstance;
+import com.infrawrench.bulkinstances.RunpodInstanceOptions;
 import com.infrawrench.bulkinstances.RunpodPricingData;
 import com.infrawrench.bulkinstances.RunpodPricingDataException;
 import com.infrawrench.bulkinstances.RunpodPricingDataOptions;
@@ -49,11 +51,33 @@ public final class Dump {
         JsonGenerator g = new JsonFactory().createGenerator(System.out);
 
         if (instanceType != null) {
-            Optional<AWSInstance> i;
+            Optional<? extends AWSInstance> i;
             try {
-                AWSInstanceOptions.Builder b = AWSInstanceOptions.builder().baseUrl(baseUrl);
-                if (!token.equals("-")) b.token(token);
-                i = BulkInstances.fetchAwsInstance(platform, instanceType, b.build());
+                // RunPod and Alibaba have their own functions, returning their own types and exceptions.
+                if ("runpod".equals(platform)) {
+                    Optional<RunpodInstance> r;
+                    try {
+                        r = BulkInstances.fetchRunpodInstance(instanceType,
+                                instanceOptions(RunpodInstanceOptions.builder(), baseUrl, token).build());
+                    } catch (AWSPricingDataException e) {
+                        throw providerException(e, RunpodPricingDataException.class);
+                    }
+                    expectInstance(r, RunpodInstance.class);
+                    i = r;
+                } else if ("alibaba".equals(platform)) {
+                    Optional<AlibabaInstance> a;
+                    try {
+                        a = BulkInstances.fetchAlibabaInstance(instanceType,
+                                instanceOptions(AlibabaInstanceOptions.builder(), baseUrl, token).build());
+                    } catch (AWSPricingDataException e) {
+                        throw providerException(e, AlibabaPricingDataException.class);
+                    }
+                    expectInstance(a, AlibabaInstance.class);
+                    i = a;
+                } else {
+                    i = BulkInstances.fetchAwsInstance(
+                            platform, instanceType, instanceOptions(AWSInstanceOptions.builder(), baseUrl, token).build());
+                }
             } catch (AWSPricingDataException e) {
                 error(g, e);
                 return;
@@ -183,6 +207,12 @@ public final class Dump {
         return b;
     }
 
+    static <B extends AWSInstanceOptions.Builder> B instanceOptions(B b, String baseUrl, String token) {
+        b.baseUrl(baseUrl);
+        if (!token.equals("-")) b.token(token);
+        return b;
+    }
+
     /** {@code e}, if it is the provider's exception; exits 1 if it is another {@link AWSPricingDataException}. */
     static AWSPricingDataException providerException(
             AWSPricingDataException e, Class<? extends AWSPricingDataException> expected) {
@@ -197,6 +227,14 @@ public final class Dump {
     static void expectTypes(PricingData<?> d, AWSInstance first, Class<?> data, Class<?> instance) {
         if (d.getClass() != data || (first != null && first.getClass() != instance)) {
             System.err.println("expected " + data.getSimpleName() + " and " + instance.getSimpleName());
+            System.exit(1);
+        }
+    }
+
+    /** Exits 1 unless the instance, if there is one, is exactly the provider's class. */
+    static void expectInstance(Optional<? extends AWSInstance> i, Class<?> instance) {
+        if (i.isPresent() && i.get().getClass() != instance) {
+            System.err.println("expected " + instance.getSimpleName());
             System.exit(1);
         }
     }

@@ -172,14 +172,17 @@ export async function downloadGcpPricingData(options: GCPPricingDataOptions = {}
   return new GCPPricingData(await loadBundleAs("gcp", options, GCPPricingDataError));
 }
 
+type ProviderErrorClass = new (message: string, status?: number) => AWSPricingDataError;
+
 /** loadBundle, failing with the provider's own error class. */
-async function loadBundleAs(
-  platform: string,
-  options: AWSPricingDataOptions,
-  ProviderError: new (message: string, status?: number) => AWSPricingDataError,
-): Promise<BundleFile> {
+function loadBundleAs(platform: string, options: AWSPricingDataOptions, ProviderError: ProviderErrorClass): Promise<BundleFile> {
+  return withProviderError(ProviderError, () => loadBundle(platform, options));
+}
+
+/** Runs `load`, turning an {@link AWSPricingDataError} into the provider's own error class. */
+async function withProviderError<T>(ProviderError: ProviderErrorClass, load: () => Promise<T>): Promise<T> {
   try {
-    return await loadBundle(platform, options);
+    return await load();
   } catch (err) {
     if (err instanceof AWSPricingDataError) throw new ProviderError(err.message, err.status);
     throw err;
@@ -270,11 +273,53 @@ type InstanceFile = Pick<BundleFile, "offer" | "compression_table" | "regions" |
  * The result is the same as `(await downloadAwsPricingData(platform)).get(instanceType)`, from
  * whichever bundle the API last synced, which can trail the newest bundle by up to half an hour.
  */
-export async function fetchAwsInstance(
+export function fetchAwsInstance(
   platform: AWSPlatform | (string & {}),
   instanceType: string,
   options: AWSInstanceOptions = {},
 ): Promise<AWSInstance | undefined> {
+  return fetchInstance(platform, instanceType, options, AWSPricingData);
+}
+
+/** Options for {@link fetchRunpodInstance}: the same as for {@link fetchAwsInstance}. */
+export type RunpodInstanceOptions = AWSInstanceOptions;
+
+/**
+ * Fetches one RunPod GPU type (`NVIDIA H100 80GB HBM3`) or CPU pod (`cpu3c-2-4`) from the Infrawrench API,
+ * without downloading RunPod's bundle. Nothing is cached. Returns `undefined` if RunPod has no instance with
+ * that id.
+ *
+ * The result is the same as `(await downloadRunpodPricingData()).get(id)`, from whichever bundle the API
+ * last synced, which can trail the newest bundle by up to half an hour.
+ */
+export async function fetchRunpodInstance(id: string, options: RunpodInstanceOptions = {}): Promise<RunpodInstance | undefined> {
+  return withProviderError(RunpodPricingDataError, () => fetchInstance("runpod", id, options, RunpodPricingData));
+}
+
+/** Options for {@link fetchAlibabaInstance}: the same as for {@link fetchAwsInstance}. */
+export type AlibabaInstanceOptions = AWSInstanceOptions;
+
+/**
+ * Fetches one Alibaba Cloud ECS instance type (`ecs.g6.large`) from the Infrawrench API, without downloading
+ * Alibaba's bundle. Nothing is cached. Returns `undefined` if Alibaba has no instance type with that name.
+ *
+ * The result is the same as `(await downloadAlibabaPricingData()).get(instanceType)`, from whichever bundle
+ * the API last synced, which can trail the newest bundle by up to half an hour.
+ */
+export async function fetchAlibabaInstance(
+  instanceType: string,
+  options: AlibabaInstanceOptions = {},
+): Promise<AlibabaInstance | undefined> {
+  return withProviderError(AlibabaPricingDataError, () => fetchInstance("alibaba", instanceType, options, AlibabaPricingData));
+}
+
+/** GETs one instance from the Infrawrench API and decodes it with `Data`, whose `get` gives the instance type. */
+async function fetchInstance<D extends AWSPricingData>(
+  platform: string,
+  instanceType: string,
+  options: AWSInstanceOptions,
+  Data: new (raw: BundleFile) => D,
+): Promise<ReturnType<D["get"]>> {
   if (!/^[a-z0-9]+$/.test(platform)) {
     throw new AWSPricingDataError(`"${platform}" is not a platform name.`);
   }
@@ -290,11 +335,11 @@ export async function fetchAwsInstance(
   try {
     res = await download(`${baseUrl}/api/v1/aws-bulk-pricing/${platform}/${encodeURIComponent(instanceType)}`, token);
   } catch (err) {
-    if (err instanceof AWSPricingDataError && err.status === 404) return undefined;
+    if (err instanceof AWSPricingDataError && err.status === 404) return undefined as ReturnType<D["get"]>;
     throw err;
   }
   const file = (await res.json()) as InstanceFile;
-  return new AWSPricingData({ ...file, snapshots: [], instances: { [file.name]: file.instance } }).get(file.name);
+  return new Data({ ...file, snapshots: [], instances: { [file.name]: file.instance } }).get(file.name) as ReturnType<D["get"]>;
 }
 
 /** The bundle as instances-bundler writes it; every string is an index into `compression_table`. */

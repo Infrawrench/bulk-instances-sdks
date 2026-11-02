@@ -602,7 +602,7 @@ impl fmt::Debug for RunpodPricingData {
 }
 
 /// One RunPod GPU type or CPU pod. It derefs to [`AwsInstance`], whose getters it has.
-pub struct RunpodInstance(AwsInstance);
+pub struct RunpodInstance(pub(crate) AwsInstance);
 
 impl Deref for RunpodInstance {
     type Target = AwsInstance;
@@ -661,7 +661,7 @@ impl fmt::Debug for AlibabaPricingData {
 }
 
 /// One Alibaba Cloud ECS instance type. It derefs to [`AwsInstance`], whose getters it has.
-pub struct AlibabaInstance(AwsInstance);
+pub struct AlibabaInstance(pub(crate) AwsInstance);
 
 impl Deref for AlibabaInstance {
     type Target = AwsInstance;

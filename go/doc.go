@@ -12,6 +12,8 @@
 // and [DownloadGCPPricingData] load RunPod's, Alibaba Cloud's, Azure's and Google
 // Cloud's bundles, which have the same format, as a [RunpodPricingData], an
 // [AlibabaPricingData], an [AzurePricingData] and a [GCPPricingData].
+// [FetchRunpodInstance] and [FetchAlibabaInstance] fetch one RunPod or Alibaba
+// instance from the Infrawrench API.
 //
 // The fields that pick a price differ by platform: [AWSPricingData.VariantKeys]
 // names them, and every price's [Variant.Fields] is keyed by them. The other

@@ -119,6 +119,14 @@ key is `cloudType`, `Secure Cloud` or `Community Cloud`. Savings plans are in `p
 term `3mo` or `6mo`, `Savings Plan`, `All Upfront`, and `hourly()` is the plan's effective hourly rate. Stock
 levels and spot prices are not included. The history starts in November 2026.
 
+`BulkInstances.fetchRunpodInstance(id, options)` fetches one GPU type or CPU pod from the Infrawrench API
+instead (see [One instance](#one-instance)). It returns an `Optional<RunpodInstance>`, empty if RunPod has no
+instance with that id, and fails with a `RunpodPricingDataException`:
+
+```java
+Optional<RunpodInstance> h100 = BulkInstances.fetchRunpodInstance("NVIDIA H100 80GB HBM3");
+```
+
 ## Alibaba Cloud
 
 `BulkInstances.downloadAlibabaPricingData(options)` loads Alibaba Cloud ECS prices. It takes the same options as
@@ -145,6 +153,14 @@ when bought, so `hourly()` is 0 and `upfront()` is the price. It also has reserv
 `1yr` or `3yr`, `Reserved Instance`, and a purchase option. Attributes are Alibaba's instance type definitions
 (`CpuCoreCount`, `MemorySize`, `CpuOptions.ThreadsPerCore`, ...), from May 2023 on. The history starts in
 May 2018.
+
+`BulkInstances.fetchAlibabaInstance(instanceType, options)` fetches one instance type from the Infrawrench API
+instead (see [One instance](#one-instance)). It returns an `Optional<AlibabaInstance>`, empty if Alibaba has no
+instance type with that name, and fails with an `AlibabaPricingDataException`:
+
+```java
+Optional<AlibabaInstance> g6 = BulkInstances.fetchAlibabaInstance("ecs.g6.large");
+```
 
 ## Azure
 
@@ -204,7 +220,7 @@ Compute Engine API (`guestCpus`, `memoryMb`, `description`, `isSharedCpu`, ...),
 `acceleratorCount` for its GPUs, and `zones`, the zones in each region that have it, which differ by region
 (see `attributesIn(region)`). The history starts in November 2026.
 
-`fetchAwsInstance` doesn't cover RunPod, Alibaba, Azure or Google Cloud; download their bundles instead.
+There is no single-instance fetch for Azure or Google Cloud yet; download their bundles instead.
 
 ## One instance
 
@@ -221,6 +237,12 @@ Its options are an `AWSInstanceOptions`, built like `AWSPricingDataOptions`: `to
 for where the API is served from (`https://app.infrawrench.com` by default). Nothing is cached. The
 API syncs each new bundle within about half an hour of it being published, so it can briefly trail
 `downloadAwsPricingData`.
+
+`BulkInstances.fetchRunpodInstance(id, options)` and `BulkInstances.fetchAlibabaInstance(instanceType, options)`
+do the same for RunPod and Alibaba Cloud, with the same half-hour sync. Their options are a
+`RunpodInstanceOptions` or `AlibabaInstanceOptions`, subclasses of `AWSInstanceOptions` built the same way. They
+return an `Optional<RunpodInstance>` or `Optional<AlibabaInstance>` and fail with the provider's exception.
+RunPod's ids have spaces; pass them as they are, they are escaped for you.
 
 ## Caching
 

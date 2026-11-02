@@ -32,10 +32,42 @@ static JsonArray Arr<T>(IEnumerable<T> xs, Func<T, JsonNode?> f) => new(xs.Selec
 if (instanceType is not null)
 {
     AwsInstance? one;
+    T InstanceOptions<T>() where T : AwsInstanceOptions, new() => new T { BaseUrl = baseUrl, Token = token == "-" ? null : token };
     try
     {
-        one = await BulkInstances.FetchAwsInstanceAsync(
-            platform!, instanceType, new AwsInstanceOptions { BaseUrl = baseUrl, Token = token == "-" ? null : token });
+        // RunPod and Alibaba have their own methods, returning their own types and exceptions.
+        if (platform == "runpod")
+        {
+            RunpodInstance? i;
+            try
+            {
+                i = await BulkInstances.FetchRunpodInstanceAsync(instanceType, InstanceOptions<RunpodInstanceOptions>());
+            }
+            catch (AwsPricingDataException e) when (e is not RunpodPricingDataException)
+            {
+                return WrongException(e, typeof(RunpodPricingDataException));
+            }
+            if (!ExpectInstance(i, typeof(RunpodInstance))) return 1;
+            one = i;
+        }
+        else if (platform == "alibaba")
+        {
+            AlibabaInstance? i;
+            try
+            {
+                i = await BulkInstances.FetchAlibabaInstanceAsync(instanceType, InstanceOptions<AlibabaInstanceOptions>());
+            }
+            catch (AwsPricingDataException e) when (e is not AlibabaPricingDataException)
+            {
+                return WrongException(e, typeof(AlibabaPricingDataException));
+            }
+            if (!ExpectInstance(i, typeof(AlibabaInstance))) return 1;
+            one = i;
+        }
+        else
+        {
+            one = await BulkInstances.FetchAwsInstanceAsync(platform!, instanceType, InstanceOptions<AwsInstanceOptions>());
+        }
     }
     catch (AwsPricingDataException e)
     {
@@ -135,6 +167,14 @@ static int WrongException(AwsPricingDataException e, Type expected)
 {
     Console.Error.WriteLine($"expected a {expected.Name}, got {e.GetType().Name}");
     return 1;
+}
+
+// Whether the instance, if there is one, is exactly the provider's class.
+static bool ExpectInstance(AwsInstance? i, Type instance)
+{
+    if (i is null || i.GetType() == instance) return true;
+    Console.Error.WriteLine($"expected {instance.Name}");
+    return false;
 }
 
 // Whether the data and its first instance are exactly the provider's classes.
