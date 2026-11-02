@@ -212,8 +212,9 @@ try:
 
     # One instance from the Infrawrench API, decoded the same as from the whole bundle. attributesIn is
     # dumped for the regions the instance's attributes are overridden in; any other gives `attributes`.
+    # RunPod and Alibaba go through their own functions, which the dump checks return their own types.
     unused = os.path.join(tmp, "unused")
-    for platform, reference in [("ec2", REFERENCE), ("rds", REFERENCE_RDS)]:
+    for platform, reference in [("ec2", REFERENCE), ("rds", REFERENCE_RDS), *OTHER.items()]:
         for name, expected in reference["instances"].items():
             p, out, _ = run(BASE, unused, platform=platform, instance=name)
             got = out.get("instance") if isinstance(out, dict) else None
@@ -221,7 +222,8 @@ try:
                 expected = {**expected, "attributesIn": {r: expected["attributesIn"].get(r) for r in got["attributesIn"]}}
             dump_ok(f"API {platform}/{name} decodes to the reference", p, got, expected)
             check(f"API {platform}/{name} fetches only that instance",
-                  [x[:2] for x in State.log] == [(f"{API}{platform}/{name}", "Bearer test-token")], State.log)
+                  [x[:2] for x in State.log] == [(f"{API}{platform}/{urllib.parse.quote(name, safe='')}", "Bearer test-token")],
+                  State.log)
     check("API User-Agent", {ua for _, _, ua in State.log} == {f"infrawrench/bulk-instances, {lang}, 1.0"}, State.log)
 
     p, out, _ = run(BASE, unused, platform="ec2", instance="nope")
@@ -251,6 +253,22 @@ try:
     check("API empty instance type makes no request", State.log == [], State.log)
     p, out, _ = run(DEAD, unused, platform="ec2", instance="m5.large")
     check("API offline fails", p.returncode != 0, p.stdout[:200])
+    for platform, reference in OTHER.items():
+        name = next(iter(reference["instances"]))
+        p, out, _ = run(BASE, unused, platform=platform, instance="nope")
+        check(f"API {platform} missing instance is null", p.returncode == 0 and out == {"instance": None},
+              (p.returncode, p.stdout[:200], p.stderr[-800:]))
+        check(f"API {platform} missing instance fetches {platform}/nope", [x[0] for x in State.log] == [f"{API}{platform}/nope"], State.log)
+        p, out, _ = run(BASE, unused, token="wrong", platform=platform, instance=name)
+        error_with(f"API {platform} rejected token is 401 with the {platform} error", p, out, 401)
+        p, out, _ = run(BASE, unused, token="-", env_token="test-token", platform=platform, instance=name)
+        check(f"API {platform} token defaults to INFRAWRENCH_API_KEY", isinstance(out, dict) and out.get("instance") is not None,
+              p.stdout[:200])
+        p, out, _ = run(BASE, unused, token="-", platform=platform, instance=name)
+        error_with(f"API {platform} no token at all fails with the {platform} error", p, out, None)
+        p, out, _ = run(BASE, unused, platform=platform, instance="")
+        error_with(f"API {platform} empty instance fails with the {platform} error", p, out, None)
+        check(f"API {platform} empty instance makes no request", State.log == [], State.log)
     check("API writes nothing to the cache directory", not os.path.exists(unused), unused)
 finally:
     shutil.rmtree(tmp)

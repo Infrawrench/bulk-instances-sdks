@@ -1,7 +1,7 @@
 import {
   downloadAwsEc2PricingData, downloadAwsPricingData, fetchAwsInstance, AWSPricingDataError,
-  downloadRunpodPricingData, RunpodPricingData, RunpodInstance, RunpodPricingDataError,
-  downloadAlibabaPricingData, AlibabaPricingData, AlibabaInstance, AlibabaPricingDataError,
+  downloadRunpodPricingData, fetchRunpodInstance, RunpodPricingData, RunpodInstance, RunpodPricingDataError,
+  downloadAlibabaPricingData, fetchAlibabaInstance, AlibabaPricingData, AlibabaInstance, AlibabaPricingDataError,
 } from "../../../ts/dist/index.js";
 
 const [baseUrl, cachePath, token, cache, platform, instanceType] = process.argv.slice(2);
@@ -37,9 +37,19 @@ function dumpInstance(i, regionNames) {
 const options = { baseUrl, cachePath, cachePricingData: cache === "1", ...(token === "-" ? {} : { token }) };
 
 if (instanceType !== undefined) {
+  const apiOptions = { baseUrl, ...(token === "-" ? {} : { token }) };
   let i;
   try {
-    i = await fetchAwsInstance(platform, instanceType, { baseUrl, ...(token === "-" ? {} : { token }) });
+    // RunPod and Alibaba have their own functions, returning their own instance type and errors.
+    if (platform === "runpod") {
+      i = await fetchRunpodInstance(instanceType, apiOptions).catch((e) => providerError(e, RunpodPricingDataError));
+      expectInstance(i, RunpodInstance);
+    } else if (platform === "alibaba") {
+      i = await fetchAlibabaInstance(instanceType, apiOptions).catch((e) => providerError(e, AlibabaPricingDataError));
+      expectInstance(i, AlibabaInstance);
+    } else {
+      i = await fetchAwsInstance(platform, instanceType, apiOptions);
+    }
   } catch (e) {
     error(e);
   }
@@ -71,6 +81,13 @@ function providerError(e, ProviderError) {
     process.exit(1);
   }
   throw e;
+}
+
+function expectInstance(i, Instance) {
+  if (i !== undefined && !(i instanceof Instance)) {
+    console.error(`expected ${Instance.name}`);
+    process.exit(1);
+  }
 }
 
 function expectTypes(d, Data, Instance) {

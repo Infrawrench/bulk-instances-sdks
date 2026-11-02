@@ -11,7 +11,7 @@ conformance/run.sh <typescript|python|ruby|java|csharp|rust|php|go>
 
 `make_fixture.py` regenerates `fixture/`: an EC2 bundle, an RDS one served as `rds-latest` and
 `rds-bundle-<name>.json.xz`, RunPod and Alibaba ones written the way other-instances writes them (with a
-`source_version` key every decoder must skip), and each AWS instance as the Infrawrench API serves it
+`source_version` key every decoder must skip), and each instance of every platform as the Infrawrench API serves it
 (`fixture/api/<platform>/<instance>.json`, the bundle's tables cut down to what the instance uses). Every SDK must
 decode those to the same values as the whole bundle. After changing it, regenerate `reference.json`,
 `reference-rds.json`, `reference-runpod.json` and `reference-alibaba.json` from the TypeScript SDK (offline, from a cache seeded with the fixture):
@@ -37,7 +37,9 @@ Invoked as `<program> <baseUrl> <cacheDir> <token> <cache> [platform [instance]]
   the SDK's function that takes a platform, passing it through unchecked.
 - With `instance`, fetch that one instance from the API at `baseUrl` with the SDK's function for it (`cacheDir` and
   `cache` are unused) and print `{"instance": <one entry of "instances" below, or null>}`, with `attributesIn` for
-  the sorted regions in its `attributesHistory`, plus "Mystery" and "Nowhere".
+  the sorted regions in its `attributesHistory`, plus "Mystery" and "Nowhere". For `runpod` and `alibaba` that is
+  the SDK's RunPod or Alibaba fetch function, with the same checks as above: exit 1 unless an instance it returns is
+  that provider's instance type and it fails with that provider's error type where the SDK has one.
 
 On success print one JSON object to stdout and exit 0. On the SDK's AWSPricingDataError (or a provider's subclass of it) print
 `{"error": {"status": <HTTP status or null>, "message": "..."}}` and exit 3. Any other failure: exit non-zero.
