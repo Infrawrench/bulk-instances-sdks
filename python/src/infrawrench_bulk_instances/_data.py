@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from functools import cached_property
 from types import MappingProxyType
-from typing import Any, Final, TypedDict
+from typing import Any, Final, TypedDict, cast
 
 
 class _BundleFileFields(TypedDict):
@@ -209,13 +209,17 @@ class AWSPricingData:
         """The instance with this type (e.g. ``m5.large``), or ``None`` if the bundle has never listed it."""
         inst = self._instances.get(instance_type)
         if inst is None and self.has(instance_type):
-            inst = AWSInstance(instance_type, self._raw["instances"][instance_type], self)
+            inst = self._new_instance(instance_type, self._raw["instances"][instance_type])
             self._instances[instance_type] = inst
         return inst
 
+    def _new_instance(self, name: str, raw: Sequence[Any]) -> AWSInstance:
+        """Makes the object :meth:`get` returns; each provider's subclass returns its own instance class."""
+        return AWSInstance(name, raw, self)
+
     @property
     def offer(self) -> str:
-        """The AWS offer code, e.g. ``AmazonEC2`` or ``AmazonRDS``."""
+        """The offer code, e.g. ``AmazonEC2``, ``AmazonRDS``, ``RunpodPods`` or ``AlibabaECS``."""
         offer: str | None = self._raw.get("offer")
         return "AmazonEC2" if offer is None else offer
 
@@ -291,7 +295,7 @@ class AWSInstance:
         self._data = data
 
     def __repr__(self) -> str:
-        return f"AWSInstance({self.name!r})"
+        return f"{type(self).__name__}({self.name!r})"
 
     @property
     def created_at(self) -> datetime:
@@ -460,3 +464,39 @@ class AWSInstance:
 
 def _od_key(r: OnDemandPriceChange | ReservedPriceChange) -> tuple[str, ...]:
     return (r.region, *r.variant.values())
+
+
+class RunpodPricingData(AWSPricingData):
+    """RunPod's pricing data, keyed by GPU type id (``NVIDIA H100 80GB HBM3``) or CPU pod id (``cpu3c-2-4``).
+
+    It decodes the same way as :class:`AWSPricingData`; see the README for what RunPod's data holds.
+    """
+
+    def get(self, instance_type: str) -> RunpodInstance | None:
+        """The GPU type or CPU pod with this id, or ``None`` if the bundle has never listed it."""
+        return cast("RunpodInstance | None", super().get(instance_type))
+
+    def _new_instance(self, name: str, raw: Sequence[Any]) -> RunpodInstance:
+        return RunpodInstance(name, raw, self)
+
+
+class RunpodInstance(AWSInstance):
+    """One RunPod GPU type or CPU pod."""
+
+
+class AlibabaPricingData(AWSPricingData):
+    """Alibaba Cloud's ECS pricing data, keyed by instance type (``ecs.g6.large``).
+
+    It decodes the same way as :class:`AWSPricingData`; see the README for what Alibaba's data holds.
+    """
+
+    def get(self, instance_type: str) -> AlibabaInstance | None:
+        """The instance type with this name, or ``None`` if the bundle has never listed it."""
+        return cast("AlibabaInstance | None", super().get(instance_type))
+
+    def _new_instance(self, name: str, raw: Sequence[Any]) -> AlibabaInstance:
+        return AlibabaInstance(name, raw, self)
+
+
+class AlibabaInstance(AWSInstance):
+    """One Alibaba Cloud ECS instance type."""

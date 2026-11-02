@@ -14,17 +14,21 @@ import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.function.DoubleFunction;
 
-/** One instance type. Each getter decodes on first access and caches the result. */
-public final class AWSInstance {
+/**
+ * One instance type. Each getter decodes on first access and caches the result.
+ *
+ * <p>{@link RunpodInstance} and {@link AlibabaInstance} are the same for RunPod's and Alibaba Cloud's data.
+ */
+public sealed class AWSInstance permits RunpodInstance, AlibabaInstance {
     private final String name;
     private final RawInstance raw;
-    private final AWSPricingData data;
+    private final PricingData<?> data;
     private volatile Map<String, String> attributes;
     private volatile List<AttributeChange> attributesHistory;
     private volatile Pricing pricing;
     private volatile PricingHistory pricingHistory;
 
-    AWSInstance(String name, RawInstance raw, AWSPricingData data) {
+    AWSInstance(String name, RawInstance raw, PricingData<?> data) {
         this.name = name;
         this.raw = raw;
         this.data = data;
@@ -45,7 +49,7 @@ public final class AWSInstance {
      * @return the creation date
      */
     public Instant createdAt() {
-        return AWSPricingData.date(raw.createdAt());
+        return PricingData.date(raw.createdAt());
     }
 
     /**
@@ -54,7 +58,7 @@ public final class AWSInstance {
      * @return the deletion date
      */
     public Optional<Instant> deletedAt() {
-        return Double.isNaN(raw.deletedAt()) ? Optional.empty() : Optional.of(AWSPricingData.date(raw.deletedAt()));
+        return Double.isNaN(raw.deletedAt()) ? Optional.empty() : Optional.of(PricingData.date(raw.deletedAt()));
     }
 
     /**
@@ -106,7 +110,7 @@ public final class AWSInstance {
     public List<AttributeChange> attributesHistory() {
         List<AttributeChange> out = attributesHistory;
         if (out == null) {
-            AWSPricingData d = data;
+            PricingData<?> d = data;
             Instant created = createdAt();
             List<AttributeChange> l = new ArrayList<>();
             Rows a = raw.attrs();
@@ -118,7 +122,7 @@ public final class AWSInstance {
             for (int r = 0; r < c.size(); r++) {
                 double value = c.get(r, 2), region = c.get(r, 3);
                 changes.add(new AttributeChange(
-                        AWSPricingData.date(c.get(r, 0)),
+                        PricingData.date(c.get(r, 0)),
                         d.str(c.get(r, 1)),
                         Double.isNaN(value) ? Optional.empty() : Optional.of(d.str(value)),
                         Double.isNaN(region) ? Optional.empty() : Optional.of(d.str(region))));
@@ -168,7 +172,7 @@ public final class AWSInstance {
     public PricingHistory pricingHistory() {
         PricingHistory out = pricingHistory;
         if (out == null) {
-            AWSPricingData d = data;
+            PricingData<?> d = data;
             double base = raw.basePrice();
             // Rows repeat a few dozen locations; share one record per location.
             Map<Double, Location> locations = new HashMap<>();
@@ -180,7 +184,7 @@ public final class AWSInstance {
                 onDemand.add(new OnDemandPriceChange(
                         location.apply(o.get(r, 1)),
                         d.variant(o.get(r, 2)),
-                        AWSPricingData.date(o.get(r, 0)),
+                        PricingData.date(o.get(r, 0)),
                         price(o.length(r) <= 3 ? base : o.get(r, 3))));
             }
             // [ts, region, variant, term, hourly: null = no longer offered, upfront: omitted if 0]
@@ -193,7 +197,7 @@ public final class AWSInstance {
                         location.apply(v.get(r, 1)),
                         d.variant(v.get(r, 2)),
                         d.term(v.get(r, 3)),
-                        AWSPricingData.date(v.get(r, 0)),
+                        PricingData.date(v.get(r, 0)),
                         price(hourly),
                         removed ? OptionalDouble.empty() : OptionalDouble.of(Double.isNaN(upfront) ? 0 : upfront)));
             }

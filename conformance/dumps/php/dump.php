@@ -4,9 +4,16 @@ declare(strict_types=1);
 
 require __DIR__ . '/vendor/autoload.php';
 
+use Infrawrench\BulkInstances\AlibabaInstance;
+use Infrawrench\BulkInstances\AlibabaPricingData;
+use Infrawrench\BulkInstances\AlibabaPricingDataException;
 use Infrawrench\BulkInstances\AWSInstance;
+use Infrawrench\BulkInstances\AWSPricingData;
 use Infrawrench\BulkInstances\AWSPricingDataException;
 use Infrawrench\BulkInstances\BulkInstances;
+use Infrawrench\BulkInstances\RunpodInstance;
+use Infrawrench\BulkInstances\RunpodPricingData;
+use Infrawrench\BulkInstances\RunpodPricingDataException;
 
 [, $baseUrl, $cachePath, $token, $cache] = $argv;
 $platform = $argv[5] ?? null;
@@ -77,11 +84,48 @@ if ($instanceType !== null) {
     exit(0);
 }
 
+// RunPod and Alibaba have their own methods and types, and their own exceptions.
+/** @param class-string<AWSPricingDataException> $exception */
+$providerError = static function (AWSPricingDataException $e, string $exception) use ($error): never {
+    if (!$e instanceof $exception) {
+        fwrite(STDERR, 'expected a ' . $exception . ', got ' . $e::class . "\n");
+        exit(1);
+    }
+    $error($e);
+};
+/**
+ * @param class-string<AWSPricingData> $dataClass
+ * @param class-string<AWSInstance> $instanceClass
+ */
+$expectTypes = static function (AWSPricingData $d, string $dataClass, string $instanceClass): void {
+    $first = $d->keys()[0] ?? null;
+    if (!$d instanceof $dataClass || ($first !== null && !$d->get($first) instanceof $instanceClass)) {
+        fwrite(STDERR, "expected $dataClass and $instanceClass\n");
+        exit(1);
+    }
+};
+
+$options = ['token' => $token === '-' ? null : $token, 'cachePricingData' => $cache === '1', 'cachePath' => $cachePath, 'baseUrl' => $baseUrl];
 try {
-    $options = ['token' => $token === '-' ? null : $token, 'cachePricingData' => $cache === '1', 'cachePath' => $cachePath, 'baseUrl' => $baseUrl];
-    $data = $platform === null
-        ? BulkInstances::downloadAwsEc2PricingData(...$options)
-        : BulkInstances::downloadAwsPricingData($platform, ...$options);
+    if ($platform === 'runpod') {
+        try {
+            $data = BulkInstances::downloadRunpodPricingData(...$options);
+        } catch (AWSPricingDataException $e) {
+            $providerError($e, RunpodPricingDataException::class);
+        }
+        $expectTypes($data, RunpodPricingData::class, RunpodInstance::class);
+    } elseif ($platform === 'alibaba') {
+        try {
+            $data = BulkInstances::downloadAlibabaPricingData(...$options);
+        } catch (AWSPricingDataException $e) {
+            $providerError($e, AlibabaPricingDataException::class);
+        }
+        $expectTypes($data, AlibabaPricingData::class, AlibabaInstance::class);
+    } else {
+        $data = $platform === null
+            ? BulkInstances::downloadAwsEc2PricingData(...$options)
+            : BulkInstances::downloadAwsPricingData($platform, ...$options);
+    }
 } catch (AWSPricingDataException $e) {
     $error($e);
 }

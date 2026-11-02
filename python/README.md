@@ -86,42 +86,60 @@ Its locations are region codes, so `region` and `region_code` are both `us-east-
 have no attributes; take their specs from `ec2`. The history goes back to August 2026, hourly at
 first and every 6 hours since November 2026, and prices change far more often than on-demand prices.
 
-## Other clouds
+## RunPod
 
-Infrawrench also publishes bundles for clouds other than AWS, in the same format, and `download_aws_pricing_data` loads them
-the same way. `OTHER_PLATFORMS` lists them:
-
-| Platform | What | History from |
-| --- | --- | --- |
-| `runpod` | RunPod GPU and CPU pods | November 2026 |
-| `alibaba` | Alibaba Cloud ECS instance types | May 2018 |
+`download_runpod_pricing_data(...)` loads RunPod's GPU and CPU pod prices. It takes the same keyword
+arguments as the AWS functions, caches the same way, and raises `RunpodPricingDataError`, a subclass of
+`AWSPricingDataError`. It returns a `RunpodPricingData`, whose `get` returns a `RunpodInstance`; they have
+the same members as `AWSPricingData` and `AWSInstance`.
 
 ```python
-from infrawrench_bulk_instances import download_aws_pricing_data
+from infrawrench_bulk_instances import download_runpod_pricing_data
 
-runpod = download_aws_pricing_data("runpod")
+runpod = download_runpod_pricing_data()
 h100 = runpod.get("NVIDIA H100 80GB HBM3")
 assert h100 is not None
 next(p.hourly for p in h100.pricing.on_demand if p.variant["cloudType"] == "Secure Cloud")
 ```
 
-`runpod` has GPU types by RunPod's id (`NVIDIA H100 80GB HBM3`), priced per GPU per hour, and CPU pods by
-pod id (`cpu3c-2-4`: flavor, vCPUs, GB of memory), priced per pod per hour; the `productFamily` attribute is
-`GPU` or `CPU`. Prices are the same in every data center, so every price is in the location `global`. The
-only variant key is `cloudType`, `Secure Cloud` or `Community Cloud`. Savings plans are in `pricing.reserved`
-with the term `3mo` or `6mo`, `Savings Plan`, `All Upfront`, and `hourly` is the plan's effective hourly rate.
-Stock levels and spot prices are not included.
+It has GPU types by RunPod's id (`NVIDIA H100 80GB HBM3`), priced per GPU per hour, and CPU pods by pod id
+(`cpu3c-2-4`: flavor, vCPUs, GB of memory), priced per pod per hour; the `productFamily` attribute is `GPU` or
+`CPU`. Prices are the same in every data center, so every price is in the location `global`. The only variant
+key is `cloudType`, `Secure Cloud` or `Community Cloud`. Savings plans are in `pricing.reserved` with the term
+`3mo` or `6mo`, `Savings Plan`, `All Upfront`, and `hourly` is the plan's effective hourly rate. Stock levels
+and spot prices are not included. The history starts in November 2026.
 
-`alibaba`'s locations are region ids (`cn-hangzhou`), so the location and its region code are the same, and
-the regions table gives each an English `name`. Its variant keys are `operatingSystem` (`Linux` or `Windows`)
-and `networkType` (`VPC`, or `Classic` in older history). `pricing.on_demand` has pay-as-you-go prices. `pricing.reserved` has
+## Alibaba Cloud
+
+`download_alibaba_pricing_data(...)` loads Alibaba Cloud ECS prices. It takes the same keyword arguments as
+the AWS functions, caches the same way, and raises `AlibabaPricingDataError`, a subclass of
+`AWSPricingDataError`. It returns an `AlibabaPricingData`, whose `get` returns an `AlibabaInstance`; they
+have the same members as `AWSPricingData` and `AWSInstance`.
+
+```python
+from infrawrench_bulk_instances import download_alibaba_pricing_data
+
+alibaba = download_alibaba_pricing_data()
+g6 = alibaba.get("ecs.g6.large")
+assert g6 is not None
+next(
+    p.hourly
+    for p in g6.pricing.on_demand
+    if p.region_code == "cn-hangzhou" and p.variant["operatingSystem"] == "Linux"
+    and p.variant["networkType"] == "VPC"
+)
+```
+
+Its locations are region ids (`cn-hangzhou`), so the location and its region code are the same, and `regions`
+gives each an English `name`. Its variant keys are `operatingSystem` (`Linux` or `Windows`) and `networkType`
+(`VPC`, or `Classic` in older history). `pricing.on_demand` has pay-as-you-go prices. `pricing.reserved` has
 subscriptions, with the term `1mo` or `1yr` to `5yr`, `Subscription`, `All Upfront`: they are paid in full
 when bought, so `hourly` is 0 and `upfront` is the price. It also has reserved instances, with the term `1yr` or
 `3yr`, `Reserved Instance`, and a purchase option. Attributes are Alibaba's instance type definitions
-(`CpuCoreCount`, `MemorySize`, `CpuOptions.ThreadsPerCore`, ...), from May 2023 on.
+(`CpuCoreCount`, `MemorySize`, `CpuOptions.ThreadsPerCore`, ...), from May 2023 on. The history starts in
+May 2018.
 
-`fetch_aws_instance` doesn't serve these platforms yet: the Infrawrench API has no instances for them, so it returns
-`None`. Download the bundle instead.
+`fetch_aws_instance` doesn't cover RunPod or Alibaba; download their bundles instead.
 
 ## One instance
 

@@ -18,10 +18,11 @@ import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import org.tukaani.xz.XZInputStream;
 
-/** Downloads AWS pricing data: EC2's, or any other platform's. */
+/** Downloads AWS pricing data (EC2's, or any other platform's), RunPod's and Alibaba Cloud's. */
 public final class BulkInstances {
     /**
      * The AWS platforms Infrawrench publishes a bundle for. Any other lowercase name is requested as is, so a
@@ -30,12 +31,6 @@ public final class BulkInstances {
     public static final List<String> AWS_PLATFORMS = List.of(
             "ec2", "rds", "elasticache", "opensearch", "redshift", "docdb", "neptune", "memorydb", "dax", "sagemaker",
             "emr", "gamelift", "spot");
-
-    /**
-     * The other clouds Infrawrench publishes a bundle for, in the same format: RunPod GPU and CPU pods, and Alibaba
-     * Cloud ECS. The same methods load them.
-     */
-    public static final List<String> OTHER_PLATFORMS = List.of("runpod", "alibaba");
 
     /** The variant keys of EC2 bundles, which don't list their own. */
     public static final List<String> EC2_VARIANT_KEYS =
@@ -115,6 +110,74 @@ public final class BulkInstances {
      */
     public static AWSPricingData downloadAwsPricingData(String platform, AWSPricingDataOptions options)
             throws IOException {
+        return new AWSPricingData(loadBundle(platform, options));
+    }
+
+    /**
+     * Downloads RunPod's pricing data with the default options.
+     *
+     * @return the pricing data
+     * @throws RunpodPricingDataException if the pricing data cannot be downloaded
+     * @throws IOException if the cache cannot be read or written, or the bundle is corrupt
+     * @see #downloadRunpodPricingData(RunpodPricingDataOptions)
+     */
+    public static RunpodPricingData downloadRunpodPricingData() throws IOException {
+        return downloadRunpodPricingData(RunpodPricingDataOptions.builder().build());
+    }
+
+    /**
+     * Downloads RunPod's pricing data: GPU types (priced per GPU per hour) and CPU pods (per pod per hour). Caching
+     * and the offline fallback work as for {@link #downloadAwsPricingData(String, AWSPricingDataOptions)}.
+     *
+     * @param options the options
+     * @return the pricing data
+     * @throws RunpodPricingDataException if the pricing data cannot be downloaded
+     * @throws IOException if the cache cannot be read or written, or the bundle is corrupt
+     *     ({@link InterruptedIOException} if the thread is interrupted)
+     */
+    public static RunpodPricingData downloadRunpodPricingData(RunpodPricingDataOptions options) throws IOException {
+        return new RunpodPricingData(loadBundleAs("runpod", options, RunpodPricingDataException::new));
+    }
+
+    /**
+     * Downloads Alibaba Cloud's ECS pricing data with the default options.
+     *
+     * @return the pricing data
+     * @throws AlibabaPricingDataException if the pricing data cannot be downloaded
+     * @throws IOException if the cache cannot be read or written, or the bundle is corrupt
+     * @see #downloadAlibabaPricingData(AlibabaPricingDataOptions)
+     */
+    public static AlibabaPricingData downloadAlibabaPricingData() throws IOException {
+        return downloadAlibabaPricingData(AlibabaPricingDataOptions.builder().build());
+    }
+
+    /**
+     * Downloads Alibaba Cloud's ECS pricing data: pay-as-you-go, subscription and reserved instance prices per region.
+     * Caching and the offline fallback work as for {@link #downloadAwsPricingData(String, AWSPricingDataOptions)}.
+     *
+     * @param options the options
+     * @return the pricing data
+     * @throws AlibabaPricingDataException if the pricing data cannot be downloaded
+     * @throws IOException if the cache cannot be read or written, or the bundle is corrupt
+     *     ({@link InterruptedIOException} if the thread is interrupted)
+     */
+    public static AlibabaPricingData downloadAlibabaPricingData(AlibabaPricingDataOptions options) throws IOException {
+        return new AlibabaPricingData(loadBundleAs("alibaba", options, AlibabaPricingDataException::new));
+    }
+
+    /** {@link #loadBundle}, failing with the provider's own exception class. */
+    private static BundleParser.Bundle loadBundleAs(
+            String platform, AWSPricingDataOptions options,
+            Function<AWSPricingDataException, AWSPricingDataException> providerException) throws IOException {
+        try {
+            return loadBundle(platform, options);
+        } catch (AWSPricingDataException e) {
+            throw providerException.apply(e);
+        }
+    }
+
+    /** Downloads (or reads from the cache) one platform's bundle. */
+    private static BundleParser.Bundle loadBundle(String platform, AWSPricingDataOptions options) throws IOException {
         if (!PLATFORM.matcher(platform).matches()) {
             throw new AWSPricingDataException("\"" + platform + "\" is not a platform name.");
         }
@@ -237,7 +300,7 @@ public final class BulkInstances {
             throw e;
         }
         try (InputStream in = new Transport(res.body(), url)) {
-            AWSPricingData data = BundleParser.parseInstance(in);
+            AWSPricingData data = new AWSPricingData(BundleParser.parseInstance(in));
             return data.get(data.keys().get(0));
         }
     }

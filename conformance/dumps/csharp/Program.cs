@@ -50,20 +50,69 @@ if (instanceType is not null)
 AwsPricingData data;
 try
 {
-    var options = new AwsPricingDataOptions
+    T Options<T>() where T : AwsPricingDataOptions, new() => new T
     {
         BaseUrl = baseUrl,
         CachePath = cachePath,
         CachePricingData = cache == "1",
         Token = token == "-" ? null : token,
     };
-    data = platform is null
-        ? await BulkInstances.DownloadAwsEc2PricingDataAsync(options)
-        : await BulkInstances.DownloadAwsPricingDataAsync(platform, options);
+    // RunPod and Alibaba have their own methods and types, and their own exceptions.
+    if (platform == "runpod")
+    {
+        RunpodPricingData d;
+        try
+        {
+            d = await BulkInstances.DownloadRunpodPricingDataAsync(Options<RunpodPricingDataOptions>());
+        }
+        catch (AwsPricingDataException e) when (e is not RunpodPricingDataException)
+        {
+            return WrongException(e, typeof(RunpodPricingDataException));
+        }
+        RunpodInstance? first = d.Keys.Count == 0 ? null : d.Get(d.Keys[0]);
+        if (!ExpectTypes(d, first, typeof(RunpodPricingData), typeof(RunpodInstance))) return 1;
+        data = d;
+    }
+    else if (platform == "alibaba")
+    {
+        AlibabaPricingData d;
+        try
+        {
+            d = await BulkInstances.DownloadAlibabaPricingDataAsync(Options<AlibabaPricingDataOptions>());
+        }
+        catch (AwsPricingDataException e) when (e is not AlibabaPricingDataException)
+        {
+            return WrongException(e, typeof(AlibabaPricingDataException));
+        }
+        AlibabaInstance? first = d.Keys.Count == 0 ? null : d.Get(d.Keys[0]);
+        if (!ExpectTypes(d, first, typeof(AlibabaPricingData), typeof(AlibabaInstance))) return 1;
+        data = d;
+    }
+    else
+    {
+        var options = Options<AwsPricingDataOptions>();
+        data = platform is null
+            ? await BulkInstances.DownloadAwsEc2PricingDataAsync(options)
+            : await BulkInstances.DownloadAwsPricingDataAsync(platform, options);
+    }
 }
 catch (AwsPricingDataException e)
 {
     return Error(e);
+}
+
+static int WrongException(AwsPricingDataException e, Type expected)
+{
+    Console.Error.WriteLine($"expected a {expected.Name}, got {e.GetType().Name}");
+    return 1;
+}
+
+// Whether the data and its first instance are exactly the provider's classes.
+static bool ExpectTypes(AwsPricingData d, AwsInstance? first, Type data, Type instance)
+{
+    if (d.GetType() == data && (first is null || first.GetType() == instance)) return true;
+    Console.Error.WriteLine($"expected {data.Name} and {instance.Name}");
+    return false;
 }
 
 var regions = new JsonObject(data.Regions.Select(kv => KeyValuePair.Create(kv.Key, (JsonNode?)Dict(kv.Value))));

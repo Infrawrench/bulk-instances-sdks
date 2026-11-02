@@ -385,7 +385,7 @@ func (d *AWSPricingData) Get(instanceType string) (*AWSInstance, bool) {
 	return inst, true
 }
 
-// Offer returns the AWS offer code, e.g. "AmazonEC2" or "AmazonRDS".
+// Offer returns the offer code, e.g. "AmazonEC2", "AmazonRDS", "RunpodPods" or "AlibabaECS".
 func (d *AWSPricingData) Offer() string {
 	if d.raw.offer == nil {
 		return "AmazonEC2"
@@ -734,4 +734,51 @@ func (i *AWSInstance) decodePricingHistory() PricingHistory {
 	slices.SortStableFunc(h.OnDemand, func(a, b OnDemandPriceChange) int { return byTime(a.At, b.At) })
 	slices.SortStableFunc(h.Reserved, func(a, b ReservedPriceChange) int { return byTime(a.At, b.At) })
 	return h
+}
+
+// RunpodPricingData is RunPod's pricing data, keyed by GPU type id
+// ("NVIDIA H100 80GB HBM3") or CPU pod id ("cpu3c-2-4"). It decodes the same way
+// as [AWSPricingData], whose methods it has; see the README for what RunPod's data
+// holds.
+type RunpodPricingData struct {
+	*AWSPricingData
+}
+
+// Get returns the GPU type or CPU pod with this id, or false if the bundle has
+// never listed it.
+func (d *RunpodPricingData) Get(id string) (*RunpodInstance, bool) {
+	inst, ok := d.AWSPricingData.Get(id)
+	if !ok {
+		return nil, false
+	}
+	return &RunpodInstance{inst}, true
+}
+
+// RunpodInstance is one RunPod GPU type or CPU pod. It has the methods of
+// [AWSInstance].
+type RunpodInstance struct {
+	*AWSInstance
+}
+
+// AlibabaPricingData is Alibaba Cloud's ECS pricing data, keyed by instance type
+// ("ecs.g6.large"). It decodes the same way as [AWSPricingData], whose methods it
+// has; see the README for what Alibaba's data holds.
+type AlibabaPricingData struct {
+	*AWSPricingData
+}
+
+// Get returns the instance type with this name, or false if the bundle has never
+// listed it.
+func (d *AlibabaPricingData) Get(instanceType string) (*AlibabaInstance, bool) {
+	inst, ok := d.AWSPricingData.Get(instanceType)
+	if !ok {
+		return nil, false
+	}
+	return &AlibabaInstance{inst}, true
+}
+
+// AlibabaInstance is one Alibaba Cloud ECS instance type. It has the methods of
+// [AWSInstance].
+type AlibabaInstance struct {
+	*AWSInstance
 }

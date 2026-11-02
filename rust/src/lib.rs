@@ -13,9 +13,9 @@ use ureq::http::Response;
 use ureq::{Agent, Body};
 
 pub use crate::data::{
-    AttributeChange, AwsInstance, AwsPricingData, EC2_VARIANT_KEYS, OnDemandPrice,
-    OnDemandPriceChange, Pricing, PricingHistory, Regions, ReservedPrice, ReservedPriceChange,
-    ReservedTerm, Variant,
+    AlibabaInstance, AlibabaPricingData, AttributeChange, AwsInstance, AwsPricingData,
+    EC2_VARIANT_KEYS, OnDemandPrice, OnDemandPriceChange, Pricing, PricingHistory, Regions,
+    ReservedPrice, ReservedPriceChange, ReservedTerm, RunpodInstance, RunpodPricingData, Variant,
 };
 pub use crate::error::Error;
 use crate::raw::InstanceFile;
@@ -42,11 +42,8 @@ pub const AWS_PLATFORMS: &[&str] = &[
     "spot",
 ];
 
-/// The other clouds Infrawrench publishes a bundle for, in the same format: RunPod GPU and CPU
-/// pods, and Alibaba Cloud ECS. The same functions load them.
-pub const OTHER_PLATFORMS: &[&str] = &["runpod", "alibaba"];
-
-/// Options for [`download_aws_pricing_data`] and [`download_aws_ec2_pricing_data`].
+/// Options for [`download_aws_pricing_data`], [`download_aws_ec2_pricing_data`],
+/// [`download_runpod_pricing_data`] and [`download_alibaba_pricing_data`].
 ///
 /// ```
 /// let options = infrawrench_bulk_instances::Options {
@@ -263,6 +260,29 @@ pub fn download_aws_pricing_data(
     platform: &str,
     options: &Options,
 ) -> Result<AwsPricingData, Error> {
+    load_bundle(platform, options)
+}
+
+/// Downloads RunPod's pricing data: GPU types (priced per GPU per hour) and CPU pods (per pod
+/// per hour). Caching and the offline fallback work as for [`download_aws_pricing_data`].
+///
+/// This blocks on network and disk I/O. From async code, run it on a blocking thread, e.g.
+/// with `tokio::task::spawn_blocking`.
+pub fn download_runpod_pricing_data(options: &Options) -> Result<RunpodPricingData, Error> {
+    load_bundle("runpod", options).map(RunpodPricingData::new)
+}
+
+/// Downloads Alibaba Cloud's ECS pricing data: pay-as-you-go, subscription and reserved instance
+/// prices per region. Caching and the offline fallback work as for [`download_aws_pricing_data`].
+///
+/// This blocks on network and disk I/O. From async code, run it on a blocking thread, e.g.
+/// with `tokio::task::spawn_blocking`.
+pub fn download_alibaba_pricing_data(options: &Options) -> Result<AlibabaPricingData, Error> {
+    load_bundle("alibaba", options).map(AlibabaPricingData::new)
+}
+
+/// Downloads (or reads from the cache) one platform's bundle.
+fn load_bundle(platform: &str, options: &Options) -> Result<AwsPricingData, Error> {
     check_platform(platform)?;
     // EC2's keys have no prefix because they were published before the other platforms.
     let prefix = if platform == "ec2" {

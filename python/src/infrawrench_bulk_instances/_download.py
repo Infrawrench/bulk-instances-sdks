@@ -11,9 +11,9 @@ import urllib.parse
 import urllib.request
 from http.client import HTTPException
 from pathlib import Path
-from typing import Final
+from typing import Any, Final
 
-from ._data import AWSInstance, AWSPricingData
+from ._data import AlibabaPricingData, AWSInstance, AWSPricingData, RunpodPricingData
 
 DEFAULT_BASE_URL = "https://instances-bundles.infrawrench.com"
 DEFAULT_API_URL = "https://app.infrawrench.com"
@@ -28,6 +28,15 @@ class AWSPricingDataError(Exception):
     def __init__(self, message: str, status: int | None = None) -> None:
         super().__init__(message)
         self.status = status
+
+
+class RunpodPricingDataError(AWSPricingDataError):
+    """Raised when RunPod's pricing data cannot be downloaded. ``status`` is the HTTP status, if there was a response."""
+
+
+class AlibabaPricingDataError(AWSPricingDataError):
+    """Raised when Alibaba Cloud's pricing data cannot be downloaded. ``status`` is the HTTP status, if there was
+    a response."""
 
 
 def _retry_after(value: str | None) -> float:
@@ -90,11 +99,6 @@ AWS_PLATFORMS: Final[tuple[str, ...]] = (
 """The AWS platforms Infrawrench publishes a bundle for. Any other lowercase name is
 requested as is, so a platform added later works without a new SDK."""
 
-OTHER_PLATFORMS: Final[tuple[str, ...]] = ("runpod", "alibaba")
-"""The other clouds Infrawrench publishes a bundle for, in the same format: RunPod GPU and CPU pods,
-and Alibaba Cloud ECS. The same functions load them."""
-
-
 def download_aws_ec2_pricing_data(
     *,
     token: str | None = None,
@@ -130,6 +134,80 @@ def download_aws_pricing_data(
     :raises AWSPricingDataError: When the platform name is malformed, the token is missing or rejected,
         or the bundle cannot be fetched.
     """
+    return AWSPricingData(
+        _load_bundle(platform, token=token, cache_pricing_data=cache_pricing_data, cache_path=cache_path, base_url=base_url)
+    )
+
+
+def download_runpod_pricing_data(
+    *,
+    token: str | None = None,
+    cache_pricing_data: bool = True,
+    cache_path: str | os.PathLike[str] | None = None,
+    base_url: str | None = None,
+) -> RunpodPricingData:
+    """Downloads RunPod's pricing data: GPU types (priced per GPU per hour) and CPU pods (per pod per hour).
+
+    Caching and the offline fallback work as for :func:`download_aws_pricing_data`, and it takes the same
+    keyword arguments.
+
+    :raises RunpodPricingDataError: When the token is missing or rejected, or the bundle cannot be fetched.
+    """
+    return RunpodPricingData(_load_bundle_as(
+        "runpod", RunpodPricingDataError,
+        token=token, cache_pricing_data=cache_pricing_data, cache_path=cache_path, base_url=base_url,
+    ))
+
+
+def download_alibaba_pricing_data(
+    *,
+    token: str | None = None,
+    cache_pricing_data: bool = True,
+    cache_path: str | os.PathLike[str] | None = None,
+    base_url: str | None = None,
+) -> AlibabaPricingData:
+    """Downloads Alibaba Cloud's ECS pricing data: pay-as-you-go, subscription and reserved instance prices per
+    region.
+
+    Caching and the offline fallback work as for :func:`download_aws_pricing_data`, and it takes the same
+    keyword arguments.
+
+    :raises AlibabaPricingDataError: When the token is missing or rejected, or the bundle cannot be fetched.
+    """
+    return AlibabaPricingData(_load_bundle_as(
+        "alibaba", AlibabaPricingDataError,
+        token=token, cache_pricing_data=cache_pricing_data, cache_path=cache_path, base_url=base_url,
+    ))
+
+
+def _load_bundle_as(
+    platform: str,
+    error: type[AWSPricingDataError],
+    *,
+    token: str | None,
+    cache_pricing_data: bool,
+    cache_path: str | os.PathLike[str] | None,
+    base_url: str | None,
+) -> Any:
+    """:func:`_load_bundle`, failing with the provider's own error class."""
+    try:
+        return _load_bundle(
+            platform, token=token, cache_pricing_data=cache_pricing_data, cache_path=cache_path, base_url=base_url
+        )
+    except AWSPricingDataError as err:
+        # Chained to what the AWS error was chained to (or nothing), so the traceback reads as if raised here.
+        raise error(str(err), err.status) from err.__cause__
+
+
+def _load_bundle(
+    platform: str,
+    *,
+    token: str | None,
+    cache_pricing_data: bool,
+    cache_path: str | os.PathLike[str] | None,
+    base_url: str | None,
+) -> Any:
+    """Downloads (or reads from the cache) one platform's bundle, parsed."""
     if not re.fullmatch(r"[a-z0-9]+", platform):
         raise AWSPricingDataError(f'"{platform}" is not a platform name.')
     # EC2's keys have no prefix because they were published before the other platforms.
@@ -181,7 +259,7 @@ def download_aws_pricing_data(
                 if f != name and _is_bundle(f, prefix, _OLD_BUNDLE):
                     (cache_dir / f).unlink(missing_ok=True)
 
-    return AWSPricingData(json.loads(text))
+    return json.loads(text)
 
 
 def fetch_aws_instance(

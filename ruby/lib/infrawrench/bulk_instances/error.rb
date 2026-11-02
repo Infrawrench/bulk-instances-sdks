@@ -12,5 +12,12 @@ module Infrawrench
         @status = status
       end
     end
+
+    # Raised when RunPod's pricing data cannot be downloaded. +status+ is the HTTP status, if there was a response.
+    class RunpodPricingDataError < AWSPricingDataError; end
+
+    # Raised when Alibaba Cloud's pricing data cannot be downloaded. +status+ is the HTTP status, if there was a
+    # response.
+    class AlibabaPricingDataError < AWSPricingDataError; end
   end
 end

@@ -7,8 +7,11 @@ import java.util.Optional;
 /**
  * Options for {@link BulkInstances#downloadAwsEc2PricingData(AWSPricingDataOptions)}. Immutable; build one with
  * {@link #builder()}.
+ *
+ * <p>RunPod's and Alibaba Cloud's functions take the subclasses {@link RunpodPricingDataOptions} and
+ * {@link AlibabaPricingDataOptions}, which have the same options.
  */
-public final class AWSPricingDataOptions {
+public sealed class AWSPricingDataOptions permits RunpodPricingDataOptions, AlibabaPricingDataOptions {
     static final String DEFAULT_BASE_URL = "https://instances-bundles.infrawrench.com";
 
     private final String token;
@@ -16,7 +19,7 @@ public final class AWSPricingDataOptions {
     private final Path cachePath;
     private final String baseUrl;
 
-    private AWSPricingDataOptions(Builder b) {
+    AWSPricingDataOptions(Builder b) {
         this.token = b.token;
         this.cachePricingData = b.cachePricingData;
         this.cachePath = b.cachePath != null ? b.cachePath : defaultCachePath();
@@ -77,13 +80,13 @@ public final class AWSPricingDataOptions {
     }
 
     /** Builds {@link AWSPricingDataOptions}. Every option is optional; passing {@code null} restores its default. */
-    public static final class Builder {
+    public static sealed class Builder permits RunpodPricingDataOptions.Builder, AlibabaPricingDataOptions.Builder {
         private String token;
         private boolean cachePricingData = true;
         private Path cachePath;
         private String baseUrl;
 
-        private Builder() {}
+        Builder() {}
 
         /**
          * Defines your Infrawrench API token. Defaults to the {@code INFRAWRENCH_API_KEY} environment variable.

@@ -191,6 +191,8 @@ try:
               [x[0] for x in State.log] == [f"/{platform}-latest", f"/{platform}-bundle-{NAME}.json.xz"], State.log)
         p, out, _ = run(DEAD, other, platform=platform)
         dump_ok(f"{platform} offline falls back to the {platform} cache", p, out, reference)
+        p, out, _ = run(BASE, os.path.join(tmp, f"{platform}-notoken"), token="-", platform=platform)
+        error_with(f"{platform} with no token fails with the {platform} error", p, out, None)
     check("other clouds are cached side by side",
           sorted(os.listdir(other)) == sorted(f"{p}-bundle-{NAME}.json" for p in OTHER), sorted(os.listdir(other)))
     p, out, _ = run(BASE, cache, platform="ec2")

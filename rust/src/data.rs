@@ -2,6 +2,7 @@ use std::collections::hash_map::Entry;
 use std::collections::{BTreeMap, HashMap};
 use std::fmt;
 use std::hash::Hash;
+use std::ops::Deref;
 use std::sync::{Arc, OnceLock};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
@@ -292,7 +293,7 @@ impl AwsPricingData {
         Some(AwsInstance::new(self.shared, index))
     }
 
-    /// The AWS offer code, e.g. `AmazonEC2` or `AmazonRDS`.
+    /// The offer code, e.g. `AmazonEC2`, `AmazonRDS`, `RunpodPods` or `AlibabaECS`.
     pub fn offer(&self) -> &str {
         self.shared.raw.offer.as_deref().unwrap_or("AmazonEC2")
     }
@@ -556,6 +557,127 @@ impl fmt::Debug for AwsInstance {
     }
 }
 
+/// RunPod's pricing data, keyed by GPU type id (`NVIDIA H100 80GB HBM3`) or CPU pod id
+/// (`cpu3c-2-4`).
+///
+/// It decodes the same way as [`AwsPricingData`], and derefs to it for everything but
+/// [`get`](Self::get); see the README for what RunPod's data holds.
+pub struct RunpodPricingData {
+    data: AwsPricingData,
+    instances: Box<[OnceLock<RunpodInstance>]>,
+}
+
+impl RunpodPricingData {
+    pub(crate) fn new(data: AwsPricingData) -> Self {
+        let instances = data.instances.iter().map(|_| OnceLock::new()).collect();
+        Self { data, instances }
+    }
+
+    /// The GPU type or CPU pod with this id, or `None` if the bundle has never listed it.
+    pub fn get(&self, id: &str) -> Option<&RunpodInstance> {
+        let &index = self.data.shared.raw.instances.index.get(id)?;
+        Some(
+            self.instances[index].get_or_init(|| {
+                RunpodInstance(AwsInstance::new(Arc::clone(&self.data.shared), index))
+            }),
+        )
+    }
+}
+
+impl Deref for RunpodPricingData {
+    type Target = AwsPricingData;
+
+    fn deref(&self) -> &AwsPricingData {
+        &self.data
+    }
+}
+
+impl fmt::Debug for RunpodPricingData {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("RunpodPricingData")
+            .field("instances", &self.instances.len())
+            .finish_non_exhaustive()
+    }
+}
+
+/// One RunPod GPU type or CPU pod. It derefs to [`AwsInstance`], whose getters it has.
+pub struct RunpodInstance(AwsInstance);
+
+impl Deref for RunpodInstance {
+    type Target = AwsInstance;
+
+    fn deref(&self) -> &AwsInstance {
+        &self.0
+    }
+}
+
+impl fmt::Debug for RunpodInstance {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("RunpodInstance")
+            .field("name", &self.name())
+            .finish_non_exhaustive()
+    }
+}
+
+/// Alibaba Cloud's ECS pricing data, keyed by instance type (`ecs.g6.large`).
+///
+/// It decodes the same way as [`AwsPricingData`], and derefs to it for everything but
+/// [`get`](Self::get); see the README for what Alibaba's data holds.
+pub struct AlibabaPricingData {
+    data: AwsPricingData,
+    instances: Box<[OnceLock<AlibabaInstance>]>,
+}
+
+impl AlibabaPricingData {
+    pub(crate) fn new(data: AwsPricingData) -> Self {
+        let instances = data.instances.iter().map(|_| OnceLock::new()).collect();
+        Self { data, instances }
+    }
+
+    /// The instance type with this name, or `None` if the bundle has never listed it.
+    pub fn get(&self, instance_type: &str) -> Option<&AlibabaInstance> {
+        let &index = self.data.shared.raw.instances.index.get(instance_type)?;
+        Some(self.instances[index].get_or_init(|| {
+            AlibabaInstance(AwsInstance::new(Arc::clone(&self.data.shared), index))
+        }))
+    }
+}
+
+impl Deref for AlibabaPricingData {
+    type Target = AwsPricingData;
+
+    fn deref(&self) -> &AwsPricingData {
+        &self.data
+    }
+}
+
+impl fmt::Debug for AlibabaPricingData {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("AlibabaPricingData")
+            .field("instances", &self.instances.len())
+            .finish_non_exhaustive()
+    }
+}
+
+/// One Alibaba Cloud ECS instance type. It derefs to [`AwsInstance`], whose getters it has.
+pub struct AlibabaInstance(AwsInstance);
+
+impl Deref for AlibabaInstance {
+    type Target = AwsInstance;
+
+    fn deref(&self) -> &AwsInstance {
+        &self.0
+    }
+}
+
+impl fmt::Debug for AlibabaInstance {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("AlibabaInstance")
+            .field("name", &self.name())
+            .finish_non_exhaustive()
+    }
+}
+
 /// The last change per key, keyed in order of first appearance.
 fn latest<'a, T, K: Hash + Eq>(changes: &'a [T], key: impl Fn(&'a T) -> K) -> Vec<&'a T> {
     let mut out: Vec<&T> = Vec::new();
@@ -576,4 +698,8 @@ const _: () = {
     const fn assert_send_sync<T: Send + Sync>() {}
     assert_send_sync::<AwsPricingData>();
     assert_send_sync::<AwsInstance>();
+    assert_send_sync::<RunpodPricingData>();
+    assert_send_sync::<RunpodInstance>();
+    assert_send_sync::<AlibabaPricingData>();
+    assert_send_sync::<AlibabaInstance>();
 };

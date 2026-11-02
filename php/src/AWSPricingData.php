@@ -11,13 +11,15 @@ namespace Infrawrench\BulkInstances;
  * raw rows, and each method on the returned {@see AWSInstance} decodes its part on
  * first access and keeps the result.
  *
+ * {@see RunpodPricingData} and {@see AlibabaPricingData} extend it for the other clouds Infrawrench publishes.
+ *
  * @phpstan-type AttributeChangeRow array{0: int, 1: int, 2?: int|null, 3?: int|null}
  * @phpstan-type OnDemandRow array{0: int, 1: int, 2: int, 3?: int|float|null}
  * @phpstan-type ReservedRow array{0: int, 1: int, 2: int, 3: int, 4?: int|float|null, 5?: int|float|null}
  * @phpstan-type RawInstance array{0: list<array{int, int}>, 1: list<AttributeChangeRow>, 2: int|float, 3: list<OnDemandRow>, 4: list<ReservedRow>, 5: int, 6: int|null}
  * @phpstan-type BundleFile array{offer?: string, compression_table: list<string>, snapshots: list<int>, regions: list<array{int, list<array{int, int}>}>, variant_keys?: list<string>, variants: list<list<int>>, reserved_terms: list<list<int>>, instances: array<string, RawInstance>}
  */
-final class AWSPricingData
+class AWSPricingData
 {
     /** @var array<string, AWSInstance> */
     private array $instances = [];
@@ -39,7 +41,7 @@ final class AWSPricingData
     /**
      * @param BundleFile $raw The bundle as instances-bundler writes it; every string is an index into `compression_table`.
      */
-    public function __construct(private readonly array $raw)
+    final public function __construct(private readonly array $raw)
     {
     }
 
@@ -51,12 +53,12 @@ final class AWSPricingData
      *
      * @throws \JsonException if `$json` is not a valid bundle
      */
-    public static function fromJson(string $json): self
+    public static function fromJson(string $json): static
     {
         [$top, $spans] = Internal\BundleJson::split($json);
         /** @var BundleFile $raw */
         $raw = $top + ['instances' => []];
-        $data = new self($raw);
+        $data = new static($raw);
         if ($spans !== null) {
             $data->spans = $spans;
             $data->json = $json;
@@ -93,12 +95,22 @@ final class AWSPricingData
                 /** @var RawInstance $raw */
                 $raw = Internal\BundleJson::decode($this->json, ...$this->spans[$instanceType]);
             }
-            $this->instances[$instanceType] = new AWSInstance($instanceType, $raw, $this);
+            $this->instances[$instanceType] = $this->newInstance($instanceType, $raw);
         }
         return $this->instances[$instanceType] ?? null;
     }
 
-    /** The AWS offer code, e.g. `AmazonEC2` or `AmazonRDS`. EC2 bundles leave it out. */
+    /**
+     * Makes the object `get()` returns; each provider's subclass returns its own instance class.
+     *
+     * @param RawInstance $raw
+     */
+    protected function newInstance(string $name, array $raw): AWSInstance
+    {
+        return new AWSInstance($name, $raw, $this);
+    }
+
+    /** The offer code, e.g. `AmazonEC2`, `AmazonRDS`, `RunpodPods` or `AlibabaECS`. EC2 bundles leave it out. */
     public function offer(): string
     {
         return $this->raw['offer'] ?? 'AmazonEC2';

@@ -6,10 +6,19 @@ from datetime import datetime
 from typing import Any
 
 from infrawrench_bulk_instances import (
+    AlibabaInstance,
+    AlibabaPricingData,
+    AlibabaPricingDataError,
     AWSInstance,
+    AWSPricingData,
     AWSPricingDataError,
+    RunpodInstance,
+    RunpodPricingData,
+    RunpodPricingDataError,
+    download_alibaba_pricing_data,
     download_aws_ec2_pricing_data,
     download_aws_pricing_data,
+    download_runpod_pricing_data,
     fetch_aws_instance,
 )
 
@@ -55,6 +64,19 @@ def instance(i: AWSInstance, region_names: list[str]) -> dict[str, Any]:
     }
 
 
+def expect_error(e: AWSPricingDataError, provider_error: type[AWSPricingDataError]) -> None:
+    if not isinstance(e, provider_error):
+        print(f"expected a {provider_error.__name__}, got {type(e).__name__}", file=sys.stderr)
+        sys.exit(1)
+
+
+def expect_types(d: AWSPricingData, data_class: type[AWSPricingData], instance_class: type[AWSInstance]) -> None:
+    keys = d.keys()
+    if not isinstance(d, data_class) or (keys and not isinstance(d.get(keys[0]), instance_class)):
+        print(f"expected {data_class.__name__} and {instance_class.__name__}", file=sys.stderr)
+        sys.exit(1)
+
+
 if instance_type is not None:
     assert platform is not None
     try:
@@ -74,7 +96,24 @@ try:
         "cache_pricing_data": cache == "1",
         "token": None if token == "-" else token,
     }
-    data = download_aws_ec2_pricing_data(**options) if platform is None else download_aws_pricing_data(platform, **options)
+    # RunPod and Alibaba have their own functions and types, and their own errors.
+    data: AWSPricingData
+    if platform == "runpod":
+        try:
+            data = download_runpod_pricing_data(**options)
+        except AWSPricingDataError as e:
+            expect_error(e, RunpodPricingDataError)
+            raise
+        expect_types(data, RunpodPricingData, RunpodInstance)
+    elif platform == "alibaba":
+        try:
+            data = download_alibaba_pricing_data(**options)
+        except AWSPricingDataError as e:
+            expect_error(e, AlibabaPricingDataError)
+            raise
+        expect_types(data, AlibabaPricingData, AlibabaInstance)
+    else:
+        data = download_aws_ec2_pricing_data(**options) if platform is None else download_aws_pricing_data(platform, **options)
 except AWSPricingDataError as e:
     print(json.dumps({"error": {"status": e.status, "message": str(e)}}))
     sys.exit(3)
