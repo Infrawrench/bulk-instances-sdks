@@ -88,7 +88,7 @@ impl fmt::Debug for Options {
     }
 }
 
-/// Options for [`fetch_aws_instance`].
+/// Options for [`fetch_aws_instance`], [`fetch_runpod_instance`] and [`fetch_alibaba_instance`].
 ///
 /// ```
 /// let options = infrawrench_bulk_instances::AwsInstanceOptions {
@@ -382,6 +382,48 @@ fn write_cache(cache_path: &Path, prefix: &str, name: &str, json: &[u8]) -> std:
 /// This blocks on network I/O. From async code, run it on a blocking thread, e.g. with
 /// `tokio::task::spawn_blocking`.
 pub fn fetch_aws_instance(
+    platform: &str,
+    instance_type: &str,
+    options: &AwsInstanceOptions,
+) -> Result<Option<AwsInstance>, Error> {
+    fetch_instance(platform, instance_type, options)
+}
+
+/// Fetches one RunPod GPU type (`NVIDIA H100 80GB HBM3`) or CPU pod (`cpu3c-2-4`) from the
+/// Infrawrench API, without downloading RunPod's bundle. It takes the same options as
+/// [`fetch_aws_instance`]. Nothing is cached. Returns `None` if RunPod has no instance with that
+/// id.
+///
+/// The result is the same as `download_runpod_pricing_data(..)?.get(id)`, from whichever bundle
+/// the API last synced, which can trail the newest bundle by up to half an hour.
+///
+/// This blocks on network I/O. From async code, run it on a blocking thread, e.g. with
+/// `tokio::task::spawn_blocking`.
+pub fn fetch_runpod_instance(
+    id: &str,
+    options: &AwsInstanceOptions,
+) -> Result<Option<RunpodInstance>, Error> {
+    Ok(fetch_instance("runpod", id, options)?.map(RunpodInstance))
+}
+
+/// Fetches one Alibaba Cloud ECS instance type (`ecs.g6.large`) from the Infrawrench API,
+/// without downloading Alibaba's bundle. It takes the same options as [`fetch_aws_instance`].
+/// Nothing is cached. Returns `None` if Alibaba has no instance type with that name.
+///
+/// The result is the same as `download_alibaba_pricing_data(..)?.get(instance_type)`, from
+/// whichever bundle the API last synced, which can trail the newest bundle by up to half an hour.
+///
+/// This blocks on network I/O. From async code, run it on a blocking thread, e.g. with
+/// `tokio::task::spawn_blocking`.
+pub fn fetch_alibaba_instance(
+    instance_type: &str,
+    options: &AwsInstanceOptions,
+) -> Result<Option<AlibabaInstance>, Error> {
+    Ok(fetch_instance("alibaba", instance_type, options)?.map(AlibabaInstance))
+}
+
+/// GETs one instance of any platform from the Infrawrench API and decodes it.
+fn fetch_instance(
     platform: &str,
     instance_type: &str,
     options: &AwsInstanceOptions,

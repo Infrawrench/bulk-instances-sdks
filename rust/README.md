@@ -136,6 +136,19 @@ key is `cloudType`, `Secure Cloud` or `Community Cloud`. Savings plans are in `p
 `3mo` or `6mo`, `Savings Plan`, `All Upfront`, and `hourly` is the plan's effective hourly rate. Stock levels
 and spot prices are not included. The history starts in November 2026.
 
+`fetch_runpod_instance(id, &options)` fetches one GPU type or CPU pod from the Infrawrench API instead (see
+[One instance](#one-instance)). It returns an owned `RunpodInstance`, or `None` if RunPod has no instance with
+that id:
+
+```rust no_run
+use infrawrench_bulk_instances::{AwsInstanceOptions, fetch_runpod_instance};
+
+fn main() -> Result<(), infrawrench_bulk_instances::Error> {
+    let h100 = fetch_runpod_instance("NVIDIA H100 80GB HBM3", &AwsInstanceOptions::default())?;
+    Ok(())
+}
+```
+
 ## Alibaba Cloud
 
 `download_alibaba_pricing_data(&options)` loads Alibaba Cloud ECS prices. It takes the same `Options` as the
@@ -171,7 +184,18 @@ bought, so `hourly` is 0 and `upfront` is the price. It also has reserved instan
 (`CpuCoreCount`, `MemorySize`, `CpuOptions.ThreadsPerCore`, ...), from May 2023 on. The history starts in
 May 2018.
 
-`fetch_aws_instance` doesn't cover RunPod or Alibaba; download their bundles instead.
+`fetch_alibaba_instance(instance_type, &options)` fetches one instance type from the Infrawrench API instead
+(see [One instance](#one-instance)). It returns an owned `AlibabaInstance`, or `None` if Alibaba has no instance
+type with that name:
+
+```rust no_run
+use infrawrench_bulk_instances::{AwsInstanceOptions, fetch_alibaba_instance};
+
+fn main() -> Result<(), infrawrench_bulk_instances::Error> {
+    let g6 = fetch_alibaba_instance("ecs.g6.large", &AwsInstanceOptions::default())?;
+    Ok(())
+}
+```
 
 ## One instance
 
@@ -194,6 +218,11 @@ fn main() -> Result<(), infrawrench_bulk_instances::Error> {
 is served from (`https://app.infrawrench.com` by default). Nothing is cached. The API syncs each
 new bundle within about half an hour of it being published, so it can briefly trail
 `download_aws_pricing_data`. Like the download, it blocks.
+
+`fetch_runpod_instance(id, &options)` and `fetch_alibaba_instance(instance_type, &options)` do the same for
+RunPod and Alibaba Cloud, with the same `AwsInstanceOptions`, the same `Error` and the same half-hour sync.
+They return an owned `RunpodInstance` or `AlibabaInstance` (or `None`), which deref to `AwsInstance`. RunPod's
+ids have spaces; pass them as they are, they are escaped for you.
 
 ## Caching
 
