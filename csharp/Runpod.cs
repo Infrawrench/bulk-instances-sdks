@@ -10,8 +10,8 @@ namespace Infrawrench.BulkInstances;
 /// </summary>
 public sealed class RunpodPricingData : AwsPricingData
 {
-    internal RunpodPricingData(byte[] utf8Json)
-        : base(utf8Json)
+    internal RunpodPricingData(byte[] utf8Json, bool oneInstance = false)
+        : base(utf8Json, oneInstance)
     {
     }
 
@@ -43,6 +43,9 @@ public sealed class RunpodInstance : AwsInstance
 
 /// <summary>Options for <see cref="BulkInstances.DownloadRunpodPricingDataAsync"/>: the same as for the AWS platforms.</summary>
 public sealed record RunpodPricingDataOptions : AwsPricingDataOptions;
+
+/// <summary>Options for <see cref="BulkInstances.FetchRunpodInstanceAsync"/>: the same as for <see cref="BulkInstances.FetchAwsInstanceAsync"/>.</summary>
+public sealed record RunpodInstanceOptions : AwsInstanceOptions;
 
 /// <summary>
 /// Thrown when RunPod's pricing data cannot be downloaded. <see cref="AwsPricingDataException.Status"/> is the HTTP

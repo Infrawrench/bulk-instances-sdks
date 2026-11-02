@@ -1,7 +1,11 @@
 namespace Infrawrench.BulkInstances;
 
 /// <summary>Options for <see cref="BulkInstances.FetchAwsInstanceAsync"/>.</summary>
-public sealed record AwsInstanceOptions
+/// <remarks>
+/// RunPod's and Alibaba Cloud's methods take the subclasses <see cref="RunpodInstanceOptions"/> and
+/// <see cref="AlibabaInstanceOptions"/>, which have the same options.
+/// </remarks>
+public record AwsInstanceOptions
 {
     /// <summary>Defines your Infrawrench API token. Defaults to the <c>INFRAWRENCH_API_KEY</c> environment variable.</summary>
     public string? Token { get; init; }

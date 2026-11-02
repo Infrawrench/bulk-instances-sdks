@@ -107,13 +107,18 @@ public static class BulkInstances
             .ConfigureAwait(false));
 
     /// <summary><see cref="LoadBundleAsync"/>, failing with the provider's own exception class.</summary>
-    private static async Task<byte[]> LoadBundleAsAsync(
+    private static Task<byte[]> LoadBundleAsAsync(
         string platform, AwsPricingDataOptions? options, Func<AwsPricingDataException, AwsPricingDataException> providerException,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken) =>
+        WithProviderExceptionAsync(() => LoadBundleAsync(platform, options, cancellationToken), providerException);
+
+    /// <summary>Awaits <paramref name="run"/>, turning an <see cref="AwsPricingDataException"/> into the provider's own.</summary>
+    private static async Task<T> WithProviderExceptionAsync<T>(
+        Func<Task<T>> run, Func<AwsPricingDataException, AwsPricingDataException> providerException)
     {
         try
         {
-            return await LoadBundleAsync(platform, options, cancellationToken).ConfigureAwait(false);
+            return await run().ConfigureAwait(false);
         }
         catch (AwsPricingDataException e)
         {
@@ -221,8 +226,62 @@ public static class BulkInstances
     /// The platform is not a lowercase name, the instance type is empty, the token is missing or rejected, or the
     /// instance cannot be fetched.
     /// </exception>
-    public static async Task<AwsInstance?> FetchAwsInstanceAsync(
-        string platform, string instanceType, AwsInstanceOptions? options = null, CancellationToken cancellationToken = default)
+    public static Task<AwsInstance?> FetchAwsInstanceAsync(
+        string platform, string instanceType, AwsInstanceOptions? options = null, CancellationToken cancellationToken = default) =>
+        FetchInstanceAsync<AwsInstance>(platform, instanceType, options, json => new AwsPricingData(json, oneInstance: true), cancellationToken);
+
+    /// <summary>
+    /// Fetches one RunPod GPU type or CPU pod from the Infrawrench API, without downloading RunPod's bundle. Nothing is
+    /// cached.
+    /// </summary>
+    /// <remarks>
+    /// The result is the same as <c>(await DownloadRunpodPricingDataAsync()).Get(id)</c>, from whichever bundle the
+    /// API last synced, which can trail the newest bundle by up to half an hour.
+    /// </remarks>
+    /// <param name="id">e.g. <c>NVIDIA H100 80GB HBM3</c> or <c>cpu3c-2-4</c>.</param>
+    /// <param name="options">Token and server options; all optional.</param>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    /// <returns>The GPU type or CPU pod, or <c>null</c> if RunPod has no instance with that id.</returns>
+    /// <exception cref="RunpodPricingDataException">
+    /// The id is empty, the token is missing or rejected, or the instance cannot be fetched.
+    /// </exception>
+    public static Task<RunpodInstance?> FetchRunpodInstanceAsync(
+        string id, RunpodInstanceOptions? options = null, CancellationToken cancellationToken = default) =>
+        WithProviderExceptionAsync(
+            () => FetchInstanceAsync<RunpodInstance>(
+                "runpod", id, options, json => new RunpodPricingData(json, oneInstance: true), cancellationToken),
+            e => new RunpodPricingDataException(e.Message, e.Status, e.InnerException));
+
+    /// <summary>
+    /// Fetches one Alibaba Cloud ECS instance type from the Infrawrench API, without downloading Alibaba's bundle.
+    /// Nothing is cached.
+    /// </summary>
+    /// <remarks>
+    /// The result is the same as <c>(await DownloadAlibabaPricingDataAsync()).Get(instanceType)</c>, from whichever
+    /// bundle the API last synced, which can trail the newest bundle by up to half an hour.
+    /// </remarks>
+    /// <param name="instanceType">e.g. <c>ecs.g6.large</c>.</param>
+    /// <param name="options">Token and server options; all optional.</param>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    /// <returns>The instance type, or <c>null</c> if Alibaba has no instance type with that name.</returns>
+    /// <exception cref="AlibabaPricingDataException">
+    /// The instance type is empty, the token is missing or rejected, or the instance cannot be fetched.
+    /// </exception>
+    public static Task<AlibabaInstance?> FetchAlibabaInstanceAsync(
+        string instanceType, AlibabaInstanceOptions? options = null, CancellationToken cancellationToken = default) =>
+        WithProviderExceptionAsync(
+            () => FetchInstanceAsync<AlibabaInstance>(
+                "alibaba", instanceType, options, json => new AlibabaPricingData(json, oneInstance: true), cancellationToken),
+            e => new AlibabaPricingDataException(e.Message, e.Status, e.InnerException));
+
+    /// <summary>
+    /// GETs one instance from the Infrawrench API and decodes it with <paramref name="newData"/>, whose <c>Get</c>
+    /// gives a <typeparamref name="TInstance"/>.
+    /// </summary>
+    private static async Task<TInstance?> FetchInstanceAsync<TInstance>(
+        string platform, string instanceType, AwsInstanceOptions? options, Func<byte[], AwsPricingData> newData,
+        CancellationToken cancellationToken)
+        where TInstance : AwsInstance
     {
         ArgumentNullException.ThrowIfNull(platform);
         ArgumentNullException.ThrowIfNull(instanceType);
@@ -252,8 +311,8 @@ public static class BulkInstances
         {
             return null;
         }
-        var data = new AwsPricingData(json, oneInstance: true);
-        return data.Get(data.Keys[0]);
+        var data = newData(json);
+        return (TInstance?)data.Get(data.Keys[0]);
     }
 
     private static byte[] Decompress(byte[] compressed)

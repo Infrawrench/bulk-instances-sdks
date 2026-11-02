@@ -10,8 +10,8 @@ namespace Infrawrench.BulkInstances;
 /// </summary>
 public sealed class AlibabaPricingData : AwsPricingData
 {
-    internal AlibabaPricingData(byte[] utf8Json)
-        : base(utf8Json)
+    internal AlibabaPricingData(byte[] utf8Json, bool oneInstance = false)
+        : base(utf8Json, oneInstance)
     {
     }
 
@@ -43,6 +43,9 @@ public sealed class AlibabaInstance : AwsInstance
 
 /// <summary>Options for <see cref="BulkInstances.DownloadAlibabaPricingDataAsync"/>: the same as for the AWS platforms.</summary>
 public sealed record AlibabaPricingDataOptions : AwsPricingDataOptions;
+
+/// <summary>Options for <see cref="BulkInstances.FetchAlibabaInstanceAsync"/>: the same as for <see cref="BulkInstances.FetchAwsInstanceAsync"/>.</summary>
+public sealed record AlibabaInstanceOptions : AwsInstanceOptions;
 
 /// <summary>
 /// Thrown when Alibaba Cloud's pricing data cannot be downloaded. <see cref="AwsPricingDataException.Status"/> is the HTTP
