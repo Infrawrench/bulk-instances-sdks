@@ -26,7 +26,7 @@ namespace Infrawrench.BulkInstances;
 /// </para>
 /// <para>
 /// <see cref="RunpodPricingData"/>, <see cref="AlibabaPricingData"/>, <see cref="AzurePricingData"/> and
-/// <see cref="GcpPricingData"/> are the same for RunPod's, Alibaba Cloud's, Azure's and Google Cloud's data; their
+/// <see cref="GcpPricingData"/> are the same for RunPod's, Alibaba Cloud's, Azure's, Google Cloud's, Hetzner's, OVHcloud's, Oracle Cloud's and IBM Cloud's data; their
 /// <c>Get</c> returns their own instance class.
 /// </para>
 /// </remarks>

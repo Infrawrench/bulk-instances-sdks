@@ -8,12 +8,12 @@ import java.util.Optional;
  * Options for {@link BulkInstances#downloadAwsEc2PricingData(AWSPricingDataOptions)}. Immutable; build one with
  * {@link #builder()}.
  *
- * <p>RunPod's, Alibaba Cloud's, Azure's and Google Cloud's functions take the subclasses
+ * <p>RunPod's, Alibaba Cloud's, Azure's, Google Cloud's, Hetzner's, OVHcloud's, Oracle Cloud's and IBM Cloud's functions take the subclasses
  * {@link RunpodPricingDataOptions}, {@link AlibabaPricingDataOptions}, {@link AzurePricingDataOptions} and
  * {@link GCPPricingDataOptions}, which have the same options.
  */
 public sealed class AWSPricingDataOptions
-        permits RunpodPricingDataOptions, AlibabaPricingDataOptions, AzurePricingDataOptions, GCPPricingDataOptions {
+        permits RunpodPricingDataOptions, AlibabaPricingDataOptions, AzurePricingDataOptions, GCPPricingDataOptions, HetznerPricingDataOptions, HetznerAuctionPricingDataOptions, OVHPricingDataOptions, OVHEcoPricingDataOptions, OraclePricingDataOptions, IBMPricingDataOptions {
     static final String DEFAULT_BASE_URL = "https://instances-bundles.infrawrench.com";
 
     private final String token;
@@ -86,7 +86,13 @@ public sealed class AWSPricingDataOptions
             permits RunpodPricingDataOptions.Builder,
                     AlibabaPricingDataOptions.Builder,
                     AzurePricingDataOptions.Builder,
-                    GCPPricingDataOptions.Builder {
+                    GCPPricingDataOptions.Builder,
+                    HetznerPricingDataOptions.Builder,
+                    HetznerAuctionPricingDataOptions.Builder,
+                    OVHPricingDataOptions.Builder,
+                    OVHEcoPricingDataOptions.Builder,
+                    OraclePricingDataOptions.Builder,
+                    IBMPricingDataOptions.Builder {
         private String token;
         private boolean cachePricingData = true;
         private Path cachePath;

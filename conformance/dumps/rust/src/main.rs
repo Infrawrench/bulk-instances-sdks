@@ -3,11 +3,15 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use infrawrench_bulk_instances::{
     AlibabaInstance, AlibabaPricingData, AwsInstance, AwsInstanceOptions, AwsPricingData,
-    AzureInstance, AzurePricingData, Error, GcpInstance, GcpPricingData, Options, ReservedTerm,
-    RunpodInstance, RunpodPricingData, Variant, download_alibaba_pricing_data,
-    download_aws_ec2_pricing_data, download_aws_pricing_data, download_azure_pricing_data,
-    download_gcp_pricing_data, download_runpod_pricing_data, fetch_alibaba_instance,
-    fetch_aws_instance, fetch_runpod_instance,
+    AzureInstance, AzurePricingData, Error, GcpInstance, GcpPricingData, HetznerAuctionInstance,
+    HetznerAuctionPricingData, HetznerInstance, HetznerPricingData, IbmInstance, IbmPricingData,
+    Options, OracleInstance, OraclePricingData, OvhEcoInstance, OvhEcoPricingData, OvhInstance,
+    OvhPricingData, ReservedTerm, RunpodInstance, RunpodPricingData, Variant,
+    download_alibaba_pricing_data, download_aws_ec2_pricing_data, download_aws_pricing_data,
+    download_azure_pricing_data, download_gcp_pricing_data, download_hetzner_auction_pricing_data,
+    download_hetzner_pricing_data, download_ibm_pricing_data, download_oracle_pricing_data,
+    download_ovh_eco_pricing_data, download_ovh_pricing_data, download_runpod_pricing_data,
+    fetch_alibaba_instance, fetch_aws_instance, fetch_runpod_instance,
 };
 use serde_json::{Map, Value, json};
 
@@ -164,7 +168,7 @@ fn main() {
         base_url: Some(base_url.clone()),
     };
     let out = match platform.map(String::as_str) {
-        // RunPod, Alibaba, Azure and GCP have their own functions and types; `get` is theirs.
+        // Clouds other than AWS have their own functions and types; `get` is theirs.
         Some("runpod") => {
             let data: RunpodPricingData =
                 download_runpod_pricing_data(&options).unwrap_or_else(|e| error(e));
@@ -184,6 +188,38 @@ fn main() {
             let data: GcpPricingData =
                 download_gcp_pricing_data(&options).unwrap_or_else(|e| error(e));
             dump_data(&data, |k| data.get(k).map(|i: &GcpInstance| &**i))
+        }
+        Some("hetzner") => {
+            let data: HetznerPricingData =
+                download_hetzner_pricing_data(&options).unwrap_or_else(|e| error(e));
+            dump_data(&data, |k| data.get(k).map(|i: &HetznerInstance| &**i))
+        }
+        Some("hetznerauction") => {
+            let data: HetznerAuctionPricingData =
+                download_hetzner_auction_pricing_data(&options).unwrap_or_else(|e| error(e));
+            dump_data(&data, |k| {
+                data.get(k).map(|i: &HetznerAuctionInstance| &**i)
+            })
+        }
+        Some("ovh") => {
+            let data: OvhPricingData =
+                download_ovh_pricing_data(&options).unwrap_or_else(|e| error(e));
+            dump_data(&data, |k| data.get(k).map(|i: &OvhInstance| &**i))
+        }
+        Some("ovheco") => {
+            let data: OvhEcoPricingData =
+                download_ovh_eco_pricing_data(&options).unwrap_or_else(|e| error(e));
+            dump_data(&data, |k| data.get(k).map(|i: &OvhEcoInstance| &**i))
+        }
+        Some("oracle") => {
+            let data: OraclePricingData =
+                download_oracle_pricing_data(&options).unwrap_or_else(|e| error(e));
+            dump_data(&data, |k| data.get(k).map(|i: &OracleInstance| &**i))
+        }
+        Some("ibm") => {
+            let data: IbmPricingData =
+                download_ibm_pricing_data(&options).unwrap_or_else(|e| error(e));
+            dump_data(&data, |k| data.get(k).map(|i: &IbmInstance| &**i))
         }
         None => {
             let data = download_aws_ec2_pricing_data(&options).unwrap_or_else(|e| error(e));

@@ -20,6 +20,30 @@ import com.infrawrench.bulkinstances.GCPInstance;
 import com.infrawrench.bulkinstances.GCPPricingData;
 import com.infrawrench.bulkinstances.GCPPricingDataException;
 import com.infrawrench.bulkinstances.GCPPricingDataOptions;
+import com.infrawrench.bulkinstances.HetznerInstance;
+import com.infrawrench.bulkinstances.HetznerPricingData;
+import com.infrawrench.bulkinstances.HetznerPricingDataException;
+import com.infrawrench.bulkinstances.HetznerPricingDataOptions;
+import com.infrawrench.bulkinstances.HetznerAuctionInstance;
+import com.infrawrench.bulkinstances.HetznerAuctionPricingData;
+import com.infrawrench.bulkinstances.HetznerAuctionPricingDataException;
+import com.infrawrench.bulkinstances.HetznerAuctionPricingDataOptions;
+import com.infrawrench.bulkinstances.OVHInstance;
+import com.infrawrench.bulkinstances.OVHPricingData;
+import com.infrawrench.bulkinstances.OVHPricingDataException;
+import com.infrawrench.bulkinstances.OVHPricingDataOptions;
+import com.infrawrench.bulkinstances.OVHEcoInstance;
+import com.infrawrench.bulkinstances.OVHEcoPricingData;
+import com.infrawrench.bulkinstances.OVHEcoPricingDataException;
+import com.infrawrench.bulkinstances.OVHEcoPricingDataOptions;
+import com.infrawrench.bulkinstances.OracleInstance;
+import com.infrawrench.bulkinstances.OraclePricingData;
+import com.infrawrench.bulkinstances.OraclePricingDataException;
+import com.infrawrench.bulkinstances.OraclePricingDataOptions;
+import com.infrawrench.bulkinstances.IBMInstance;
+import com.infrawrench.bulkinstances.IBMPricingData;
+import com.infrawrench.bulkinstances.IBMPricingDataException;
+import com.infrawrench.bulkinstances.IBMPricingDataOptions;
 import com.infrawrench.bulkinstances.Location;
 import com.infrawrench.bulkinstances.OnDemandPrice;
 import com.infrawrench.bulkinstances.OnDemandPriceChange;
@@ -103,7 +127,7 @@ public final class Dump {
 
         PricingData<?> data;
         try {
-            // RunPod, Alibaba, Azure and GCP have their own functions and types, and their own exceptions.
+            // Clouds other than AWS have their own functions and types, and their own exceptions.
             if ("runpod".equals(platform)) {
                 RunpodPricingData d;
                 try {
@@ -147,6 +171,72 @@ public final class Dump {
                 }
                 GCPInstance first = d.keys().isEmpty() ? null : d.get(d.keys().get(0)).orElseThrow();
                 expectTypes(d, first, GCPPricingData.class, GCPInstance.class);
+                data = d;
+            } else if ("hetzner".equals(platform)) {
+                HetznerPricingData d;
+                try {
+                    d = BulkInstances.downloadHetznerPricingData(
+                            options(HetznerPricingDataOptions.builder(), baseUrl, cachePath, token, cache).build());
+                } catch (AWSPricingDataException e) {
+                    throw providerException(e, HetznerPricingDataException.class);
+                }
+                HetznerInstance first = d.keys().isEmpty() ? null : d.get(d.keys().get(0)).orElseThrow();
+                expectTypes(d, first, HetznerPricingData.class, HetznerInstance.class);
+                data = d;
+            } else if ("hetznerauction".equals(platform)) {
+                HetznerAuctionPricingData d;
+                try {
+                    d = BulkInstances.downloadHetznerAuctionPricingData(
+                            options(HetznerAuctionPricingDataOptions.builder(), baseUrl, cachePath, token, cache).build());
+                } catch (AWSPricingDataException e) {
+                    throw providerException(e, HetznerAuctionPricingDataException.class);
+                }
+                HetznerAuctionInstance first = d.keys().isEmpty() ? null : d.get(d.keys().get(0)).orElseThrow();
+                expectTypes(d, first, HetznerAuctionPricingData.class, HetznerAuctionInstance.class);
+                data = d;
+            } else if ("ovh".equals(platform)) {
+                OVHPricingData d;
+                try {
+                    d = BulkInstances.downloadOvhPricingData(
+                            options(OVHPricingDataOptions.builder(), baseUrl, cachePath, token, cache).build());
+                } catch (AWSPricingDataException e) {
+                    throw providerException(e, OVHPricingDataException.class);
+                }
+                OVHInstance first = d.keys().isEmpty() ? null : d.get(d.keys().get(0)).orElseThrow();
+                expectTypes(d, first, OVHPricingData.class, OVHInstance.class);
+                data = d;
+            } else if ("ovheco".equals(platform)) {
+                OVHEcoPricingData d;
+                try {
+                    d = BulkInstances.downloadOvhEcoPricingData(
+                            options(OVHEcoPricingDataOptions.builder(), baseUrl, cachePath, token, cache).build());
+                } catch (AWSPricingDataException e) {
+                    throw providerException(e, OVHEcoPricingDataException.class);
+                }
+                OVHEcoInstance first = d.keys().isEmpty() ? null : d.get(d.keys().get(0)).orElseThrow();
+                expectTypes(d, first, OVHEcoPricingData.class, OVHEcoInstance.class);
+                data = d;
+            } else if ("oracle".equals(platform)) {
+                OraclePricingData d;
+                try {
+                    d = BulkInstances.downloadOraclePricingData(
+                            options(OraclePricingDataOptions.builder(), baseUrl, cachePath, token, cache).build());
+                } catch (AWSPricingDataException e) {
+                    throw providerException(e, OraclePricingDataException.class);
+                }
+                OracleInstance first = d.keys().isEmpty() ? null : d.get(d.keys().get(0)).orElseThrow();
+                expectTypes(d, first, OraclePricingData.class, OracleInstance.class);
+                data = d;
+            } else if ("ibm".equals(platform)) {
+                IBMPricingData d;
+                try {
+                    d = BulkInstances.downloadIbmPricingData(
+                            options(IBMPricingDataOptions.builder(), baseUrl, cachePath, token, cache).build());
+                } catch (AWSPricingDataException e) {
+                    throw providerException(e, IBMPricingDataException.class);
+                }
+                IBMInstance first = d.keys().isEmpty() ? null : d.get(d.keys().get(0)).orElseThrow();
+                expectTypes(d, first, IBMPricingData.class, IBMInstance.class);
                 data = d;
             } else {
                 AWSPricingDataOptions o = options(AWSPricingDataOptions.builder(), baseUrl, cachePath, token, cache).build();

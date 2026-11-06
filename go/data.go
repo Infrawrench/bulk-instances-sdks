@@ -828,3 +828,141 @@ func (d *GCPPricingData) Get(machineType string) (*GCPInstance, bool) {
 type GCPInstance struct {
 	*AWSInstance
 }
+
+// HetznerPricingData is Hetzner's cloud server pricing data, keyed by server type
+// ("cx23"). It decodes the same way as [AWSPricingData], whose methods it
+// has; see the README for what Hetzner's data holds.
+type HetznerPricingData struct {
+	*AWSPricingData
+}
+
+// Get returns the server type with this name, or false if the bundle has never
+// listed it.
+func (d *HetznerPricingData) Get(serverType string) (*HetznerInstance, bool) {
+	inst, ok := d.AWSPricingData.Get(serverType)
+	if !ok {
+		return nil, false
+	}
+	return &HetznerInstance{inst}, true
+}
+
+// HetznerInstance is one Hetzner cloud server type. It has the methods of
+// [AWSInstance].
+type HetznerInstance struct {
+	*AWSInstance
+}
+
+// HetznerAuctionPricingData is Hetzner's Server Auction pricing data, keyed by listing
+// ("3107671"). It decodes the same way as [AWSPricingData], whose methods it
+// has; see the README for what Hetzner's data holds.
+type HetznerAuctionPricingData struct {
+	*AWSPricingData
+}
+
+// Get returns the listing with this name, or false if the bundle has never
+// listed it.
+func (d *HetznerAuctionPricingData) Get(listingId string) (*HetznerAuctionInstance, bool) {
+	inst, ok := d.AWSPricingData.Get(listingId)
+	if !ok {
+		return nil, false
+	}
+	return &HetznerAuctionInstance{inst}, true
+}
+
+// HetznerAuctionInstance is one Hetzner Server Auction listing. It has the methods of
+// [AWSInstance].
+type HetznerAuctionInstance struct {
+	*AWSInstance
+}
+
+// OVHPricingData is OVHcloud's Public Cloud pricing data, keyed by flavor
+// ("b3-8"). It decodes the same way as [AWSPricingData], whose methods it
+// has; see the README for what OVHcloud's data holds.
+type OVHPricingData struct {
+	*AWSPricingData
+}
+
+// Get returns the flavor with this name, or false if the bundle has never
+// listed it.
+func (d *OVHPricingData) Get(flavor string) (*OVHInstance, bool) {
+	inst, ok := d.AWSPricingData.Get(flavor)
+	if !ok {
+		return nil, false
+	}
+	return &OVHInstance{inst}, true
+}
+
+// OVHInstance is one OVHcloud Public Cloud flavor. It has the methods of
+// [AWSInstance].
+type OVHInstance struct {
+	*AWSInstance
+}
+
+// OVHEcoPricingData is OVHcloud's eco dedicated server pricing data, keyed by server
+// ("24sys01"). It decodes the same way as [AWSPricingData], whose methods it
+// has; see the README for what OVHcloud's data holds.
+type OVHEcoPricingData struct {
+	*AWSPricingData
+}
+
+// Get returns the server with this name, or false if the bundle has never
+// listed it.
+func (d *OVHEcoPricingData) Get(server string) (*OVHEcoInstance, bool) {
+	inst, ok := d.AWSPricingData.Get(server)
+	if !ok {
+		return nil, false
+	}
+	return &OVHEcoInstance{inst}, true
+}
+
+// OVHEcoInstance is one OVHcloud eco dedicated server. It has the methods of
+// [AWSInstance].
+type OVHEcoInstance struct {
+	*AWSInstance
+}
+
+// OraclePricingData is Oracle Cloud's compute pricing data, keyed by shape
+// ("VM.Standard.E5.Flex-2-16"). It decodes the same way as [AWSPricingData], whose methods it
+// has; see the README for what Oracle Cloud's data holds.
+type OraclePricingData struct {
+	*AWSPricingData
+}
+
+// Get returns the shape with this name, or false if the bundle has never
+// listed it.
+func (d *OraclePricingData) Get(shape string) (*OracleInstance, bool) {
+	inst, ok := d.AWSPricingData.Get(shape)
+	if !ok {
+		return nil, false
+	}
+	return &OracleInstance{inst}, true
+}
+
+// OracleInstance is one Oracle Cloud compute shape. It has the methods of
+// [AWSInstance].
+type OracleInstance struct {
+	*AWSInstance
+}
+
+// IBMPricingData is IBM Cloud's Virtual Server for VPC pricing data, keyed by profile
+// ("bx3d-2x10"). It decodes the same way as [AWSPricingData], whose methods it
+// has; see the README for what IBM Cloud's data holds.
+type IBMPricingData struct {
+	*AWSPricingData
+}
+
+// Get returns the profile with this name, or false if the bundle has never
+// listed it.
+func (d *IBMPricingData) Get(profile string) (*IBMInstance, bool) {
+	inst, ok := d.AWSPricingData.Get(profile)
+	if !ok {
+		return nil, false
+	}
+	return &IBMInstance{inst}, true
+}
+
+// IBMInstance is one IBM Cloud Virtual Server for VPC profile. It has the methods of
+// [AWSInstance].
+type IBMInstance struct {
+	*AWSInstance
+}

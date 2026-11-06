@@ -1,0 +1,279 @@
+{
+ "offer": "OracleCompute",
+ "variantKeys": [
+  "operatingSystem"
+ ],
+ "snapshots": [
+  1700000000,
+  1710000000
+ ],
+ "regions": {
+  "global": {
+   "locationType": "Global",
+   "regionCode": "global"
+  }
+ },
+ "keys": [
+  "BM.GPU.H100.8",
+  "VM.Standard.E5.Flex-2-16"
+ ],
+ "has": {
+  "m5.large": false,
+  "nope": false
+ },
+ "getMissing": null,
+ "instances": {
+  "VM.Standard.E5.Flex-2-16": {
+   "name": "VM.Standard.E5.Flex-2-16",
+   "createdAt": 1700000000,
+   "deletedAt": null,
+   "attributes": {
+    "flexible": "true",
+    "memoryGbPrice": "0.002",
+    "memoryInGb": "16",
+    "ocpuPrice": "0.03",
+    "ocpus": "2",
+    "shape": "VM.Standard.E5.Flex"
+   },
+   "attributesIn": {
+    "global": {
+     "flexible": "true",
+     "memoryGbPrice": "0.002",
+     "memoryInGb": "16",
+     "ocpuPrice": "0.03",
+     "ocpus": "2",
+     "shape": "VM.Standard.E5.Flex"
+    },
+    "Mystery": {
+     "flexible": "true",
+     "memoryGbPrice": "0.002",
+     "memoryInGb": "16",
+     "ocpuPrice": "0.03",
+     "ocpus": "2",
+     "shape": "VM.Standard.E5.Flex"
+    },
+    "Nowhere": {
+     "flexible": "true",
+     "memoryGbPrice": "0.002",
+     "memoryInGb": "16",
+     "ocpuPrice": "0.03",
+     "ocpus": "2",
+     "shape": "VM.Standard.E5.Flex"
+    }
+   },
+   "attributesHistory": [
+    {
+     "at": 1700000000,
+     "key": "flexible",
+     "value": "true",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "memoryGbPrice",
+     "value": "0.002",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "memoryInGb",
+     "value": "16",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "ocpuPrice",
+     "value": "0.03",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "ocpus",
+     "value": "2",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "shape",
+     "value": "VM.Standard.E5.Flex",
+     "region": null
+    }
+   ],
+   "pricing": {
+    "onDemand": [
+     {
+      "region": "global",
+      "regionCode": "global",
+      "variant": {
+       "operatingSystem": "Linux"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.092,
+      "since": 1700000000
+     },
+     {
+      "region": "global",
+      "regionCode": "global",
+      "variant": {
+       "operatingSystem": "Windows"
+      },
+      "operatingSystem": "Windows",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.276,
+      "since": 1700000000
+     }
+    ],
+    "reserved": []
+   },
+   "pricingHistory": {
+    "onDemand": [
+     {
+      "at": 1700000000,
+      "region": "global",
+      "regionCode": "global",
+      "variant": {
+       "operatingSystem": "Linux"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.092
+     },
+     {
+      "at": 1700000000,
+      "region": "global",
+      "regionCode": "global",
+      "variant": {
+       "operatingSystem": "Windows"
+      },
+      "operatingSystem": "Windows",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.276
+     }
+    ],
+    "reserved": []
+   }
+  },
+  "BM.GPU.H100.8": {
+   "name": "BM.GPU.H100.8",
+   "createdAt": 1700000000,
+   "deletedAt": null,
+   "attributes": {
+    "gpuCount": "8",
+    "memoryInGb": "2048",
+    "ocpus": "112",
+    "shape": "BM.GPU.H100.8"
+   },
+   "attributesIn": {
+    "global": {
+     "gpuCount": "8",
+     "memoryInGb": "2048",
+     "ocpus": "112",
+     "shape": "BM.GPU.H100.8"
+    },
+    "Mystery": {
+     "gpuCount": "8",
+     "memoryInGb": "2048",
+     "ocpus": "112",
+     "shape": "BM.GPU.H100.8"
+    },
+    "Nowhere": {
+     "gpuCount": "8",
+     "memoryInGb": "2048",
+     "ocpus": "112",
+     "shape": "BM.GPU.H100.8"
+    }
+   },
+   "attributesHistory": [
+    {
+     "at": 1700000000,
+     "key": "gpuCount",
+     "value": "8",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "memoryInGb",
+     "value": "2048",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "ocpus",
+     "value": "112",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "shape",
+     "value": "BM.GPU.H100.8",
+     "region": null
+    }
+   ],
+   "pricing": {
+    "onDemand": [
+     {
+      "region": "global",
+      "regionCode": "global",
+      "variant": {
+       "operatingSystem": "Linux"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 72,
+      "since": 1710000000
+     }
+    ],
+    "reserved": []
+   },
+   "pricingHistory": {
+    "onDemand": [
+     {
+      "at": 1700000000,
+      "region": "global",
+      "regionCode": "global",
+      "variant": {
+       "operatingSystem": "Linux"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 80
+     },
+     {
+      "at": 1710000000,
+      "region": "global",
+      "regionCode": "global",
+      "variant": {
+       "operatingSystem": "Linux"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 72
+     }
+    ],
+    "reserved": []
+   }
+  }
+ }
+}

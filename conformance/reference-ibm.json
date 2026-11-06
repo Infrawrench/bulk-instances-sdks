@@ -1,0 +1,316 @@
+{
+ "offer": "IBMVPC",
+ "variantKeys": [
+  "capacityType"
+ ],
+ "snapshots": [
+  1700000000,
+  1710000000
+ ],
+ "regions": {
+  "au-syd": {
+   "locationType": "IBM Cloud Region",
+   "name": "Sydney",
+   "regionCode": "au-syd"
+  },
+  "us-south": {
+   "locationType": "IBM Cloud Region",
+   "name": "Dallas",
+   "regionCode": "us-south"
+  }
+ },
+ "keys": [
+  "bxf-16x64"
+ ],
+ "has": {
+  "m5.large": false,
+  "nope": false
+ },
+ "getMissing": null,
+ "instances": {
+  "bxf-16x64": {
+   "name": "bxf-16x64",
+   "createdAt": 1700000000,
+   "deletedAt": null,
+   "attributes": {
+    "cpu": "16",
+    "displayName": "Balanced Flex 16x64",
+    "family": "balanced",
+    "productFamily": "Virtual Server for VPC",
+    "ram": "64"
+   },
+   "attributesIn": {
+    "au-syd": {
+     "cpu": "16",
+     "displayName": "Balanced Flex 16x64",
+     "family": "balanced",
+     "productFamily": "Virtual Server for VPC",
+     "ram": "64"
+    },
+    "us-south": {
+     "cpu": "16",
+     "displayName": "Balanced Flex 16x64",
+     "family": "balanced",
+     "productFamily": "Virtual Server for VPC",
+     "ram": "64"
+    },
+    "Mystery": {
+     "cpu": "16",
+     "displayName": "Balanced Flex 16x64",
+     "family": "balanced",
+     "productFamily": "Virtual Server for VPC",
+     "ram": "64"
+    },
+    "Nowhere": {
+     "cpu": "16",
+     "displayName": "Balanced Flex 16x64",
+     "family": "balanced",
+     "productFamily": "Virtual Server for VPC",
+     "ram": "64"
+    }
+   },
+   "attributesHistory": [
+    {
+     "at": 1700000000,
+     "key": "cpu",
+     "value": "16",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "displayName",
+     "value": "Balanced Flex 16x64",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "family",
+     "value": "balanced",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "productFamily",
+     "value": "Virtual Server for VPC",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "ram",
+     "value": "64",
+     "region": null
+    }
+   ],
+   "pricing": {
+    "onDemand": [
+     {
+      "region": "us-south",
+      "regionCode": "us-south",
+      "variant": {
+       "capacityType": "On-Demand"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.95,
+      "since": 1710000000
+     },
+     {
+      "region": "us-south",
+      "regionCode": "us-south",
+      "variant": {
+       "capacityType": "Spot"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.235054,
+      "since": 1700000000
+     },
+     {
+      "region": "us-south",
+      "regionCode": "us-south",
+      "variant": {
+       "capacityType": "Burstable 50%"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.63974,
+      "since": 1700000000
+     },
+     {
+      "region": "au-syd",
+      "regionCode": "au-syd",
+      "variant": {
+       "capacityType": "On-Demand"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 1.148,
+      "since": 1700000000
+     }
+    ],
+    "reserved": [
+     {
+      "region": "us-south",
+      "regionCode": "us-south",
+      "variant": {
+       "capacityType": "On-Demand"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1yr",
+      "offeringClass": "Reserved",
+      "purchaseOption": "No Upfront",
+      "hourly": 0.611,
+      "upfront": 0,
+      "since": 1700000000
+     },
+     {
+      "region": "us-south",
+      "regionCode": "us-south",
+      "variant": {
+       "capacityType": "On-Demand"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "3yr",
+      "offeringClass": "Reserved",
+      "purchaseOption": "No Upfront",
+      "hourly": 0.376,
+      "upfront": 0,
+      "since": 1700000000
+     }
+    ]
+   },
+   "pricingHistory": {
+    "onDemand": [
+     {
+      "at": 1700000000,
+      "region": "us-south",
+      "regionCode": "us-south",
+      "variant": {
+       "capacityType": "On-Demand"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.941
+     },
+     {
+      "at": 1700000000,
+      "region": "us-south",
+      "regionCode": "us-south",
+      "variant": {
+       "capacityType": "Spot"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.235054
+     },
+     {
+      "at": 1700000000,
+      "region": "us-south",
+      "regionCode": "us-south",
+      "variant": {
+       "capacityType": "Burstable 50%"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.63974
+     },
+     {
+      "at": 1700000000,
+      "region": "au-syd",
+      "regionCode": "au-syd",
+      "variant": {
+       "capacityType": "On-Demand"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 1.148
+     },
+     {
+      "at": 1710000000,
+      "region": "us-south",
+      "regionCode": "us-south",
+      "variant": {
+       "capacityType": "On-Demand"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.95
+     }
+    ],
+    "reserved": [
+     {
+      "at": 1700000000,
+      "region": "us-south",
+      "regionCode": "us-south",
+      "variant": {
+       "capacityType": "On-Demand"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1yr",
+      "offeringClass": "Reserved",
+      "purchaseOption": "No Upfront",
+      "hourly": 0.611,
+      "upfront": 0
+     },
+     {
+      "at": 1700000000,
+      "region": "us-south",
+      "regionCode": "us-south",
+      "variant": {
+       "capacityType": "On-Demand"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "3yr",
+      "offeringClass": "Reserved",
+      "purchaseOption": "No Upfront",
+      "hourly": 0.376,
+      "upfront": 0
+     }
+    ]
+   }
+  }
+ }
+}

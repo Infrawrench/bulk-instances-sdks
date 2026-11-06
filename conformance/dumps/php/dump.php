@@ -17,6 +17,24 @@ use Infrawrench\BulkInstances\BulkInstances;
 use Infrawrench\BulkInstances\GCPInstance;
 use Infrawrench\BulkInstances\GCPPricingData;
 use Infrawrench\BulkInstances\GCPPricingDataException;
+use Infrawrench\BulkInstances\HetznerInstance;
+use Infrawrench\BulkInstances\HetznerPricingData;
+use Infrawrench\BulkInstances\HetznerPricingDataException;
+use Infrawrench\BulkInstances\HetznerAuctionInstance;
+use Infrawrench\BulkInstances\HetznerAuctionPricingData;
+use Infrawrench\BulkInstances\HetznerAuctionPricingDataException;
+use Infrawrench\BulkInstances\OVHInstance;
+use Infrawrench\BulkInstances\OVHPricingData;
+use Infrawrench\BulkInstances\OVHPricingDataException;
+use Infrawrench\BulkInstances\OVHEcoInstance;
+use Infrawrench\BulkInstances\OVHEcoPricingData;
+use Infrawrench\BulkInstances\OVHEcoPricingDataException;
+use Infrawrench\BulkInstances\OracleInstance;
+use Infrawrench\BulkInstances\OraclePricingData;
+use Infrawrench\BulkInstances\OraclePricingDataException;
+use Infrawrench\BulkInstances\IBMInstance;
+use Infrawrench\BulkInstances\IBMPricingData;
+use Infrawrench\BulkInstances\IBMPricingDataException;
 use Infrawrench\BulkInstances\RunpodInstance;
 use Infrawrench\BulkInstances\RunpodPricingData;
 use Infrawrench\BulkInstances\RunpodPricingDataException;
@@ -71,7 +89,7 @@ $dumpInstance = static function (AWSInstance $i, array $regionNames) use ($ts, $
     return $out;
 };
 
-// RunPod, Alibaba, Azure and GCP have their own methods and types, and their own exceptions.
+// Clouds other than AWS have their own methods and types, and their own exceptions.
 /** @param class-string<AWSPricingDataException> $exception */
 $providerError = static function (AWSPricingDataException $e, string $exception) use ($error): never {
     if (!$e instanceof $exception) {
@@ -166,6 +184,48 @@ try {
             $providerError($e, GCPPricingDataException::class);
         }
         $expectTypes($data, GCPPricingData::class, GCPInstance::class);
+    } elseif ($platform === 'hetzner') {
+        try {
+            $data = BulkInstances::downloadHetznerPricingData(...$options);
+        } catch (AWSPricingDataException $e) {
+            $providerError($e, HetznerPricingDataException::class);
+        }
+        $expectTypes($data, HetznerPricingData::class, HetznerInstance::class);
+    } elseif ($platform === 'hetznerauction') {
+        try {
+            $data = BulkInstances::downloadHetznerAuctionPricingData(...$options);
+        } catch (AWSPricingDataException $e) {
+            $providerError($e, HetznerAuctionPricingDataException::class);
+        }
+        $expectTypes($data, HetznerAuctionPricingData::class, HetznerAuctionInstance::class);
+    } elseif ($platform === 'ovh') {
+        try {
+            $data = BulkInstances::downloadOvhPricingData(...$options);
+        } catch (AWSPricingDataException $e) {
+            $providerError($e, OVHPricingDataException::class);
+        }
+        $expectTypes($data, OVHPricingData::class, OVHInstance::class);
+    } elseif ($platform === 'ovheco') {
+        try {
+            $data = BulkInstances::downloadOvhEcoPricingData(...$options);
+        } catch (AWSPricingDataException $e) {
+            $providerError($e, OVHEcoPricingDataException::class);
+        }
+        $expectTypes($data, OVHEcoPricingData::class, OVHEcoInstance::class);
+    } elseif ($platform === 'oracle') {
+        try {
+            $data = BulkInstances::downloadOraclePricingData(...$options);
+        } catch (AWSPricingDataException $e) {
+            $providerError($e, OraclePricingDataException::class);
+        }
+        $expectTypes($data, OraclePricingData::class, OracleInstance::class);
+    } elseif ($platform === 'ibm') {
+        try {
+            $data = BulkInstances::downloadIbmPricingData(...$options);
+        } catch (AWSPricingDataException $e) {
+            $providerError($e, IBMPricingDataException::class);
+        }
+        $expectTypes($data, IBMPricingData::class, IBMInstance::class);
     } else {
         $data = $platform === null
             ? BulkInstances::downloadAwsEc2PricingData(...$options)

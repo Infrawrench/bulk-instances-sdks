@@ -241,6 +241,66 @@ func DownloadGCPPricingData(ctx context.Context, opts Options) (*GCPPricingData,
 	return &GCPPricingData{data}, nil
 }
 
+// DownloadHetznerPricingData downloads Hetzner's cloud server pricing data:
+// hourly prices and monthly caps per location, for each server type. Caching, the offline fallback and errors work as for [DownloadAWSPricingData].
+func DownloadHetznerPricingData(ctx context.Context, opts Options) (*HetznerPricingData, error) {
+	data, err := loadBundle(ctx, "hetzner", opts)
+	if err != nil {
+		return nil, err
+	}
+	return &HetznerPricingData{data}, nil
+}
+
+// DownloadHetznerAuctionPricingData downloads Hetzner's Server Auction pricing data:
+// the hourly price and monthly cap of each server for sale, by listing id. Caching, the offline fallback and errors work as for [DownloadAWSPricingData].
+func DownloadHetznerAuctionPricingData(ctx context.Context, opts Options) (*HetznerAuctionPricingData, error) {
+	data, err := loadBundle(ctx, "hetznerauction", opts)
+	if err != nil {
+		return nil, err
+	}
+	return &HetznerAuctionPricingData{data}, nil
+}
+
+// DownloadOVHPricingData downloads OVHcloud's Public Cloud pricing data:
+// hourly and monthly prices per pricing zone, for each instance flavor. Caching, the offline fallback and errors work as for [DownloadAWSPricingData].
+func DownloadOVHPricingData(ctx context.Context, opts Options) (*OVHPricingData, error) {
+	data, err := loadBundle(ctx, "ovh", opts)
+	if err != nil {
+		return nil, err
+	}
+	return &OVHPricingData{data}, nil
+}
+
+// DownloadOVHEcoPricingData downloads OVHcloud's eco dedicated server pricing data:
+// monthly rent and prepaid prices per data center and configuration, for Kimsufi, So you Start, Rise and Advance servers. Caching, the offline fallback and errors work as for [DownloadAWSPricingData].
+func DownloadOVHEcoPricingData(ctx context.Context, opts Options) (*OVHEcoPricingData, error) {
+	data, err := loadBundle(ctx, "ovheco", opts)
+	if err != nil {
+		return nil, err
+	}
+	return &OVHEcoPricingData{data}, nil
+}
+
+// DownloadOraclePricingData downloads Oracle Cloud's compute pricing data:
+// hourly prices for each VM and bare metal shape, the same in every commercial region. Caching, the offline fallback and errors work as for [DownloadAWSPricingData].
+func DownloadOraclePricingData(ctx context.Context, opts Options) (*OraclePricingData, error) {
+	data, err := loadBundle(ctx, "oracle", opts)
+	if err != nil {
+		return nil, err
+	}
+	return &OraclePricingData{data}, nil
+}
+
+// DownloadIBMPricingData downloads IBM Cloud's Virtual Server for VPC pricing data:
+// on-demand, Spot, burstable and reserved prices per region, for each profile. Caching, the offline fallback and errors work as for [DownloadAWSPricingData].
+func DownloadIBMPricingData(ctx context.Context, opts Options) (*IBMPricingData, error) {
+	data, err := loadBundle(ctx, "ibm", opts)
+	if err != nil {
+		return nil, err
+	}
+	return &IBMPricingData{data}, nil
+}
+
 // loadBundle downloads (or reads from the cache) one platform's bundle.
 func loadBundle(ctx context.Context, platform string, opts Options) (*AWSPricingData, error) {
 	if !platformName.MatchString(platform) {

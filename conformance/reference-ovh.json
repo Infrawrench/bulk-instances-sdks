@@ -1,0 +1,316 @@
+{
+ "offer": "OVHPublicCloud",
+ "variantKeys": [
+  "operatingSystem"
+ ],
+ "snapshots": [
+  1700000000,
+  1710000000
+ ],
+ "regions": {
+  "lz-af": {
+   "locationType": "OVHcloud Pricing Zone",
+   "name": "Local Zones in Africa",
+   "regionCode": "lz-af"
+  },
+  "us": {
+   "locationType": "OVHcloud Pricing Zone",
+   "name": "OVHcloud US regions",
+   "regionCode": "us"
+  },
+  "world": {
+   "locationType": "OVHcloud Pricing Zone",
+   "name": "Standard regions",
+   "regionCode": "world"
+  }
+ },
+ "keys": [
+  "b2-7"
+ ],
+ "has": {
+  "m5.large": false,
+  "nope": false
+ },
+ "getMissing": null,
+ "instances": {
+  "b2-7": {
+   "name": "b2-7",
+   "createdAt": 1700000000,
+   "deletedAt": null,
+   "attributes": {
+    "brick": "guaranteed-resources",
+    "cpu.cores": "2",
+    "memory.size": "7",
+    "productFamily": "Public Cloud Instance"
+   },
+   "attributesIn": {
+    "lz-af": {
+     "brick": "guaranteed-resources",
+     "cpu.cores": "2",
+     "memory.size": "7",
+     "productFamily": "Public Cloud Instance"
+    },
+    "us": {
+     "brick": "guaranteed-resources",
+     "cpu.cores": "2",
+     "memory.size": "7",
+     "productFamily": "Public Cloud Instance"
+    },
+    "world": {
+     "brick": "guaranteed-resources",
+     "cpu.cores": "2",
+     "memory.size": "7",
+     "productFamily": "Public Cloud Instance"
+    },
+    "Mystery": {
+     "brick": "guaranteed-resources",
+     "cpu.cores": "2",
+     "memory.size": "7",
+     "productFamily": "Public Cloud Instance"
+    },
+    "Nowhere": {
+     "brick": "guaranteed-resources",
+     "cpu.cores": "2",
+     "memory.size": "7",
+     "productFamily": "Public Cloud Instance"
+    }
+   },
+   "attributesHistory": [
+    {
+     "at": 1700000000,
+     "key": "brick",
+     "value": "guaranteed-resources",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "cpu.cores",
+     "value": "2",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "memory.size",
+     "value": "7",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "productFamily",
+     "value": "Public Cloud Instance",
+     "region": null
+    }
+   ],
+   "pricing": {
+    "onDemand": [
+     {
+      "region": "world",
+      "regionCode": "world",
+      "variant": {
+       "operatingSystem": "Linux"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.0837,
+      "since": 1700000000
+     },
+     {
+      "region": "world",
+      "regionCode": "world",
+      "variant": {
+       "operatingSystem": "Windows"
+      },
+      "operatingSystem": "Windows",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.2251,
+      "since": 1700000000
+     },
+     {
+      "region": "lz-af",
+      "regionCode": "lz-af",
+      "variant": {
+       "operatingSystem": "Linux"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.11,
+      "since": 1710000000
+     },
+     {
+      "region": "us",
+      "regionCode": "us",
+      "variant": {
+       "operatingSystem": "Linux"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.0879,
+      "since": 1700000000
+     }
+    ],
+    "reserved": [
+     {
+      "region": "world",
+      "regionCode": "world",
+      "variant": {
+       "operatingSystem": "Linux"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1mo",
+      "offeringClass": "Monthly",
+      "purchaseOption": "Postpaid",
+      "hourly": 0,
+      "upfront": 50.5,
+      "since": 1700000000
+     },
+     {
+      "region": "us",
+      "regionCode": "us",
+      "variant": {
+       "operatingSystem": "Linux"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1mo",
+      "offeringClass": "Monthly",
+      "purchaseOption": "All Upfront",
+      "hourly": 0,
+      "upfront": 52,
+      "since": 1700000000
+     }
+    ]
+   },
+   "pricingHistory": {
+    "onDemand": [
+     {
+      "at": 1700000000,
+      "region": "world",
+      "regionCode": "world",
+      "variant": {
+       "operatingSystem": "Linux"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.0837
+     },
+     {
+      "at": 1700000000,
+      "region": "world",
+      "regionCode": "world",
+      "variant": {
+       "operatingSystem": "Windows"
+      },
+      "operatingSystem": "Windows",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.2251
+     },
+     {
+      "at": 1700000000,
+      "region": "lz-af",
+      "regionCode": "lz-af",
+      "variant": {
+       "operatingSystem": "Linux"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.105
+     },
+     {
+      "at": 1700000000,
+      "region": "us",
+      "regionCode": "us",
+      "variant": {
+       "operatingSystem": "Linux"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.0879
+     },
+     {
+      "at": 1710000000,
+      "region": "lz-af",
+      "regionCode": "lz-af",
+      "variant": {
+       "operatingSystem": "Linux"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.11
+     }
+    ],
+    "reserved": [
+     {
+      "at": 1700000000,
+      "region": "world",
+      "regionCode": "world",
+      "variant": {
+       "operatingSystem": "Linux"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1mo",
+      "offeringClass": "Monthly",
+      "purchaseOption": "Postpaid",
+      "hourly": 0,
+      "upfront": 50.5
+     },
+     {
+      "at": 1700000000,
+      "region": "us",
+      "regionCode": "us",
+      "variant": {
+       "operatingSystem": "Linux"
+      },
+      "operatingSystem": "Linux",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1mo",
+      "offeringClass": "Monthly",
+      "purchaseOption": "All Upfront",
+      "hourly": 0,
+      "upfront": 52
+     }
+    ]
+   }
+  }
+ }
+}

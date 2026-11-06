@@ -8,7 +8,8 @@ namespace Infrawrench.BulkInstances;
 /// <summary>One instance type. Each property decodes on first access and caches the result.</summary>
 /// <remarks>
 /// <see cref="RunpodInstance"/>, <see cref="AlibabaInstance"/>, <see cref="AzureInstance"/> and <see cref="GcpInstance"/> are
-/// the same for RunPod's, Alibaba Cloud's, Azure's and Google Cloud's data.
+/// the same for RunPod's, Alibaba Cloud's, Azure's, Google Cloud's, Hetzner's, OVHcloud's, Oracle Cloud's and
+/// IBM Cloud's data.
 /// </remarks>
 public class AwsInstance
 {

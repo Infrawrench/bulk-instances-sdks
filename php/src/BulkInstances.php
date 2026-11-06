@@ -170,9 +170,156 @@ final class BulkInstances
     }
 
     /**
+     * Downloads Hetzner's cloud server pricing data: hourly prices and monthly caps per location, for each server
+     * type. Caching and the offline fallback work as for {@see downloadAwsPricingData()}.
+     *
+     * @param string|null $token Defines your Infrawrench API token. Defaults to the `INFRAWRENCH_API_KEY` environment variable.
+     * @param bool $cachePricingData Whether to cache the pricing data. Defaults to true.
+     * @param string|null $cachePath The cache path. Defaults to ~/.infrawrench/aws_pricing_data
+     * @param string|null $baseUrl Where the bundles are served from. Defaults to https://instances-bundles.infrawrench.com
+     *
+     * @throws HetznerPricingDataException
+     * @throws \JsonException if the bundle is not valid
+     * @throws \RuntimeException if the cache directory cannot be written
+     */
+    public static function downloadHetznerPricingData(
+        ?string $token = null,
+        bool $cachePricingData = true,
+        ?string $cachePath = null,
+        ?string $baseUrl = null,
+    ): HetznerPricingData {
+        return HetznerPricingData::fromJson(
+            self::loadBundleAs('hetzner', HetznerPricingDataException::class, $token, $cachePricingData, $cachePath, $baseUrl),
+        );
+    }
+
+    /**
+     * Downloads Hetzner's Server Auction pricing data: the hourly price and monthly cap of each server for sale,
+     * by listing id. Caching and the offline fallback work as for {@see downloadAwsPricingData()}.
+     *
+     * @param string|null $token Defines your Infrawrench API token. Defaults to the `INFRAWRENCH_API_KEY` environment variable.
+     * @param bool $cachePricingData Whether to cache the pricing data. Defaults to true.
+     * @param string|null $cachePath The cache path. Defaults to ~/.infrawrench/aws_pricing_data
+     * @param string|null $baseUrl Where the bundles are served from. Defaults to https://instances-bundles.infrawrench.com
+     *
+     * @throws HetznerAuctionPricingDataException
+     * @throws \JsonException if the bundle is not valid
+     * @throws \RuntimeException if the cache directory cannot be written
+     */
+    public static function downloadHetznerAuctionPricingData(
+        ?string $token = null,
+        bool $cachePricingData = true,
+        ?string $cachePath = null,
+        ?string $baseUrl = null,
+    ): HetznerAuctionPricingData {
+        return HetznerAuctionPricingData::fromJson(
+            self::loadBundleAs('hetznerauction', HetznerAuctionPricingDataException::class, $token, $cachePricingData, $cachePath, $baseUrl),
+        );
+    }
+
+    /**
+     * Downloads OVHcloud's Public Cloud pricing data: hourly and monthly prices per pricing zone, for each
+     * instance flavor. Caching and the offline fallback work as for {@see downloadAwsPricingData()}.
+     *
+     * @param string|null $token Defines your Infrawrench API token. Defaults to the `INFRAWRENCH_API_KEY` environment variable.
+     * @param bool $cachePricingData Whether to cache the pricing data. Defaults to true.
+     * @param string|null $cachePath The cache path. Defaults to ~/.infrawrench/aws_pricing_data
+     * @param string|null $baseUrl Where the bundles are served from. Defaults to https://instances-bundles.infrawrench.com
+     *
+     * @throws OVHPricingDataException
+     * @throws \JsonException if the bundle is not valid
+     * @throws \RuntimeException if the cache directory cannot be written
+     */
+    public static function downloadOvhPricingData(
+        ?string $token = null,
+        bool $cachePricingData = true,
+        ?string $cachePath = null,
+        ?string $baseUrl = null,
+    ): OVHPricingData {
+        return OVHPricingData::fromJson(
+            self::loadBundleAs('ovh', OVHPricingDataException::class, $token, $cachePricingData, $cachePath, $baseUrl),
+        );
+    }
+
+    /**
+     * Downloads OVHcloud's eco dedicated server pricing data: monthly rent and prepaid prices per data center and
+     * configuration, for Kimsufi, So you Start, Rise and Advance servers. Caching and the offline fallback work as
+     * for {@see downloadAwsPricingData()}.
+     *
+     * @param string|null $token Defines your Infrawrench API token. Defaults to the `INFRAWRENCH_API_KEY` environment variable.
+     * @param bool $cachePricingData Whether to cache the pricing data. Defaults to true.
+     * @param string|null $cachePath The cache path. Defaults to ~/.infrawrench/aws_pricing_data
+     * @param string|null $baseUrl Where the bundles are served from. Defaults to https://instances-bundles.infrawrench.com
+     *
+     * @throws OVHEcoPricingDataException
+     * @throws \JsonException if the bundle is not valid
+     * @throws \RuntimeException if the cache directory cannot be written
+     */
+    public static function downloadOvhEcoPricingData(
+        ?string $token = null,
+        bool $cachePricingData = true,
+        ?string $cachePath = null,
+        ?string $baseUrl = null,
+    ): OVHEcoPricingData {
+        return OVHEcoPricingData::fromJson(
+            self::loadBundleAs('ovheco', OVHEcoPricingDataException::class, $token, $cachePricingData, $cachePath, $baseUrl),
+        );
+    }
+
+    /**
+     * Downloads Oracle Cloud's compute pricing data: hourly prices for each VM and bare metal shape, the same in
+     * every commercial region. Caching and the offline fallback work as for {@see downloadAwsPricingData()}.
+     *
+     * @param string|null $token Defines your Infrawrench API token. Defaults to the `INFRAWRENCH_API_KEY` environment variable.
+     * @param bool $cachePricingData Whether to cache the pricing data. Defaults to true.
+     * @param string|null $cachePath The cache path. Defaults to ~/.infrawrench/aws_pricing_data
+     * @param string|null $baseUrl Where the bundles are served from. Defaults to https://instances-bundles.infrawrench.com
+     *
+     * @throws OraclePricingDataException
+     * @throws \JsonException if the bundle is not valid
+     * @throws \RuntimeException if the cache directory cannot be written
+     */
+    public static function downloadOraclePricingData(
+        ?string $token = null,
+        bool $cachePricingData = true,
+        ?string $cachePath = null,
+        ?string $baseUrl = null,
+    ): OraclePricingData {
+        return OraclePricingData::fromJson(
+            self::loadBundleAs('oracle', OraclePricingDataException::class, $token, $cachePricingData, $cachePath, $baseUrl),
+        );
+    }
+
+    /**
+     * Downloads IBM Cloud's Virtual Server for VPC pricing data: on-demand, Spot, burstable and reserved prices
+     * per region, for each profile. Caching and the offline fallback work as for {@see downloadAwsPricingData()}.
+     *
+     * @param string|null $token Defines your Infrawrench API token. Defaults to the `INFRAWRENCH_API_KEY` environment variable.
+     * @param bool $cachePricingData Whether to cache the pricing data. Defaults to true.
+     * @param string|null $cachePath The cache path. Defaults to ~/.infrawrench/aws_pricing_data
+     * @param string|null $baseUrl Where the bundles are served from. Defaults to https://instances-bundles.infrawrench.com
+     *
+     * @throws IBMPricingDataException
+     * @throws \JsonException if the bundle is not valid
+     * @throws \RuntimeException if the cache directory cannot be written
+     */
+    public static function downloadIbmPricingData(
+        ?string $token = null,
+        bool $cachePricingData = true,
+        ?string $cachePath = null,
+        ?string $baseUrl = null,
+    ): IBMPricingData {
+        return IBMPricingData::fromJson(
+            self::loadBundleAs('ibm', IBMPricingDataException::class, $token, $cachePricingData, $cachePath, $baseUrl),
+        );
+    }
+
+    /**
      * {@see loadBundle()}, failing with the provider's own exception class.
      *
-     * @param class-string<RunpodPricingDataException|AlibabaPricingDataException|AzurePricingDataException|GCPPricingDataException> $exception
+     * @param
+     * class-string<RunpodPricingDataException|AlibabaPricingDataException|AzurePricingDataException|GCPPricingDataException|HetznerPricingDataException|HetznerAuctionPricingDataException|OVHPricingDataException|OVHEcoPricingDataException|OraclePricingDataException|IBMPricingDataException>
+     * $exception
      *
      * @throws AWSPricingDataException of class `$exception`
      */

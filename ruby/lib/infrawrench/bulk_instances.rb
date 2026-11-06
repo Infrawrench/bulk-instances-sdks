@@ -16,6 +16,12 @@ require_relative "bulk_instances/runpod_pricing_data"
 require_relative "bulk_instances/alibaba_pricing_data"
 require_relative "bulk_instances/azure_pricing_data"
 require_relative "bulk_instances/gcp_pricing_data"
+require_relative "bulk_instances/hetzner_pricing_data"
+require_relative "bulk_instances/hetzner_auction_pricing_data"
+require_relative "bulk_instances/ovh_pricing_data"
+require_relative "bulk_instances/ovh_eco_pricing_data"
+require_relative "bulk_instances/oracle_pricing_data"
+require_relative "bulk_instances/ibm_pricing_data"
 
 module Infrawrench
   # AWS instance attributes and pricing (EC2, RDS, ElastiCache and more), with full history, from Infrawrench.
@@ -143,6 +149,104 @@ module Infrawrench
       def download_gcp_pricing_data(token: nil, cache_pricing_data: true, cache_path: nil, base_url: nil)
         GCPPricingData.new(
           load_bundle_as("gcp", GCPPricingDataError, token:, cache_pricing_data:, cache_path:, base_url:),
+        )
+      end
+
+      # Downloads Hetzner's cloud server pricing data: hourly prices and monthly caps per location, for each server
+      # type. Caching and the offline fallback work as for #download_aws_pricing_data, and it
+      # takes the same options.
+      #
+      # @param token [String, nil] Your Infrawrench API token. Defaults to the +INFRAWRENCH_API_KEY+ environment variable.
+      # @param cache_pricing_data [Boolean] Whether to cache the pricing data.
+      # @param cache_path [String, nil] The cache path. Defaults to <tt>~/.infrawrench/aws_pricing_data</tt>.
+      # @param base_url [String, nil] Where the bundles are served from. Defaults to https://instances-bundles.infrawrench.com
+      # @return [HetznerPricingData]
+      # @raise [HetznerPricingDataError]
+      def download_hetzner_pricing_data(token: nil, cache_pricing_data: true, cache_path: nil, base_url: nil)
+        HetznerPricingData.new(
+          load_bundle_as("hetzner", HetznerPricingDataError, token:, cache_pricing_data:, cache_path:, base_url:),
+        )
+      end
+
+      # Downloads Hetzner's Server Auction pricing data: the hourly price and monthly cap of each server for sale,
+      # by listing id. Caching and the offline fallback work as for #download_aws_pricing_data, and it
+      # takes the same options.
+      #
+      # @param token [String, nil] Your Infrawrench API token. Defaults to the +INFRAWRENCH_API_KEY+ environment variable.
+      # @param cache_pricing_data [Boolean] Whether to cache the pricing data.
+      # @param cache_path [String, nil] The cache path. Defaults to <tt>~/.infrawrench/aws_pricing_data</tt>.
+      # @param base_url [String, nil] Where the bundles are served from. Defaults to https://instances-bundles.infrawrench.com
+      # @return [HetznerAuctionPricingData]
+      # @raise [HetznerAuctionPricingDataError]
+      def download_hetzner_auction_pricing_data(token: nil, cache_pricing_data: true, cache_path: nil, base_url: nil)
+        HetznerAuctionPricingData.new(
+          load_bundle_as("hetznerauction", HetznerAuctionPricingDataError, token:, cache_pricing_data:, cache_path:, base_url:),
+        )
+      end
+
+      # Downloads OVHcloud's Public Cloud pricing data: hourly and monthly prices per pricing zone, for each
+      # instance flavor. Caching and the offline fallback work as for #download_aws_pricing_data, and it
+      # takes the same options.
+      #
+      # @param token [String, nil] Your Infrawrench API token. Defaults to the +INFRAWRENCH_API_KEY+ environment variable.
+      # @param cache_pricing_data [Boolean] Whether to cache the pricing data.
+      # @param cache_path [String, nil] The cache path. Defaults to <tt>~/.infrawrench/aws_pricing_data</tt>.
+      # @param base_url [String, nil] Where the bundles are served from. Defaults to https://instances-bundles.infrawrench.com
+      # @return [OVHPricingData]
+      # @raise [OVHPricingDataError]
+      def download_ovh_pricing_data(token: nil, cache_pricing_data: true, cache_path: nil, base_url: nil)
+        OVHPricingData.new(
+          load_bundle_as("ovh", OVHPricingDataError, token:, cache_pricing_data:, cache_path:, base_url:),
+        )
+      end
+
+      # Downloads OVHcloud's eco dedicated server pricing data: monthly rent and prepaid prices per data center and
+      # configuration, for Kimsufi, So you Start, Rise and Advance servers. Caching and the offline fallback work as
+      # for #download_aws_pricing_data, and it
+      # takes the same options.
+      #
+      # @param token [String, nil] Your Infrawrench API token. Defaults to the +INFRAWRENCH_API_KEY+ environment variable.
+      # @param cache_pricing_data [Boolean] Whether to cache the pricing data.
+      # @param cache_path [String, nil] The cache path. Defaults to <tt>~/.infrawrench/aws_pricing_data</tt>.
+      # @param base_url [String, nil] Where the bundles are served from. Defaults to https://instances-bundles.infrawrench.com
+      # @return [OVHEcoPricingData]
+      # @raise [OVHEcoPricingDataError]
+      def download_ovh_eco_pricing_data(token: nil, cache_pricing_data: true, cache_path: nil, base_url: nil)
+        OVHEcoPricingData.new(
+          load_bundle_as("ovheco", OVHEcoPricingDataError, token:, cache_pricing_data:, cache_path:, base_url:),
+        )
+      end
+
+      # Downloads Oracle Cloud's compute pricing data: hourly prices for each VM and bare metal shape, the same in
+      # every commercial region. Caching and the offline fallback work as for #download_aws_pricing_data, and it
+      # takes the same options.
+      #
+      # @param token [String, nil] Your Infrawrench API token. Defaults to the +INFRAWRENCH_API_KEY+ environment variable.
+      # @param cache_pricing_data [Boolean] Whether to cache the pricing data.
+      # @param cache_path [String, nil] The cache path. Defaults to <tt>~/.infrawrench/aws_pricing_data</tt>.
+      # @param base_url [String, nil] Where the bundles are served from. Defaults to https://instances-bundles.infrawrench.com
+      # @return [OraclePricingData]
+      # @raise [OraclePricingDataError]
+      def download_oracle_pricing_data(token: nil, cache_pricing_data: true, cache_path: nil, base_url: nil)
+        OraclePricingData.new(
+          load_bundle_as("oracle", OraclePricingDataError, token:, cache_pricing_data:, cache_path:, base_url:),
+        )
+      end
+
+      # Downloads IBM Cloud's Virtual Server for VPC pricing data: on-demand, Spot, burstable and reserved prices
+      # per region, for each profile. Caching and the offline fallback work as for #download_aws_pricing_data, and
+      # it
+      # takes the same options.
+      #
+      # @param token [String, nil] Your Infrawrench API token. Defaults to the +INFRAWRENCH_API_KEY+ environment variable.
+      # @param cache_pricing_data [Boolean] Whether to cache the pricing data.
+      # @param cache_path [String, nil] The cache path. Defaults to <tt>~/.infrawrench/aws_pricing_data</tt>.
+      # @param base_url [String, nil] Where the bundles are served from. Defaults to https://instances-bundles.infrawrench.com
+      # @return [IBMPricingData]
+      # @raise [IBMPricingDataError]
+      def download_ibm_pricing_data(token: nil, cache_pricing_data: true, cache_path: nil, base_url: nil)
+        IBMPricingData.new(
+          load_bundle_as("ibm", IBMPricingDataError, token:, cache_pricing_data:, cache_path:, base_url:),
         )
       end
 

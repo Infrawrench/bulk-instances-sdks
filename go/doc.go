@@ -9,8 +9,8 @@
 // single instance from the Infrawrench API instead, without the whole bundle.
 //
 // [DownloadRunpodPricingData], [DownloadAlibabaPricingData], [DownloadAzurePricingData]
-// and [DownloadGCPPricingData] load RunPod's, Alibaba Cloud's, Azure's and Google
-// Cloud's bundles, which have the same format, as a [RunpodPricingData], an
+// and [DownloadGCPPricingData] load RunPod's, Alibaba Cloud's, Azure's, Google Cloud's, Hetzner's, OVHcloud's,
+// Oracle Cloud's and IBM Cloud's bundles, which have the same format, as a [RunpodPricingData], an
 // [AlibabaPricingData], an [AzurePricingData] and a [GCPPricingData].
 // [FetchRunpodInstance] and [FetchAlibabaInstance] fetch one RunPod or Alibaba
 // instance from the Infrawrench API.

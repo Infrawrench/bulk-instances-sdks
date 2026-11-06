@@ -89,7 +89,7 @@ try
         CachePricingData = cache == "1",
         Token = token == "-" ? null : token,
     };
-    // RunPod, Alibaba, Azure and GCP have their own methods and types, and their own exceptions.
+    // Clouds other than AWS have their own methods and types, and their own exceptions.
     if (platform == "runpod")
     {
         RunpodPricingData d;
@@ -148,6 +148,96 @@ try
         }
         GcpInstance? first = d.Keys.Count == 0 ? null : d.Get(d.Keys[0]);
         if (!ExpectTypes(d, first, typeof(GcpPricingData), typeof(GcpInstance))) return 1;
+        data = d;
+    }
+    else if (platform == "hetzner")
+    {
+        HetznerPricingData d;
+        try
+        {
+            d = await BulkInstances.DownloadHetznerPricingDataAsync(Options<HetznerPricingDataOptions>());
+        }
+        catch (AwsPricingDataException e) when (e is not HetznerPricingDataException)
+        {
+            return WrongException(e, typeof(HetznerPricingDataException));
+        }
+        HetznerInstance? first = d.Keys.Count == 0 ? null : d.Get(d.Keys[0]);
+        if (!ExpectTypes(d, first, typeof(HetznerPricingData), typeof(HetznerInstance))) return 1;
+        data = d;
+    }
+    else if (platform == "hetznerauction")
+    {
+        HetznerAuctionPricingData d;
+        try
+        {
+            d = await BulkInstances.DownloadHetznerAuctionPricingDataAsync(Options<HetznerAuctionPricingDataOptions>());
+        }
+        catch (AwsPricingDataException e) when (e is not HetznerAuctionPricingDataException)
+        {
+            return WrongException(e, typeof(HetznerAuctionPricingDataException));
+        }
+        HetznerAuctionInstance? first = d.Keys.Count == 0 ? null : d.Get(d.Keys[0]);
+        if (!ExpectTypes(d, first, typeof(HetznerAuctionPricingData), typeof(HetznerAuctionInstance))) return 1;
+        data = d;
+    }
+    else if (platform == "ovh")
+    {
+        OvhPricingData d;
+        try
+        {
+            d = await BulkInstances.DownloadOvhPricingDataAsync(Options<OvhPricingDataOptions>());
+        }
+        catch (AwsPricingDataException e) when (e is not OvhPricingDataException)
+        {
+            return WrongException(e, typeof(OvhPricingDataException));
+        }
+        OvhInstance? first = d.Keys.Count == 0 ? null : d.Get(d.Keys[0]);
+        if (!ExpectTypes(d, first, typeof(OvhPricingData), typeof(OvhInstance))) return 1;
+        data = d;
+    }
+    else if (platform == "ovheco")
+    {
+        OvhEcoPricingData d;
+        try
+        {
+            d = await BulkInstances.DownloadOvhEcoPricingDataAsync(Options<OvhEcoPricingDataOptions>());
+        }
+        catch (AwsPricingDataException e) when (e is not OvhEcoPricingDataException)
+        {
+            return WrongException(e, typeof(OvhEcoPricingDataException));
+        }
+        OvhEcoInstance? first = d.Keys.Count == 0 ? null : d.Get(d.Keys[0]);
+        if (!ExpectTypes(d, first, typeof(OvhEcoPricingData), typeof(OvhEcoInstance))) return 1;
+        data = d;
+    }
+    else if (platform == "oracle")
+    {
+        OraclePricingData d;
+        try
+        {
+            d = await BulkInstances.DownloadOraclePricingDataAsync(Options<OraclePricingDataOptions>());
+        }
+        catch (AwsPricingDataException e) when (e is not OraclePricingDataException)
+        {
+            return WrongException(e, typeof(OraclePricingDataException));
+        }
+        OracleInstance? first = d.Keys.Count == 0 ? null : d.Get(d.Keys[0]);
+        if (!ExpectTypes(d, first, typeof(OraclePricingData), typeof(OracleInstance))) return 1;
+        data = d;
+    }
+    else if (platform == "ibm")
+    {
+        IbmPricingData d;
+        try
+        {
+            d = await BulkInstances.DownloadIbmPricingDataAsync(Options<IbmPricingDataOptions>());
+        }
+        catch (AwsPricingDataException e) when (e is not IbmPricingDataException)
+        {
+            return WrongException(e, typeof(IbmPricingDataException));
+        }
+        IbmInstance? first = d.Keys.Count == 0 ? null : d.Get(d.Keys[0]);
+        if (!ExpectTypes(d, first, typeof(IbmPricingData), typeof(IbmInstance))) return 1;
         data = d;
     }
     else

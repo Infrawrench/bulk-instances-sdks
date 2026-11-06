@@ -22,6 +22,12 @@ from ._data import (
     AWSPricingData,
     AzurePricingData,
     GCPPricingData,
+    HetznerPricingData,
+    HetznerAuctionPricingData,
+    OVHPricingData,
+    OVHEcoPricingData,
+    OraclePricingData,
+    IBMPricingData,
     RunpodInstance,
     RunpodPricingData,
 )
@@ -56,6 +62,36 @@ class AzurePricingDataError(AWSPricingDataError):
 
 class GCPPricingDataError(AWSPricingDataError):
     """Raised when Google Cloud's pricing data cannot be downloaded. ``status`` is the HTTP status, if there was a
+    response."""
+
+
+class HetznerPricingDataError(AWSPricingDataError):
+    """Raised when Hetzner's cloud server pricing data cannot be downloaded. ``status`` is the HTTP status, if there was a
+    response."""
+
+
+class HetznerAuctionPricingDataError(AWSPricingDataError):
+    """Raised when Hetzner's Server Auction pricing data cannot be downloaded. ``status`` is the HTTP status, if there was a
+    response."""
+
+
+class OVHPricingDataError(AWSPricingDataError):
+    """Raised when OVHcloud's Public Cloud pricing data cannot be downloaded. ``status`` is the HTTP status, if there was a
+    response."""
+
+
+class OVHEcoPricingDataError(AWSPricingDataError):
+    """Raised when OVHcloud's eco dedicated server pricing data cannot be downloaded. ``status`` is the HTTP status, if there was a
+    response."""
+
+
+class OraclePricingDataError(AWSPricingDataError):
+    """Raised when Oracle Cloud's compute pricing data cannot be downloaded. ``status`` is the HTTP status, if there was a
+    response."""
+
+
+class IBMPricingDataError(AWSPricingDataError):
+    """Raised when IBM Cloud's Virtual Server for VPC pricing data cannot be downloaded. ``status`` is the HTTP status, if there was a
     response."""
 
 
@@ -238,6 +274,126 @@ def download_gcp_pricing_data(
     """
     return GCPPricingData(_load_bundle_as(
         "gcp", GCPPricingDataError,
+        token=token, cache_pricing_data=cache_pricing_data, cache_path=cache_path, base_url=base_url,
+    ))
+
+
+def download_hetzner_pricing_data(
+    *,
+    token: str | None = None,
+    cache_pricing_data: bool = True,
+    cache_path: str | os.PathLike[str] | None = None,
+    base_url: str | None = None,
+) -> HetznerPricingData:
+    """Downloads Hetzner's cloud server pricing data: hourly prices and monthly caps per location, for each server type.
+
+    Caching and the offline fallback work as for :func:`download_aws_pricing_data`, and it takes the same
+    keyword arguments.
+
+    :raises HetznerPricingDataError: When the token is missing or rejected, or the bundle cannot be fetched.
+    """
+    return HetznerPricingData(_load_bundle_as(
+        "hetzner", HetznerPricingDataError,
+        token=token, cache_pricing_data=cache_pricing_data, cache_path=cache_path, base_url=base_url,
+    ))
+
+
+def download_hetzner_auction_pricing_data(
+    *,
+    token: str | None = None,
+    cache_pricing_data: bool = True,
+    cache_path: str | os.PathLike[str] | None = None,
+    base_url: str | None = None,
+) -> HetznerAuctionPricingData:
+    """Downloads Hetzner's Server Auction pricing data: the hourly price and monthly cap of each server for sale, by listing id.
+
+    Caching and the offline fallback work as for :func:`download_aws_pricing_data`, and it takes the same
+    keyword arguments.
+
+    :raises HetznerAuctionPricingDataError: When the token is missing or rejected, or the bundle cannot be fetched.
+    """
+    return HetznerAuctionPricingData(_load_bundle_as(
+        "hetznerauction", HetznerAuctionPricingDataError,
+        token=token, cache_pricing_data=cache_pricing_data, cache_path=cache_path, base_url=base_url,
+    ))
+
+
+def download_ovh_pricing_data(
+    *,
+    token: str | None = None,
+    cache_pricing_data: bool = True,
+    cache_path: str | os.PathLike[str] | None = None,
+    base_url: str | None = None,
+) -> OVHPricingData:
+    """Downloads OVHcloud's Public Cloud pricing data: hourly and monthly prices per pricing zone, for each instance flavor.
+
+    Caching and the offline fallback work as for :func:`download_aws_pricing_data`, and it takes the same
+    keyword arguments.
+
+    :raises OVHPricingDataError: When the token is missing or rejected, or the bundle cannot be fetched.
+    """
+    return OVHPricingData(_load_bundle_as(
+        "ovh", OVHPricingDataError,
+        token=token, cache_pricing_data=cache_pricing_data, cache_path=cache_path, base_url=base_url,
+    ))
+
+
+def download_ovh_eco_pricing_data(
+    *,
+    token: str | None = None,
+    cache_pricing_data: bool = True,
+    cache_path: str | os.PathLike[str] | None = None,
+    base_url: str | None = None,
+) -> OVHEcoPricingData:
+    """Downloads OVHcloud's eco dedicated server pricing data: monthly rent and prepaid prices per data center and configuration, for Kimsufi, So you Start, Rise and Advance servers.
+
+    Caching and the offline fallback work as for :func:`download_aws_pricing_data`, and it takes the same
+    keyword arguments.
+
+    :raises OVHEcoPricingDataError: When the token is missing or rejected, or the bundle cannot be fetched.
+    """
+    return OVHEcoPricingData(_load_bundle_as(
+        "ovheco", OVHEcoPricingDataError,
+        token=token, cache_pricing_data=cache_pricing_data, cache_path=cache_path, base_url=base_url,
+    ))
+
+
+def download_oracle_pricing_data(
+    *,
+    token: str | None = None,
+    cache_pricing_data: bool = True,
+    cache_path: str | os.PathLike[str] | None = None,
+    base_url: str | None = None,
+) -> OraclePricingData:
+    """Downloads Oracle Cloud's compute pricing data: hourly prices for each VM and bare metal shape, the same in every commercial region.
+
+    Caching and the offline fallback work as for :func:`download_aws_pricing_data`, and it takes the same
+    keyword arguments.
+
+    :raises OraclePricingDataError: When the token is missing or rejected, or the bundle cannot be fetched.
+    """
+    return OraclePricingData(_load_bundle_as(
+        "oracle", OraclePricingDataError,
+        token=token, cache_pricing_data=cache_pricing_data, cache_path=cache_path, base_url=base_url,
+    ))
+
+
+def download_ibm_pricing_data(
+    *,
+    token: str | None = None,
+    cache_pricing_data: bool = True,
+    cache_path: str | os.PathLike[str] | None = None,
+    base_url: str | None = None,
+) -> IBMPricingData:
+    """Downloads IBM Cloud's Virtual Server for VPC pricing data: on-demand, Spot, burstable and reserved prices per region, for each profile.
+
+    Caching and the offline fallback work as for :func:`download_aws_pricing_data`, and it takes the same
+    keyword arguments.
+
+    :raises IBMPricingDataError: When the token is missing or rejected, or the bundle cannot be fetched.
+    """
+    return IBMPricingData(_load_bundle_as(
+        "ibm", IBMPricingDataError,
         token=token, cache_pricing_data=cache_pricing_data, cache_path=cache_path, base_url=base_url,
     ))
 

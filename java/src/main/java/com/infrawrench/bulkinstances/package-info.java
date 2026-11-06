@@ -7,7 +7,7 @@
  * {@link com.infrawrench.bulkinstances.BulkInstances#downloadRunpodPricingData()},
  * {@link com.infrawrench.bulkinstances.BulkInstances#downloadAlibabaPricingData()},
  * {@link com.infrawrench.bulkinstances.BulkInstances#downloadAzurePricingData()} and
- * {@link com.infrawrench.bulkinstances.BulkInstances#downloadGcpPricingData()} load RunPod's, Alibaba Cloud's, Azure's
- * and Google Cloud's prices, in the same format.
+ * {@link com.infrawrench.bulkinstances.BulkInstances#downloadGcpPricingData()} load RunPod's, Alibaba Cloud's,
+ * Azure's, Google Cloud's, Hetzner's, OVHcloud's, Oracle Cloud's and IBM Cloud's prices, in the same format.
  */
 package com.infrawrench.bulkinstances;

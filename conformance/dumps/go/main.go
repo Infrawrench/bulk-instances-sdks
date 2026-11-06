@@ -159,7 +159,7 @@ func main() {
 		platform = os.Args[5]
 	}
 	var data *bulkinstances.AWSPricingData
-	// get is the loaded data's own Get: RunPod, Alibaba, Azure and GCP have their own data and instance types.
+	// get is the loaded data's own Get: Clouds other than AWS have their own data and instance types.
 	var get func(string) (*bulkinstances.AWSInstance, bool)
 	var err error
 	switch platform {
@@ -205,6 +205,78 @@ func main() {
 			data = d.AWSPricingData
 			get = func(k string) (*bulkinstances.AWSInstance, bool) {
 				i, ok := d.Get(k) // a *GCPInstance
+				if !ok {
+					return nil, false
+				}
+				return i.AWSInstance, true
+			}
+		}
+	case "hetzner":
+		var d *bulkinstances.HetznerPricingData
+		if d, err = bulkinstances.DownloadHetznerPricingData(context.Background(), opts); err == nil {
+			data = d.AWSPricingData
+			get = func(k string) (*bulkinstances.AWSInstance, bool) {
+				i, ok := d.Get(k) // a *HetznerInstance
+				if !ok {
+					return nil, false
+				}
+				return i.AWSInstance, true
+			}
+		}
+	case "hetznerauction":
+		var d *bulkinstances.HetznerAuctionPricingData
+		if d, err = bulkinstances.DownloadHetznerAuctionPricingData(context.Background(), opts); err == nil {
+			data = d.AWSPricingData
+			get = func(k string) (*bulkinstances.AWSInstance, bool) {
+				i, ok := d.Get(k) // a *HetznerAuctionInstance
+				if !ok {
+					return nil, false
+				}
+				return i.AWSInstance, true
+			}
+		}
+	case "ovh":
+		var d *bulkinstances.OVHPricingData
+		if d, err = bulkinstances.DownloadOVHPricingData(context.Background(), opts); err == nil {
+			data = d.AWSPricingData
+			get = func(k string) (*bulkinstances.AWSInstance, bool) {
+				i, ok := d.Get(k) // a *OVHInstance
+				if !ok {
+					return nil, false
+				}
+				return i.AWSInstance, true
+			}
+		}
+	case "ovheco":
+		var d *bulkinstances.OVHEcoPricingData
+		if d, err = bulkinstances.DownloadOVHEcoPricingData(context.Background(), opts); err == nil {
+			data = d.AWSPricingData
+			get = func(k string) (*bulkinstances.AWSInstance, bool) {
+				i, ok := d.Get(k) // a *OVHEcoInstance
+				if !ok {
+					return nil, false
+				}
+				return i.AWSInstance, true
+			}
+		}
+	case "oracle":
+		var d *bulkinstances.OraclePricingData
+		if d, err = bulkinstances.DownloadOraclePricingData(context.Background(), opts); err == nil {
+			data = d.AWSPricingData
+			get = func(k string) (*bulkinstances.AWSInstance, bool) {
+				i, ok := d.Get(k) // a *OracleInstance
+				if !ok {
+					return nil, false
+				}
+				return i.AWSInstance, true
+			}
+		}
+	case "ibm":
+		var d *bulkinstances.IBMPricingData
+		if d, err = bulkinstances.DownloadIBMPricingData(context.Background(), opts); err == nil {
+			data = d.AWSPricingData
+			get = func(k string) (*bulkinstances.AWSInstance, bool) {
+				i, ok := d.Get(k) // a *IBMInstance
 				if !ok {
 					return nil, false
 				}

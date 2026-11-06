@@ -1,0 +1,409 @@
+{
+ "offer": "HetznerAuction",
+ "variantKeys": [
+  "ipv4"
+ ],
+ "snapshots": [
+  1700000000,
+  1710000000,
+  1720000000
+ ],
+ "regions": {
+  "fsn1": {
+   "locationType": "Hetzner Location",
+   "name": "Falkenstein",
+   "regionCode": "fsn1"
+  }
+ },
+ "keys": [
+  "3082226",
+  "3107671"
+ ],
+ "has": {
+  "m5.large": false,
+  "nope": false
+ },
+ "getMissing": null,
+ "instances": {
+  "3082226": {
+   "name": "3082226",
+   "createdAt": 1700000000,
+   "deletedAt": 1720000000,
+   "attributes": {
+    "CPU.Name": "AMD Ryzen 5 3600",
+    "RAM.Size": "64",
+    "datacenter": "FSN1-DC21",
+    "fixedPrice": "true",
+    "productFamily": "Dedicated Server"
+   },
+   "attributesIn": {
+    "fsn1": {
+     "CPU.Name": "AMD Ryzen 5 3600",
+     "RAM.Size": "64",
+     "datacenter": "FSN1-DC21",
+     "fixedPrice": "true",
+     "productFamily": "Dedicated Server"
+    },
+    "Mystery": {
+     "CPU.Name": "AMD Ryzen 5 3600",
+     "RAM.Size": "64",
+     "datacenter": "FSN1-DC21",
+     "fixedPrice": "true",
+     "productFamily": "Dedicated Server"
+    },
+    "Nowhere": {
+     "CPU.Name": "AMD Ryzen 5 3600",
+     "RAM.Size": "64",
+     "datacenter": "FSN1-DC21",
+     "fixedPrice": "true",
+     "productFamily": "Dedicated Server"
+    }
+   },
+   "attributesHistory": [
+    {
+     "at": 1700000000,
+     "key": "CPU.Name",
+     "value": "AMD Ryzen 5 3600",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "RAM.Size",
+     "value": "64",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "datacenter",
+     "value": "FSN1-DC21",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "fixedPrice",
+     "value": "true",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "productFamily",
+     "value": "Dedicated Server",
+     "region": null
+    }
+   ],
+   "pricing": {
+    "onDemand": [],
+    "reserved": []
+   },
+   "pricingHistory": {
+    "onDemand": [
+     {
+      "at": 1700000000,
+      "region": "fsn1",
+      "regionCode": "fsn1",
+      "variant": {
+       "ipv4": "IPv6 only"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.2099
+     },
+     {
+      "at": 1720000000,
+      "region": "fsn1",
+      "regionCode": "fsn1",
+      "variant": {
+       "ipv4": "IPv6 only"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": null
+     }
+    ],
+    "reserved": [
+     {
+      "at": 1700000000,
+      "region": "fsn1",
+      "regionCode": "fsn1",
+      "variant": {
+       "ipv4": "IPv6 only"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1mo",
+      "offeringClass": "Monthly Cap",
+      "purchaseOption": "Postpaid",
+      "hourly": 0,
+      "upfront": 131
+     },
+     {
+      "at": 1720000000,
+      "region": "fsn1",
+      "regionCode": "fsn1",
+      "variant": {
+       "ipv4": "IPv6 only"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1mo",
+      "offeringClass": "Monthly Cap",
+      "purchaseOption": "Postpaid",
+      "hourly": null,
+      "upfront": null
+     }
+    ]
+   }
+  },
+  "3107671": {
+   "name": "3107671",
+   "createdAt": 1700000000,
+   "deletedAt": null,
+   "attributes": {
+    "CPU.Name": "Intel Core i7-7700",
+    "RAM.Size": "64",
+    "datacenter": "FSN1-DC4",
+    "fixedPrice": "false",
+    "productFamily": "Dedicated Server"
+   },
+   "attributesIn": {
+    "fsn1": {
+     "CPU.Name": "Intel Core i7-7700",
+     "RAM.Size": "64",
+     "datacenter": "FSN1-DC4",
+     "fixedPrice": "false",
+     "productFamily": "Dedicated Server"
+    },
+    "Mystery": {
+     "CPU.Name": "Intel Core i7-7700",
+     "RAM.Size": "64",
+     "datacenter": "FSN1-DC4",
+     "fixedPrice": "false",
+     "productFamily": "Dedicated Server"
+    },
+    "Nowhere": {
+     "CPU.Name": "Intel Core i7-7700",
+     "RAM.Size": "64",
+     "datacenter": "FSN1-DC4",
+     "fixedPrice": "false",
+     "productFamily": "Dedicated Server"
+    }
+   },
+   "attributesHistory": [
+    {
+     "at": 1700000000,
+     "key": "CPU.Name",
+     "value": "Intel Core i7-7700",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "RAM.Size",
+     "value": "64",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "datacenter",
+     "value": "FSN1-DC4",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "fixedPrice",
+     "value": "false",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "productFamily",
+     "value": "Dedicated Server",
+     "region": null
+    }
+   ],
+   "pricing": {
+    "onDemand": [
+     {
+      "region": "fsn1",
+      "regionCode": "fsn1",
+      "variant": {
+       "ipv4": "IPv6 only"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.13,
+      "since": 1710000000
+     },
+     {
+      "region": "fsn1",
+      "regionCode": "fsn1",
+      "variant": {
+       "ipv4": "Primary IPv4"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.1392,
+      "since": 1700000000
+     }
+    ],
+    "reserved": [
+     {
+      "region": "fsn1",
+      "regionCode": "fsn1",
+      "variant": {
+       "ipv4": "IPv6 only"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1mo",
+      "offeringClass": "Monthly Cap",
+      "purchaseOption": "Postpaid",
+      "hourly": 0,
+      "upfront": 81,
+      "since": 1710000000
+     },
+     {
+      "region": "fsn1",
+      "regionCode": "fsn1",
+      "variant": {
+       "ipv4": "Primary IPv4"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1mo",
+      "offeringClass": "Monthly Cap",
+      "purchaseOption": "Postpaid",
+      "hourly": 0,
+      "upfront": 86.9,
+      "since": 1700000000
+     }
+    ]
+   },
+   "pricingHistory": {
+    "onDemand": [
+     {
+      "at": 1700000000,
+      "region": "fsn1",
+      "regionCode": "fsn1",
+      "variant": {
+       "ipv4": "IPv6 only"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.1362
+     },
+     {
+      "at": 1700000000,
+      "region": "fsn1",
+      "regionCode": "fsn1",
+      "variant": {
+       "ipv4": "Primary IPv4"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.1392
+     },
+     {
+      "at": 1710000000,
+      "region": "fsn1",
+      "regionCode": "fsn1",
+      "variant": {
+       "ipv4": "IPv6 only"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.13
+     }
+    ],
+    "reserved": [
+     {
+      "at": 1700000000,
+      "region": "fsn1",
+      "regionCode": "fsn1",
+      "variant": {
+       "ipv4": "IPv6 only"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1mo",
+      "offeringClass": "Monthly Cap",
+      "purchaseOption": "Postpaid",
+      "hourly": 0,
+      "upfront": 85
+     },
+     {
+      "at": 1700000000,
+      "region": "fsn1",
+      "regionCode": "fsn1",
+      "variant": {
+       "ipv4": "Primary IPv4"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1mo",
+      "offeringClass": "Monthly Cap",
+      "purchaseOption": "Postpaid",
+      "hourly": 0,
+      "upfront": 86.9
+     },
+     {
+      "at": 1710000000,
+      "region": "fsn1",
+      "regionCode": "fsn1",
+      "variant": {
+       "ipv4": "IPv6 only"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1mo",
+      "offeringClass": "Monthly Cap",
+      "purchaseOption": "Postpaid",
+      "hourly": 0,
+      "upfront": 81
+     }
+    ]
+   }
+  }
+ }
+}

@@ -76,7 +76,7 @@ end
 
 begin
   options = { base_url:, cache_path:, cache_pricing_data: cache == "1", token: }
-  # RunPod, Alibaba, Azure and GCP have their own functions and classes, and their own errors.
+  # Clouds other than AWS have their own functions and classes, and their own errors.
   data = case platform
          when nil then BI.download_aws_ec2_pricing_data(**options)
          when "runpod"
@@ -91,6 +91,24 @@ begin
          when "gcp"
            expect_types(expect_error(BI::GCPPricingDataError) { BI.download_gcp_pricing_data(**options) },
                         BI::GCPPricingData, BI::GCPInstance)
+         when "hetzner"
+           expect_types(expect_error(BI::HetznerPricingDataError) { BI.download_hetzner_pricing_data(**options) },
+                        BI::HetznerPricingData, BI::HetznerInstance)
+         when "hetznerauction"
+           expect_types(expect_error(BI::HetznerAuctionPricingDataError) { BI.download_hetzner_auction_pricing_data(**options) },
+                        BI::HetznerAuctionPricingData, BI::HetznerAuctionInstance)
+         when "ovh"
+           expect_types(expect_error(BI::OVHPricingDataError) { BI.download_ovh_pricing_data(**options) },
+                        BI::OVHPricingData, BI::OVHInstance)
+         when "ovheco"
+           expect_types(expect_error(BI::OVHEcoPricingDataError) { BI.download_ovh_eco_pricing_data(**options) },
+                        BI::OVHEcoPricingData, BI::OVHEcoInstance)
+         when "oracle"
+           expect_types(expect_error(BI::OraclePricingDataError) { BI.download_oracle_pricing_data(**options) },
+                        BI::OraclePricingData, BI::OracleInstance)
+         when "ibm"
+           expect_types(expect_error(BI::IBMPricingDataError) { BI.download_ibm_pricing_data(**options) },
+                        BI::IBMPricingData, BI::IBMInstance)
          else BI.download_aws_pricing_data(platform, **options)
          end
 rescue AWSPricingDataError => e

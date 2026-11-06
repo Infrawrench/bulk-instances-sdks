@@ -134,6 +134,91 @@ public static class BulkInstances
             "gcp", options, e => new GcpPricingDataException(e.Message, e.Status, e.InnerException), cancellationToken)
             .ConfigureAwait(false));
 
+    /// <summary>
+    /// Downloads Hetzner's cloud server pricing data: hourly prices and monthly caps per location, for each server
+    /// type. Caching and the offline fallback work as for
+    /// <see cref="DownloadAwsPricingDataAsync"/>.
+    /// </summary>
+    /// <param name="options">Token, caching and server options; all optional.</param>
+    /// <param name="cancellationToken">Cancels the download.</param>
+    /// <exception cref="HetznerPricingDataException">The token is missing or rejected, or the bundle cannot be downloaded.</exception>
+    public static async Task<HetznerPricingData> DownloadHetznerPricingDataAsync(
+        HetznerPricingDataOptions? options = null, CancellationToken cancellationToken = default) =>
+        new(await LoadBundleAsAsync(
+            "hetzner", options, e => new HetznerPricingDataException(e.Message, e.Status, e.InnerException), cancellationToken)
+            .ConfigureAwait(false));
+
+    /// <summary>
+    /// Downloads Hetzner's Server Auction pricing data: the hourly price and monthly cap of each server for sale,
+    /// by listing id. Caching and the offline fallback work as for
+    /// <see cref="DownloadAwsPricingDataAsync"/>.
+    /// </summary>
+    /// <param name="options">Token, caching and server options; all optional.</param>
+    /// <param name="cancellationToken">Cancels the download.</param>
+    /// <exception cref="HetznerAuctionPricingDataException">The token is missing or rejected, or the bundle cannot be downloaded.</exception>
+    public static async Task<HetznerAuctionPricingData> DownloadHetznerAuctionPricingDataAsync(
+        HetznerAuctionPricingDataOptions? options = null, CancellationToken cancellationToken = default) =>
+        new(await LoadBundleAsAsync(
+            "hetznerauction", options, e => new HetznerAuctionPricingDataException(e.Message, e.Status, e.InnerException), cancellationToken)
+            .ConfigureAwait(false));
+
+    /// <summary>
+    /// Downloads OVHcloud's Public Cloud pricing data: hourly and monthly prices per pricing zone, for each
+    /// instance flavor. Caching and the offline fallback work as for
+    /// <see cref="DownloadAwsPricingDataAsync"/>.
+    /// </summary>
+    /// <param name="options">Token, caching and server options; all optional.</param>
+    /// <param name="cancellationToken">Cancels the download.</param>
+    /// <exception cref="OvhPricingDataException">The token is missing or rejected, or the bundle cannot be downloaded.</exception>
+    public static async Task<OvhPricingData> DownloadOvhPricingDataAsync(
+        OvhPricingDataOptions? options = null, CancellationToken cancellationToken = default) =>
+        new(await LoadBundleAsAsync(
+            "ovh", options, e => new OvhPricingDataException(e.Message, e.Status, e.InnerException), cancellationToken)
+            .ConfigureAwait(false));
+
+    /// <summary>
+    /// Downloads OVHcloud's eco dedicated server pricing data: monthly rent and prepaid prices per data center and
+    /// configuration, for Kimsufi, So you Start, Rise and Advance servers. Caching and the offline fallback work as
+    /// for
+    /// <see cref="DownloadAwsPricingDataAsync"/>.
+    /// </summary>
+    /// <param name="options">Token, caching and server options; all optional.</param>
+    /// <param name="cancellationToken">Cancels the download.</param>
+    /// <exception cref="OvhEcoPricingDataException">The token is missing or rejected, or the bundle cannot be downloaded.</exception>
+    public static async Task<OvhEcoPricingData> DownloadOvhEcoPricingDataAsync(
+        OvhEcoPricingDataOptions? options = null, CancellationToken cancellationToken = default) =>
+        new(await LoadBundleAsAsync(
+            "ovheco", options, e => new OvhEcoPricingDataException(e.Message, e.Status, e.InnerException), cancellationToken)
+            .ConfigureAwait(false));
+
+    /// <summary>
+    /// Downloads Oracle Cloud's compute pricing data: hourly prices for each VM and bare metal shape, the same in
+    /// every commercial region. Caching and the offline fallback work as for
+    /// <see cref="DownloadAwsPricingDataAsync"/>.
+    /// </summary>
+    /// <param name="options">Token, caching and server options; all optional.</param>
+    /// <param name="cancellationToken">Cancels the download.</param>
+    /// <exception cref="OraclePricingDataException">The token is missing or rejected, or the bundle cannot be downloaded.</exception>
+    public static async Task<OraclePricingData> DownloadOraclePricingDataAsync(
+        OraclePricingDataOptions? options = null, CancellationToken cancellationToken = default) =>
+        new(await LoadBundleAsAsync(
+            "oracle", options, e => new OraclePricingDataException(e.Message, e.Status, e.InnerException), cancellationToken)
+            .ConfigureAwait(false));
+
+    /// <summary>
+    /// Downloads IBM Cloud's Virtual Server for VPC pricing data: on-demand, Spot, burstable and reserved prices
+    /// per region, for each profile. Caching and the offline fallback work as for
+    /// <see cref="DownloadAwsPricingDataAsync"/>.
+    /// </summary>
+    /// <param name="options">Token, caching and server options; all optional.</param>
+    /// <param name="cancellationToken">Cancels the download.</param>
+    /// <exception cref="IbmPricingDataException">The token is missing or rejected, or the bundle cannot be downloaded.</exception>
+    public static async Task<IbmPricingData> DownloadIbmPricingDataAsync(
+        IbmPricingDataOptions? options = null, CancellationToken cancellationToken = default) =>
+        new(await LoadBundleAsAsync(
+            "ibm", options, e => new IbmPricingDataException(e.Message, e.Status, e.InnerException), cancellationToken)
+            .ConfigureAwait(false));
+
     /// <summary><see cref="LoadBundleAsync"/>, failing with the provider's own exception class.</summary>
     private static Task<byte[]> LoadBundleAsAsync(
         string platform, AwsPricingDataOptions? options, Func<AwsPricingDataException, AwsPricingDataException> providerException,

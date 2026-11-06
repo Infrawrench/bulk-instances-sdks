@@ -1,0 +1,355 @@
+{
+ "offer": "OVHEco",
+ "variantKeys": [
+  "memory",
+  "storage",
+  "systemStorage"
+ ],
+ "snapshots": [
+  1700000000,
+  1710000000
+ ],
+ "regions": {
+  "gra": {
+   "locationType": "OVHcloud Data Center",
+   "name": "Gravelines",
+   "regionCode": "gra"
+  },
+  "sgp": {
+   "locationType": "OVHcloud Data Center",
+   "name": "Singapore",
+   "regionCode": "sgp"
+  }
+ },
+ "keys": [
+  "24sys01"
+ ],
+ "has": {
+  "m5.large": false,
+  "nope": false
+ },
+ "getMissing": null,
+ "instances": {
+  "24sys01": {
+   "name": "24sys01",
+   "createdAt": 1700000000,
+   "deletedAt": null,
+   "attributes": {
+    "billing": "Monthly",
+    "cpu.cores": "6",
+    "planCode": "24sys01-v1",
+    "productFamily": "Dedicated Server",
+    "range": "soyoustart",
+    "setupFee": "33.2"
+   },
+   "attributesIn": {
+    "gra": {
+     "billing": "Monthly",
+     "cpu.cores": "6",
+     "planCode": "24sys01-v1",
+     "productFamily": "Dedicated Server",
+     "range": "soyoustart",
+     "setupFee": "33.2"
+    },
+    "sgp": {
+     "billing": "Monthly",
+     "cpu.cores": "6",
+     "planCode": "24sys01-v1-sgp",
+     "productFamily": "Dedicated Server",
+     "range": "soyoustart",
+     "setupFee": "33.2"
+    },
+    "Mystery": {
+     "billing": "Monthly",
+     "cpu.cores": "6",
+     "planCode": "24sys01-v1",
+     "productFamily": "Dedicated Server",
+     "range": "soyoustart",
+     "setupFee": "33.2"
+    },
+    "Nowhere": {
+     "billing": "Monthly",
+     "cpu.cores": "6",
+     "planCode": "24sys01-v1",
+     "productFamily": "Dedicated Server",
+     "range": "soyoustart",
+     "setupFee": "33.2"
+    }
+   },
+   "attributesHistory": [
+    {
+     "at": 1700000000,
+     "key": "billing",
+     "value": "Monthly",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "cpu.cores",
+     "value": "6",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "planCode",
+     "value": "24sys01-v1",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "productFamily",
+     "value": "Dedicated Server",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "range",
+     "value": "soyoustart",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "setupFee",
+     "value": "33.2",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "planCode",
+     "value": "24sys01-v1-sgp",
+     "region": "sgp"
+    }
+   ],
+   "pricing": {
+    "onDemand": [],
+    "reserved": [
+     {
+      "region": "gra",
+      "regionCode": "gra",
+      "variant": {
+       "memory": "ram-32g-ecc-2666",
+       "storage": "softraid-2x4000sa",
+       "systemStorage": ""
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1mo",
+      "offeringClass": "Rental",
+      "purchaseOption": "All Upfront",
+      "hourly": 0,
+      "upfront": 35,
+      "since": 1710000000
+     },
+     {
+      "region": "gra",
+      "regionCode": "gra",
+      "variant": {
+       "memory": "ram-64g-ecc-2666",
+       "storage": "softraid-2x4000sa",
+       "systemStorage": ""
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1mo",
+      "offeringClass": "Rental",
+      "purchaseOption": "All Upfront",
+      "hourly": 0,
+      "upfront": 44.3,
+      "since": 1700000000
+     },
+     {
+      "region": "gra",
+      "regionCode": "gra",
+      "variant": {
+       "memory": "ram-32g-ecc-2666",
+       "storage": "softraid-2x4000sa",
+       "systemStorage": ""
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1yr",
+      "offeringClass": "Prepaid",
+      "purchaseOption": "All Upfront",
+      "hourly": 0,
+      "upfront": 378.48,
+      "since": 1700000000
+     },
+     {
+      "region": "gra",
+      "regionCode": "gra",
+      "variant": {
+       "memory": "ram-32g-ecc-2666",
+       "storage": "softraid-2x4000sa",
+       "systemStorage": ""
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "2yr",
+      "offeringClass": "Prepaid",
+      "purchaseOption": "All Upfront",
+      "hourly": 0,
+      "upfront": 756.96,
+      "since": 1700000000
+     },
+     {
+      "region": "sgp",
+      "regionCode": "sgp",
+      "variant": {
+       "memory": "ram-32g-ecc-2666",
+       "storage": "softraid-2x4000sa",
+       "systemStorage": ""
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1mo",
+      "offeringClass": "Rental",
+      "purchaseOption": "All Upfront",
+      "hourly": 0,
+      "upfront": 40,
+      "since": 1700000000
+     }
+    ]
+   },
+   "pricingHistory": {
+    "onDemand": [],
+    "reserved": [
+     {
+      "at": 1700000000,
+      "region": "gra",
+      "regionCode": "gra",
+      "variant": {
+       "memory": "ram-32g-ecc-2666",
+       "storage": "softraid-2x4000sa",
+       "systemStorage": ""
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1mo",
+      "offeringClass": "Rental",
+      "purchaseOption": "All Upfront",
+      "hourly": 0,
+      "upfront": 33.2
+     },
+     {
+      "at": 1700000000,
+      "region": "gra",
+      "regionCode": "gra",
+      "variant": {
+       "memory": "ram-64g-ecc-2666",
+       "storage": "softraid-2x4000sa",
+       "systemStorage": ""
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1mo",
+      "offeringClass": "Rental",
+      "purchaseOption": "All Upfront",
+      "hourly": 0,
+      "upfront": 44.3
+     },
+     {
+      "at": 1700000000,
+      "region": "gra",
+      "regionCode": "gra",
+      "variant": {
+       "memory": "ram-32g-ecc-2666",
+       "storage": "softraid-2x4000sa",
+       "systemStorage": ""
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1yr",
+      "offeringClass": "Prepaid",
+      "purchaseOption": "All Upfront",
+      "hourly": 0,
+      "upfront": 378.48
+     },
+     {
+      "at": 1700000000,
+      "region": "gra",
+      "regionCode": "gra",
+      "variant": {
+       "memory": "ram-32g-ecc-2666",
+       "storage": "softraid-2x4000sa",
+       "systemStorage": ""
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "2yr",
+      "offeringClass": "Prepaid",
+      "purchaseOption": "All Upfront",
+      "hourly": 0,
+      "upfront": 756.96
+     },
+     {
+      "at": 1700000000,
+      "region": "sgp",
+      "regionCode": "sgp",
+      "variant": {
+       "memory": "ram-32g-ecc-2666",
+       "storage": "softraid-2x4000sa",
+       "systemStorage": ""
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1mo",
+      "offeringClass": "Rental",
+      "purchaseOption": "All Upfront",
+      "hourly": 0,
+      "upfront": 40
+     },
+     {
+      "at": 1710000000,
+      "region": "gra",
+      "regionCode": "gra",
+      "variant": {
+       "memory": "ram-32g-ecc-2666",
+       "storage": "softraid-2x4000sa",
+       "systemStorage": ""
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1mo",
+      "offeringClass": "Rental",
+      "purchaseOption": "All Upfront",
+      "hourly": 0,
+      "upfront": 35
+     }
+    ]
+   }
+  }
+ }
+}

@@ -219,6 +219,168 @@ public final class BulkInstances {
         return new GCPPricingData(loadBundleAs("gcp", options, GCPPricingDataException::new));
     }
 
+    /**
+     * Downloads Hetzner's cloud server pricing data with the default options.
+     *
+     * @return the pricing data
+     * @throws HetznerPricingDataException if the pricing data cannot be downloaded
+     * @throws IOException if the cache cannot be read or written, or the bundle is corrupt
+     * @see #downloadHetznerPricingData(HetznerPricingDataOptions)
+     */
+    public static HetznerPricingData downloadHetznerPricingData() throws IOException {
+        return downloadHetznerPricingData(HetznerPricingDataOptions.builder().build());
+    }
+
+    /**
+     * Downloads Hetzner's cloud server pricing data: hourly prices and monthly caps per location, for each server
+     * type.
+     * Caching and the offline fallback work as for {@link #downloadAwsPricingData(String, AWSPricingDataOptions)}.
+     *
+     * @param options the options
+     * @return the pricing data
+     * @throws HetznerPricingDataException if the pricing data cannot be downloaded
+     * @throws IOException if the cache cannot be read or written, or the bundle is corrupt
+     *     ({@link InterruptedIOException} if the thread is interrupted)
+     */
+    public static HetznerPricingData downloadHetznerPricingData(HetznerPricingDataOptions options) throws IOException {
+        return new HetznerPricingData(loadBundleAs("hetzner", options, HetznerPricingDataException::new));
+    }
+
+    /**
+     * Downloads Hetzner's Server Auction pricing data with the default options.
+     *
+     * @return the pricing data
+     * @throws HetznerAuctionPricingDataException if the pricing data cannot be downloaded
+     * @throws IOException if the cache cannot be read or written, or the bundle is corrupt
+     * @see #downloadHetznerAuctionPricingData(HetznerAuctionPricingDataOptions)
+     */
+    public static HetznerAuctionPricingData downloadHetznerAuctionPricingData() throws IOException {
+        return downloadHetznerAuctionPricingData(HetznerAuctionPricingDataOptions.builder().build());
+    }
+
+    /**
+     * Downloads Hetzner's Server Auction pricing data: the hourly price and monthly cap of each server for sale,
+     * by listing id.
+     * Caching and the offline fallback work as for {@link #downloadAwsPricingData(String, AWSPricingDataOptions)}.
+     *
+     * @param options the options
+     * @return the pricing data
+     * @throws HetznerAuctionPricingDataException if the pricing data cannot be downloaded
+     * @throws IOException if the cache cannot be read or written, or the bundle is corrupt
+     *     ({@link InterruptedIOException} if the thread is interrupted)
+     */
+    public static HetznerAuctionPricingData downloadHetznerAuctionPricingData(HetznerAuctionPricingDataOptions options) throws IOException {
+        return new HetznerAuctionPricingData(loadBundleAs("hetznerauction", options, HetznerAuctionPricingDataException::new));
+    }
+
+    /**
+     * Downloads OVHcloud's Public Cloud pricing data with the default options.
+     *
+     * @return the pricing data
+     * @throws OVHPricingDataException if the pricing data cannot be downloaded
+     * @throws IOException if the cache cannot be read or written, or the bundle is corrupt
+     * @see #downloadOvhPricingData(OVHPricingDataOptions)
+     */
+    public static OVHPricingData downloadOvhPricingData() throws IOException {
+        return downloadOvhPricingData(OVHPricingDataOptions.builder().build());
+    }
+
+    /**
+     * Downloads OVHcloud's Public Cloud pricing data: hourly and monthly prices per pricing zone, for each
+     * instance flavor.
+     * Caching and the offline fallback work as for {@link #downloadAwsPricingData(String, AWSPricingDataOptions)}.
+     *
+     * @param options the options
+     * @return the pricing data
+     * @throws OVHPricingDataException if the pricing data cannot be downloaded
+     * @throws IOException if the cache cannot be read or written, or the bundle is corrupt
+     *     ({@link InterruptedIOException} if the thread is interrupted)
+     */
+    public static OVHPricingData downloadOvhPricingData(OVHPricingDataOptions options) throws IOException {
+        return new OVHPricingData(loadBundleAs("ovh", options, OVHPricingDataException::new));
+    }
+
+    /**
+     * Downloads OVHcloud's eco dedicated server pricing data with the default options.
+     *
+     * @return the pricing data
+     * @throws OVHEcoPricingDataException if the pricing data cannot be downloaded
+     * @throws IOException if the cache cannot be read or written, or the bundle is corrupt
+     * @see #downloadOvhEcoPricingData(OVHEcoPricingDataOptions)
+     */
+    public static OVHEcoPricingData downloadOvhEcoPricingData() throws IOException {
+        return downloadOvhEcoPricingData(OVHEcoPricingDataOptions.builder().build());
+    }
+
+    /**
+     * Downloads OVHcloud's eco dedicated server pricing data: monthly rent and prepaid prices per data center and
+     * configuration, for Kimsufi, So you Start, Rise and Advance servers.
+     * Caching and the offline fallback work as for {@link #downloadAwsPricingData(String, AWSPricingDataOptions)}.
+     *
+     * @param options the options
+     * @return the pricing data
+     * @throws OVHEcoPricingDataException if the pricing data cannot be downloaded
+     * @throws IOException if the cache cannot be read or written, or the bundle is corrupt
+     *     ({@link InterruptedIOException} if the thread is interrupted)
+     */
+    public static OVHEcoPricingData downloadOvhEcoPricingData(OVHEcoPricingDataOptions options) throws IOException {
+        return new OVHEcoPricingData(loadBundleAs("ovheco", options, OVHEcoPricingDataException::new));
+    }
+
+    /**
+     * Downloads Oracle Cloud's compute pricing data with the default options.
+     *
+     * @return the pricing data
+     * @throws OraclePricingDataException if the pricing data cannot be downloaded
+     * @throws IOException if the cache cannot be read or written, or the bundle is corrupt
+     * @see #downloadOraclePricingData(OraclePricingDataOptions)
+     */
+    public static OraclePricingData downloadOraclePricingData() throws IOException {
+        return downloadOraclePricingData(OraclePricingDataOptions.builder().build());
+    }
+
+    /**
+     * Downloads Oracle Cloud's compute pricing data: hourly prices for each VM and bare metal shape, the same in
+     * every commercial region.
+     * Caching and the offline fallback work as for {@link #downloadAwsPricingData(String, AWSPricingDataOptions)}.
+     *
+     * @param options the options
+     * @return the pricing data
+     * @throws OraclePricingDataException if the pricing data cannot be downloaded
+     * @throws IOException if the cache cannot be read or written, or the bundle is corrupt
+     *     ({@link InterruptedIOException} if the thread is interrupted)
+     */
+    public static OraclePricingData downloadOraclePricingData(OraclePricingDataOptions options) throws IOException {
+        return new OraclePricingData(loadBundleAs("oracle", options, OraclePricingDataException::new));
+    }
+
+    /**
+     * Downloads IBM Cloud's Virtual Server for VPC pricing data with the default options.
+     *
+     * @return the pricing data
+     * @throws IBMPricingDataException if the pricing data cannot be downloaded
+     * @throws IOException if the cache cannot be read or written, or the bundle is corrupt
+     * @see #downloadIbmPricingData(IBMPricingDataOptions)
+     */
+    public static IBMPricingData downloadIbmPricingData() throws IOException {
+        return downloadIbmPricingData(IBMPricingDataOptions.builder().build());
+    }
+
+    /**
+     * Downloads IBM Cloud's Virtual Server for VPC pricing data: on-demand, Spot, burstable and reserved prices
+     * per region, for each profile.
+     * Caching and the offline fallback work as for {@link #downloadAwsPricingData(String, AWSPricingDataOptions)}.
+     *
+     * @param options the options
+     * @return the pricing data
+     * @throws IBMPricingDataException if the pricing data cannot be downloaded
+     * @throws IOException if the cache cannot be read or written, or the bundle is corrupt
+     *     ({@link InterruptedIOException} if the thread is interrupted)
+     */
+    public static IBMPricingData downloadIbmPricingData(IBMPricingDataOptions options) throws IOException {
+        return new IBMPricingData(loadBundleAs("ibm", options, IBMPricingDataException::new));
+    }
+
     /** {@link #loadBundle}, failing with the provider's own exception class. */
     private static BundleParser.Bundle loadBundleAs(
             String platform, AWSPricingDataOptions options,

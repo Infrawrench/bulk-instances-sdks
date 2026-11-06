@@ -2,7 +2,8 @@
 
 fixture/bundle-<NAME>.json(.xz) and fixture/latest are an EC2 bundle. fixture/rds-bundle-<NAME>.json(.xz) and
 fixture/rds-latest are an RDS one, which names its own variant keys. fixture/runpod-*, fixture/alibaba-*,
-fixture/azure-* and fixture/gcp-* are bundles for other clouds. fixture/api/<platform>/<instance>.json is each
+fixture/azure-*, fixture/gcp-*, fixture/hetzner-*, fixture/hetznerauction-*, fixture/ovh-*, fixture/ovheco-*, fixture/oracle-* and
+fixture/ibm-* are bundles for other clouds. fixture/api/<platform>/<instance>.json is each
 instance, of every platform the Infrawrench API serves, as it serves it from `/api/v1/aws-bulk-pricing/<platform>/<instance>`.
 """
 import json, lzma, os, sys
@@ -395,4 +396,204 @@ gcp = {
     },
 }
 write("gcp-", gcp)
+
+# Hetzner cloud servers: location names as regions, with or without the primary IPv4 as the variant, the monthly cap as a
+# Postpaid term (hourly 0, upfront the cap), and a server type with a different price in one location.
+table = []
+FSN, ASH = s("fsn1"), s("ash")
+IPV6, IPV4 = 0, 1
+CAP = 0
+hetzner = {
+    "offer": "HetznerCloud",
+    "compression_table": table,
+    "snapshots": [t1, t2],
+    "regions": [
+        [ASH, [[s("country"), s("us")], [s("locationType"), s("Hetzner Location")], [s("name"), s("Ashburn, VA")], [s("regionCode"), ASH]]],
+        [FSN, [[s("country"), s("de")], [s("locationType"), s("Hetzner Location")], [s("name"), s("Falkenstein")], [s("regionCode"), FSN]]],
+    ],
+    "variant_keys": ["ipv4"],
+    "variants": [[s("IPv6 only")], [s("Primary IPv4")]],
+    "reserved_terms": [[s("1mo"), s("Monthly Cap"), s("Postpaid")]],
+    "instances": {
+        "cx23": [
+            [[s("architecture"), s("x86_64")], [s("category"), s("Cost-Optimized")], [s("cores"), s("2")], [s("memoryInGb"), s("4")], [s("name"), s("CX23")], [s("productFamily"), s("Cloud Server")]],
+            [],
+            0.0104,
+            [[t1, FSN, IPV6], [t1, FSN, IPV4, 0.0114], [t1, ASH, IPV6, 0.0129], [t2, FSN, IPV4, 0.012]],
+            [[t1, FSN, IPV6, CAP, 0, 6.49], [t1, FSN, IPV4, CAP, 0, 7.09], [t1, ASH, IPV6, CAP, 0, 8.09]],
+            t1,
+            None,
+        ],
+    },
+}
+write("hetzner-", hetzner)
+
+# Hetzner Server Auction: listing ids as instances, one price cut, and a listing that sold.
+table = []
+FSN = s("fsn1")
+IPV6, IPV4 = 0, 1
+CAP = 0
+hetznerauction = {
+    "offer": "HetznerAuction",
+    "compression_table": table,
+    "snapshots": [t1, t2, t3],
+    "regions": [[FSN, [[s("locationType"), s("Hetzner Location")], [s("name"), s("Falkenstein")], [s("regionCode"), FSN]]]],
+    "variant_keys": ["ipv4"],
+    "variants": [[s("IPv6 only")], [s("Primary IPv4")]],
+    "reserved_terms": [[s("1mo"), s("Monthly Cap"), s("Postpaid")]],
+    "instances": {
+        "3107671": [
+            [[s("CPU.Name"), s("Intel Core i7-7700")], [s("RAM.Size"), s("64")], [s("datacenter"), s("FSN1-DC4")], [s("fixedPrice"), s("false")], [s("productFamily"), s("Dedicated Server")]],
+            [],
+            0.1362,
+            [[t1, FSN, IPV6], [t1, FSN, IPV4, 0.1392], [t2, FSN, IPV6, 0.13]],
+            [[t1, FSN, IPV6, CAP, 0, 85], [t1, FSN, IPV4, CAP, 0, 86.9], [t2, FSN, IPV6, CAP, 0, 81]],
+            t1,
+            None,
+        ],
+        "3082226": [
+            [[s("CPU.Name"), s("AMD Ryzen 5 3600")], [s("RAM.Size"), s("64")], [s("datacenter"), s("FSN1-DC21")], [s("fixedPrice"), s("true")], [s("productFamily"), s("Dedicated Server")]],
+            [],
+            0.2099,
+            [[t1, FSN, IPV6], [t3, FSN, IPV6, None]],
+            [[t1, FSN, IPV6, CAP, 0, 131], [t3, FSN, IPV6, CAP, None]],
+            t1,
+            t3,
+        ],
+    },
+}
+write("hetznerauction-", hetznerauction)
+
+# OVHcloud Public Cloud: pricing zones as regions, operatingSystem as the variant, global attributes, and monthly terms
+# both postpaid and paid at the start of the month.
+table = []
+WORLD, AF, US = s("world"), s("lz-af"), s("us")
+LIN, WIN = 0, 1
+POST, UP = 0, 1
+ovh = {
+    "offer": "OVHPublicCloud",
+    "compression_table": table,
+    "snapshots": [t1, t2],
+    "regions": [
+        [AF, [[s("locationType"), s("OVHcloud Pricing Zone")], [s("name"), s("Local Zones in Africa")], [s("regionCode"), AF]]],
+        [US, [[s("locationType"), s("OVHcloud Pricing Zone")], [s("name"), s("OVHcloud US regions")], [s("regionCode"), US]]],
+        [WORLD, [[s("locationType"), s("OVHcloud Pricing Zone")], [s("name"), s("Standard regions")], [s("regionCode"), WORLD]]],
+    ],
+    "variant_keys": ["operatingSystem"],
+    "variants": [[s("Linux")], [s("Windows")]],
+    "reserved_terms": [[s("1mo"), s("Monthly"), s("Postpaid")], [s("1mo"), s("Monthly"), s("All Upfront")]],
+    "instances": {
+        "b2-7": [
+            [[s("brick"), s("guaranteed-resources")], [s("cpu.cores"), s("2")], [s("memory.size"), s("7")], [s("productFamily"), s("Public Cloud Instance")]],
+            [],
+            0.0837,
+            [[t1, WORLD, LIN], [t1, WORLD, WIN, 0.2251], [t1, AF, LIN, 0.105], [t1, US, LIN, 0.0879], [t2, AF, LIN, 0.11]],
+            [[t1, WORLD, LIN, POST, 0, 50.5], [t1, US, LIN, UP, 0, 52]],
+            t1,
+            None,
+        ],
+    },
+}
+write("ovh-", ovh)
+
+# OVHcloud eco: data centers as regions, three variant keys of which the last is often empty, a regional attribute,
+# and no on-demand rows at all: these servers are rented by the month, so the rent is a term, and the base price is 0.
+table = []
+GRA, SGP = s("gra"), s("sgp")
+EMPTY = s("")
+RAM32, RAM64 = s("ram-32g-ecc-2666"), s("ram-64g-ecc-2666")
+RAID = s("softraid-2x4000sa")
+SMALL, BIG = 0, 1
+RENT, YEAR, TWO = 0, 1, 2
+ovheco = {
+    "offer": "OVHEco",
+    "compression_table": table,
+    "snapshots": [t1, t2],
+    "regions": [
+        [GRA, [[s("locationType"), s("OVHcloud Data Center")], [s("name"), s("Gravelines")], [s("regionCode"), GRA]]],
+        [SGP, [[s("locationType"), s("OVHcloud Data Center")], [s("name"), s("Singapore")], [s("regionCode"), SGP]]],
+    ],
+    "variant_keys": ["memory", "storage", "systemStorage"],
+    "variants": [[RAM32, RAID, EMPTY], [RAM64, RAID, EMPTY]],
+    "reserved_terms": [[s("1mo"), s("Rental"), s("All Upfront")], [s("1yr"), s("Prepaid"), s("All Upfront")], [s("2yr"), s("Prepaid"), s("All Upfront")]],
+    "instances": {
+        "24sys01": [
+            [[s("billing"), s("Monthly")], [s("cpu.cores"), s("6")], [s("planCode"), s("24sys01-v1")], [s("productFamily"), s("Dedicated Server")], [s("range"), s("soyoustart")], [s("setupFee"), s("33.2")]],
+            [[t1, s("planCode"), s("24sys01-v1-sgp"), SGP]],
+            0,
+            [],
+            [[t1, GRA, SMALL, RENT, 0, 33.2], [t1, GRA, BIG, RENT, 0, 44.3], [t1, GRA, SMALL, YEAR, 0, 378.48], [t1, GRA, SMALL, TWO, 0, 756.96],
+             [t1, SGP, SMALL, RENT, 0, 40], [t2, GRA, SMALL, RENT, 0, 35]],
+            t1,
+            None,
+        ],
+    },
+}
+write("ovheco-", ovheco)
+
+# Oracle: one global region, operatingSystem as the variant, a flexible size with its rates as attributes, a GPU shape.
+table = []
+GLOBAL = s("global")
+LIN, WIN = 0, 1
+oracle = {
+    "offer": "OracleCompute",
+    "compression_table": table,
+    "snapshots": [t1, t2],
+    "regions": [[GLOBAL, [[s("locationType"), s("Global")], [s("regionCode"), GLOBAL]]]],
+    "variant_keys": ["operatingSystem"],
+    "variants": [[s("Linux")], [s("Windows")]],
+    "reserved_terms": [],
+    "instances": {
+        "VM.Standard.E5.Flex-2-16": [
+            [[s("flexible"), s("true")], [s("memoryGbPrice"), s("0.002")], [s("memoryInGb"), s("16")], [s("ocpuPrice"), s("0.03")], [s("ocpus"), s("2")], [s("shape"), s("VM.Standard.E5.Flex")]],
+            [],
+            0.092,
+            [[t1, GLOBAL, LIN], [t1, GLOBAL, WIN, 0.276]],
+            [],
+            t1,
+            None,
+        ],
+        "BM.GPU.H100.8": [
+            [[s("gpuCount"), s("8")], [s("memoryInGb"), s("2048")], [s("ocpus"), s("112")], [s("shape"), s("BM.GPU.H100.8")]],
+            [],
+            80,
+            [[t1, GLOBAL, LIN], [t2, GLOBAL, LIN, 72]],
+            [],
+            t1,
+            None,
+        ],
+    },
+}
+write("oracle-", oracle)
+
+# IBM: regions, capacityType as the variant (Spot and burstable beside on-demand), reservations with an hourly rate and no
+# upfront price.
+table = []
+DAL, SYD = s("us-south"), s("au-syd")
+OD, SPOT, BURST = 0, 1, 2
+Y1, Y3 = 0, 1
+ibm = {
+    "offer": "IBMVPC",
+    "compression_table": table,
+    "snapshots": [t1, t2],
+    "regions": [
+        [SYD, [[s("locationType"), s("IBM Cloud Region")], [s("name"), s("Sydney")], [s("regionCode"), SYD]]],
+        [DAL, [[s("locationType"), s("IBM Cloud Region")], [s("name"), s("Dallas")], [s("regionCode"), DAL]]],
+    ],
+    "variant_keys": ["capacityType"],
+    "variants": [[s("On-Demand")], [s("Spot")], [s("Burstable 50%")]],
+    "reserved_terms": [[s("1yr"), s("Reserved"), s("No Upfront")], [s("3yr"), s("Reserved"), s("No Upfront")]],
+    "instances": {
+        "bxf-16x64": [
+            [[s("cpu"), s("16")], [s("displayName"), s("Balanced Flex 16x64")], [s("family"), s("balanced")], [s("productFamily"), s("Virtual Server for VPC")], [s("ram"), s("64")]],
+            [],
+            0.941,
+            [[t1, DAL, OD], [t1, DAL, SPOT, 0.235054], [t1, DAL, BURST, 0.63974], [t1, SYD, OD, 1.148], [t2, DAL, OD, 0.95]],
+            [[t1, DAL, OD, Y1, 0.611], [t1, DAL, OD, Y3, 0.376]],
+            t1,
+            None,
+        ],
+    },
+}
+write("ibm-", ibm)
 print(out)

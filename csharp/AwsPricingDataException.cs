@@ -6,7 +6,8 @@ namespace Infrawrench.BulkInstances;
 /// Thrown when the pricing data cannot be downloaded. <see cref="Status"/> is the HTTP status, if there was a response.
 /// </summary>
 /// <remarks>
-/// RunPod's, Alibaba Cloud's, Azure's and Google Cloud's methods throw the subclasses
+/// RunPod's, Alibaba Cloud's, Azure's, Google Cloud's, Hetzner's, OVHcloud's, Oracle Cloud's and IBM Cloud's
+/// methods throw the subclasses
 /// <see cref="RunpodPricingDataException"/>, <see cref="AlibabaPricingDataException"/>,
 /// <see cref="AzurePricingDataException"/> and <see cref="GcpPricingDataException"/> instead.
 /// </remarks>

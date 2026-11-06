@@ -14,7 +14,7 @@ NAME = open(os.path.join(FIX, "latest")).read().strip()
 REFERENCE = json.load(open(os.path.join(here, "reference.json"), encoding="utf-8"))
 REFERENCE_RDS = json.load(open(os.path.join(here, "reference-rds.json"), encoding="utf-8"))
 # Bundles for other clouds, loaded by platform name with the same functions.
-OTHER = {p: json.load(open(os.path.join(here, f"reference-{p}.json"), encoding="utf-8")) for p in ["runpod", "alibaba", "azure", "gcp"]}
+OTHER = {p: json.load(open(os.path.join(here, f"reference-{p}.json"), encoding="utf-8")) for p in ["runpod", "alibaba", "azure", "gcp", "hetzner", "hetznerauction", "ovh", "ovheco", "oracle", "ibm"]}
 # The other clouds the Infrawrench API serves single instances for (fixture/api/<platform>/).
 API_OTHER = {p: OTHER[p] for p in ["runpod", "alibaba"]}
 

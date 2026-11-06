@@ -801,6 +801,368 @@ impl fmt::Debug for GcpInstance {
     }
 }
 
+/// Hetzner's cloud server pricing data, keyed by server type (`cx23`).
+///
+/// It decodes the same way as [`AwsPricingData`], and derefs to it for everything but
+/// [`get`](Self::get); see the README for what Hetzner's data holds.
+pub struct HetznerPricingData {
+    data: AwsPricingData,
+    instances: Box<[OnceLock<HetznerInstance>]>,
+}
+
+impl HetznerPricingData {
+    pub(crate) fn new(data: AwsPricingData) -> Self {
+        let instances = data.instances.iter().map(|_| OnceLock::new()).collect();
+        Self { data, instances }
+    }
+
+    /// The server type with this name, or `None` if the bundle has never listed it.
+    pub fn get(&self, server_type: &str) -> Option<&HetznerInstance> {
+        let &index = self.data.shared.raw.instances.index.get(server_type)?;
+        Some(self.instances[index].get_or_init(|| {
+            HetznerInstance(AwsInstance::new(Arc::clone(&self.data.shared), index))
+        }))
+    }
+}
+
+impl Deref for HetznerPricingData {
+    type Target = AwsPricingData;
+
+    fn deref(&self) -> &AwsPricingData {
+        &self.data
+    }
+}
+
+impl fmt::Debug for HetznerPricingData {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("HetznerPricingData")
+            .field("instances", &self.instances.len())
+            .finish_non_exhaustive()
+    }
+}
+
+/// One Hetzner cloud server type. It derefs to [`AwsInstance`], whose getters it has.
+pub struct HetznerInstance(AwsInstance);
+
+impl Deref for HetznerInstance {
+    type Target = AwsInstance;
+
+    fn deref(&self) -> &AwsInstance {
+        &self.0
+    }
+}
+
+impl fmt::Debug for HetznerInstance {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("HetznerInstance")
+            .field("name", &self.name())
+            .finish_non_exhaustive()
+    }
+}
+
+/// Hetzner's Server Auction pricing data, keyed by listing (`3107671`).
+///
+/// It decodes the same way as [`AwsPricingData`], and derefs to it for everything but
+/// [`get`](Self::get); see the README for what Hetzner's data holds.
+pub struct HetznerAuctionPricingData {
+    data: AwsPricingData,
+    instances: Box<[OnceLock<HetznerAuctionInstance>]>,
+}
+
+impl HetznerAuctionPricingData {
+    pub(crate) fn new(data: AwsPricingData) -> Self {
+        let instances = data.instances.iter().map(|_| OnceLock::new()).collect();
+        Self { data, instances }
+    }
+
+    /// The listing with this name, or `None` if the bundle has never listed it.
+    pub fn get(&self, listing_id: &str) -> Option<&HetznerAuctionInstance> {
+        let &index = self.data.shared.raw.instances.index.get(listing_id)?;
+        Some(self.instances[index].get_or_init(|| {
+            HetznerAuctionInstance(AwsInstance::new(Arc::clone(&self.data.shared), index))
+        }))
+    }
+}
+
+impl Deref for HetznerAuctionPricingData {
+    type Target = AwsPricingData;
+
+    fn deref(&self) -> &AwsPricingData {
+        &self.data
+    }
+}
+
+impl fmt::Debug for HetznerAuctionPricingData {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("HetznerAuctionPricingData")
+            .field("instances", &self.instances.len())
+            .finish_non_exhaustive()
+    }
+}
+
+/// One Hetzner Server Auction listing. It derefs to [`AwsInstance`], whose getters it has.
+pub struct HetznerAuctionInstance(AwsInstance);
+
+impl Deref for HetznerAuctionInstance {
+    type Target = AwsInstance;
+
+    fn deref(&self) -> &AwsInstance {
+        &self.0
+    }
+}
+
+impl fmt::Debug for HetznerAuctionInstance {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("HetznerAuctionInstance")
+            .field("name", &self.name())
+            .finish_non_exhaustive()
+    }
+}
+
+/// OVHcloud's Public Cloud pricing data, keyed by flavor (`b3-8`).
+///
+/// It decodes the same way as [`AwsPricingData`], and derefs to it for everything but
+/// [`get`](Self::get); see the README for what OVHcloud's data holds.
+pub struct OvhPricingData {
+    data: AwsPricingData,
+    instances: Box<[OnceLock<OvhInstance>]>,
+}
+
+impl OvhPricingData {
+    pub(crate) fn new(data: AwsPricingData) -> Self {
+        let instances = data.instances.iter().map(|_| OnceLock::new()).collect();
+        Self { data, instances }
+    }
+
+    /// The flavor with this name, or `None` if the bundle has never listed it.
+    pub fn get(&self, flavor: &str) -> Option<&OvhInstance> {
+        let &index = self.data.shared.raw.instances.index.get(flavor)?;
+        Some(
+            self.instances[index].get_or_init(|| {
+                OvhInstance(AwsInstance::new(Arc::clone(&self.data.shared), index))
+            }),
+        )
+    }
+}
+
+impl Deref for OvhPricingData {
+    type Target = AwsPricingData;
+
+    fn deref(&self) -> &AwsPricingData {
+        &self.data
+    }
+}
+
+impl fmt::Debug for OvhPricingData {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("OvhPricingData")
+            .field("instances", &self.instances.len())
+            .finish_non_exhaustive()
+    }
+}
+
+/// One OVHcloud Public Cloud flavor. It derefs to [`AwsInstance`], whose getters it has.
+pub struct OvhInstance(AwsInstance);
+
+impl Deref for OvhInstance {
+    type Target = AwsInstance;
+
+    fn deref(&self) -> &AwsInstance {
+        &self.0
+    }
+}
+
+impl fmt::Debug for OvhInstance {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("OvhInstance")
+            .field("name", &self.name())
+            .finish_non_exhaustive()
+    }
+}
+
+/// OVHcloud's eco dedicated server pricing data, keyed by server (`24sys01`).
+///
+/// It decodes the same way as [`AwsPricingData`], and derefs to it for everything but
+/// [`get`](Self::get); see the README for what OVHcloud's data holds.
+pub struct OvhEcoPricingData {
+    data: AwsPricingData,
+    instances: Box<[OnceLock<OvhEcoInstance>]>,
+}
+
+impl OvhEcoPricingData {
+    pub(crate) fn new(data: AwsPricingData) -> Self {
+        let instances = data.instances.iter().map(|_| OnceLock::new()).collect();
+        Self { data, instances }
+    }
+
+    /// The server with this name, or `None` if the bundle has never listed it.
+    pub fn get(&self, server: &str) -> Option<&OvhEcoInstance> {
+        let &index = self.data.shared.raw.instances.index.get(server)?;
+        Some(
+            self.instances[index].get_or_init(|| {
+                OvhEcoInstance(AwsInstance::new(Arc::clone(&self.data.shared), index))
+            }),
+        )
+    }
+}
+
+impl Deref for OvhEcoPricingData {
+    type Target = AwsPricingData;
+
+    fn deref(&self) -> &AwsPricingData {
+        &self.data
+    }
+}
+
+impl fmt::Debug for OvhEcoPricingData {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("OvhEcoPricingData")
+            .field("instances", &self.instances.len())
+            .finish_non_exhaustive()
+    }
+}
+
+/// One OVHcloud eco dedicated server. It derefs to [`AwsInstance`], whose getters it has.
+pub struct OvhEcoInstance(AwsInstance);
+
+impl Deref for OvhEcoInstance {
+    type Target = AwsInstance;
+
+    fn deref(&self) -> &AwsInstance {
+        &self.0
+    }
+}
+
+impl fmt::Debug for OvhEcoInstance {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("OvhEcoInstance")
+            .field("name", &self.name())
+            .finish_non_exhaustive()
+    }
+}
+
+/// Oracle Cloud's compute pricing data, keyed by shape (`VM.Standard.E5.Flex-2-16`).
+///
+/// It decodes the same way as [`AwsPricingData`], and derefs to it for everything but
+/// [`get`](Self::get); see the README for what Oracle Cloud's data holds.
+pub struct OraclePricingData {
+    data: AwsPricingData,
+    instances: Box<[OnceLock<OracleInstance>]>,
+}
+
+impl OraclePricingData {
+    pub(crate) fn new(data: AwsPricingData) -> Self {
+        let instances = data.instances.iter().map(|_| OnceLock::new()).collect();
+        Self { data, instances }
+    }
+
+    /// The shape with this name, or `None` if the bundle has never listed it.
+    pub fn get(&self, shape: &str) -> Option<&OracleInstance> {
+        let &index = self.data.shared.raw.instances.index.get(shape)?;
+        Some(
+            self.instances[index].get_or_init(|| {
+                OracleInstance(AwsInstance::new(Arc::clone(&self.data.shared), index))
+            }),
+        )
+    }
+}
+
+impl Deref for OraclePricingData {
+    type Target = AwsPricingData;
+
+    fn deref(&self) -> &AwsPricingData {
+        &self.data
+    }
+}
+
+impl fmt::Debug for OraclePricingData {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("OraclePricingData")
+            .field("instances", &self.instances.len())
+            .finish_non_exhaustive()
+    }
+}
+
+/// One Oracle Cloud compute shape. It derefs to [`AwsInstance`], whose getters it has.
+pub struct OracleInstance(AwsInstance);
+
+impl Deref for OracleInstance {
+    type Target = AwsInstance;
+
+    fn deref(&self) -> &AwsInstance {
+        &self.0
+    }
+}
+
+impl fmt::Debug for OracleInstance {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("OracleInstance")
+            .field("name", &self.name())
+            .finish_non_exhaustive()
+    }
+}
+
+/// IBM Cloud's Virtual Server for VPC pricing data, keyed by profile (`bx3d-2x10`).
+///
+/// It decodes the same way as [`AwsPricingData`], and derefs to it for everything but
+/// [`get`](Self::get); see the README for what IBM Cloud's data holds.
+pub struct IbmPricingData {
+    data: AwsPricingData,
+    instances: Box<[OnceLock<IbmInstance>]>,
+}
+
+impl IbmPricingData {
+    pub(crate) fn new(data: AwsPricingData) -> Self {
+        let instances = data.instances.iter().map(|_| OnceLock::new()).collect();
+        Self { data, instances }
+    }
+
+    /// The profile with this name, or `None` if the bundle has never listed it.
+    pub fn get(&self, profile: &str) -> Option<&IbmInstance> {
+        let &index = self.data.shared.raw.instances.index.get(profile)?;
+        Some(
+            self.instances[index].get_or_init(|| {
+                IbmInstance(AwsInstance::new(Arc::clone(&self.data.shared), index))
+            }),
+        )
+    }
+}
+
+impl Deref for IbmPricingData {
+    type Target = AwsPricingData;
+
+    fn deref(&self) -> &AwsPricingData {
+        &self.data
+    }
+}
+
+impl fmt::Debug for IbmPricingData {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("IbmPricingData")
+            .field("instances", &self.instances.len())
+            .finish_non_exhaustive()
+    }
+}
+
+/// One IBM Cloud Virtual Server for VPC profile. It derefs to [`AwsInstance`], whose getters it has.
+pub struct IbmInstance(AwsInstance);
+
+impl Deref for IbmInstance {
+    type Target = AwsInstance;
+
+    fn deref(&self) -> &AwsInstance {
+        &self.0
+    }
+}
+
+impl fmt::Debug for IbmInstance {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("IbmInstance")
+            .field("name", &self.name())
+            .finish_non_exhaustive()
+    }
+}
+
 /// The last change per key, keyed in order of first appearance.
 fn latest<'a, T, K: Hash + Eq>(changes: &'a [T], key: impl Fn(&'a T) -> K) -> Vec<&'a T> {
     let mut out: Vec<&T> = Vec::new();
@@ -829,4 +1191,16 @@ const _: () = {
     assert_send_sync::<AzureInstance>();
     assert_send_sync::<GcpPricingData>();
     assert_send_sync::<GcpInstance>();
+    assert_send_sync::<HetznerPricingData>();
+    assert_send_sync::<HetznerInstance>();
+    assert_send_sync::<HetznerAuctionPricingData>();
+    assert_send_sync::<HetznerAuctionInstance>();
+    assert_send_sync::<OvhPricingData>();
+    assert_send_sync::<OvhInstance>();
+    assert_send_sync::<OvhEcoPricingData>();
+    assert_send_sync::<OvhEcoInstance>();
+    assert_send_sync::<OraclePricingData>();
+    assert_send_sync::<OracleInstance>();
+    assert_send_sync::<IbmPricingData>();
+    assert_send_sync::<IbmInstance>();
 };

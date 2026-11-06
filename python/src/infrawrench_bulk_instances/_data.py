@@ -536,3 +536,111 @@ class GCPPricingData(AWSPricingData):
 
 class GCPInstance(AWSInstance):
     """One Google Cloud Compute Engine machine type."""
+
+
+class HetznerPricingData(AWSPricingData):
+    """Hetzner's cloud server pricing data, keyed by server type (``cx23``).
+
+    It decodes the same way as :class:`AWSPricingData`; see the README for what Hetzner's data holds.
+    """
+
+    def get(self, instance_type: str) -> HetznerInstance | None:
+        """The server type with this name, or ``None`` if the bundle has never listed it."""
+        return cast("HetznerInstance | None", super().get(instance_type))
+
+    def _new_instance(self, name: str, raw: Sequence[Any]) -> HetznerInstance:
+        return HetznerInstance(name, raw, self)
+
+
+class HetznerInstance(AWSInstance):
+    """One Hetzner cloud server type."""
+
+
+class HetznerAuctionPricingData(AWSPricingData):
+    """Hetzner's Server Auction pricing data, keyed by listing (``3107671``).
+
+    It decodes the same way as :class:`AWSPricingData`; see the README for what Hetzner's data holds.
+    """
+
+    def get(self, instance_type: str) -> HetznerAuctionInstance | None:
+        """The listing with this name, or ``None`` if the bundle has never listed it."""
+        return cast("HetznerAuctionInstance | None", super().get(instance_type))
+
+    def _new_instance(self, name: str, raw: Sequence[Any]) -> HetznerAuctionInstance:
+        return HetznerAuctionInstance(name, raw, self)
+
+
+class HetznerAuctionInstance(AWSInstance):
+    """One Hetzner Server Auction listing."""
+
+
+class OVHPricingData(AWSPricingData):
+    """OVHcloud's Public Cloud pricing data, keyed by flavor (``b3-8``).
+
+    It decodes the same way as :class:`AWSPricingData`; see the README for what OVHcloud's data holds.
+    """
+
+    def get(self, instance_type: str) -> OVHInstance | None:
+        """The flavor with this name, or ``None`` if the bundle has never listed it."""
+        return cast("OVHInstance | None", super().get(instance_type))
+
+    def _new_instance(self, name: str, raw: Sequence[Any]) -> OVHInstance:
+        return OVHInstance(name, raw, self)
+
+
+class OVHInstance(AWSInstance):
+    """One OVHcloud Public Cloud flavor."""
+
+
+class OVHEcoPricingData(AWSPricingData):
+    """OVHcloud's eco dedicated server pricing data, keyed by server (``24sys01``).
+
+    It decodes the same way as :class:`AWSPricingData`; see the README for what OVHcloud's data holds.
+    """
+
+    def get(self, instance_type: str) -> OVHEcoInstance | None:
+        """The server with this name, or ``None`` if the bundle has never listed it."""
+        return cast("OVHEcoInstance | None", super().get(instance_type))
+
+    def _new_instance(self, name: str, raw: Sequence[Any]) -> OVHEcoInstance:
+        return OVHEcoInstance(name, raw, self)
+
+
+class OVHEcoInstance(AWSInstance):
+    """One OVHcloud eco dedicated server."""
+
+
+class OraclePricingData(AWSPricingData):
+    """Oracle Cloud's compute pricing data, keyed by shape (``VM.Standard.E5.Flex-2-16``).
+
+    It decodes the same way as :class:`AWSPricingData`; see the README for what Oracle Cloud's data holds.
+    """
+
+    def get(self, instance_type: str) -> OracleInstance | None:
+        """The shape with this name, or ``None`` if the bundle has never listed it."""
+        return cast("OracleInstance | None", super().get(instance_type))
+
+    def _new_instance(self, name: str, raw: Sequence[Any]) -> OracleInstance:
+        return OracleInstance(name, raw, self)
+
+
+class OracleInstance(AWSInstance):
+    """One Oracle Cloud compute shape."""
+
+
+class IBMPricingData(AWSPricingData):
+    """IBM Cloud's Virtual Server for VPC pricing data, keyed by profile (``bx3d-2x10``).
+
+    It decodes the same way as :class:`AWSPricingData`; see the README for what IBM Cloud's data holds.
+    """
+
+    def get(self, instance_type: str) -> IBMInstance | None:
+        """The profile with this name, or ``None`` if the bundle has never listed it."""
+        return cast("IBMInstance | None", super().get(instance_type))
+
+    def _new_instance(self, name: str, raw: Sequence[Any]) -> IBMInstance:
+        return IBMInstance(name, raw, self)
+
+
+class IBMInstance(AWSInstance):
+    """One IBM Cloud Virtual Server for VPC profile."""

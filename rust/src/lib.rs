@@ -14,9 +14,12 @@ use ureq::{Agent, Body};
 
 pub use crate::data::{
     AlibabaInstance, AlibabaPricingData, AttributeChange, AwsInstance, AwsPricingData,
-    AzureInstance, AzurePricingData, EC2_VARIANT_KEYS, GcpInstance, GcpPricingData, OnDemandPrice,
-    OnDemandPriceChange, Pricing, PricingHistory, Regions, ReservedPrice, ReservedPriceChange,
-    ReservedTerm, RunpodInstance, RunpodPricingData, Variant,
+    AzureInstance, AzurePricingData, EC2_VARIANT_KEYS, GcpInstance, GcpPricingData,
+    HetznerAuctionInstance, HetznerAuctionPricingData, HetznerInstance, HetznerPricingData,
+    IbmInstance, IbmPricingData, OnDemandPrice, OnDemandPriceChange, OracleInstance,
+    OraclePricingData, OvhEcoInstance, OvhEcoPricingData, OvhInstance, OvhPricingData, Pricing,
+    PricingHistory, Regions, ReservedPrice, ReservedPriceChange, ReservedTerm, RunpodInstance,
+    RunpodPricingData, Variant,
 };
 pub use crate::error::Error;
 use crate::raw::InstanceFile;
@@ -301,6 +304,69 @@ pub fn download_azure_pricing_data(options: &Options) -> Result<AzurePricingData
 /// with `tokio::task::spawn_blocking`.
 pub fn download_gcp_pricing_data(options: &Options) -> Result<GcpPricingData, Error> {
     load_bundle("gcp", options).map(GcpPricingData::new)
+}
+
+/// Downloads Hetzner's cloud server pricing data: hourly prices and monthly caps per location, for each server
+/// type. Caching and the offline fallback work as for
+/// [`download_aws_pricing_data`].
+///
+/// This blocks on network and disk I/O. From async code, run it on a blocking thread, e.g.
+/// with `tokio::task::spawn_blocking`.
+pub fn download_hetzner_pricing_data(options: &Options) -> Result<HetznerPricingData, Error> {
+    load_bundle("hetzner", options).map(HetznerPricingData::new)
+}
+
+/// Downloads Hetzner's Server Auction pricing data: the hourly price and monthly cap of each server for sale,
+/// by listing id. Caching and the offline fallback work as for
+/// [`download_aws_pricing_data`].
+///
+/// This blocks on network and disk I/O. From async code, run it on a blocking thread, e.g.
+/// with `tokio::task::spawn_blocking`.
+pub fn download_hetzner_auction_pricing_data(
+    options: &Options,
+) -> Result<HetznerAuctionPricingData, Error> {
+    load_bundle("hetznerauction", options).map(HetznerAuctionPricingData::new)
+}
+
+/// Downloads OVHcloud's Public Cloud pricing data: hourly and monthly prices per pricing zone, for each
+/// instance flavor. Caching and the offline fallback work as for
+/// [`download_aws_pricing_data`].
+///
+/// This blocks on network and disk I/O. From async code, run it on a blocking thread, e.g.
+/// with `tokio::task::spawn_blocking`.
+pub fn download_ovh_pricing_data(options: &Options) -> Result<OvhPricingData, Error> {
+    load_bundle("ovh", options).map(OvhPricingData::new)
+}
+
+/// Downloads OVHcloud's eco dedicated server pricing data: monthly rent and prepaid prices per data center and
+/// configuration, for Kimsufi, So you Start, Rise and Advance servers. Caching and the offline fallback work as
+/// for
+/// [`download_aws_pricing_data`].
+///
+/// This blocks on network and disk I/O. From async code, run it on a blocking thread, e.g.
+/// with `tokio::task::spawn_blocking`.
+pub fn download_ovh_eco_pricing_data(options: &Options) -> Result<OvhEcoPricingData, Error> {
+    load_bundle("ovheco", options).map(OvhEcoPricingData::new)
+}
+
+/// Downloads Oracle Cloud's compute pricing data: hourly prices for each VM and bare metal shape, the same in
+/// every commercial region. Caching and the offline fallback work as for
+/// [`download_aws_pricing_data`].
+///
+/// This blocks on network and disk I/O. From async code, run it on a blocking thread, e.g.
+/// with `tokio::task::spawn_blocking`.
+pub fn download_oracle_pricing_data(options: &Options) -> Result<OraclePricingData, Error> {
+    load_bundle("oracle", options).map(OraclePricingData::new)
+}
+
+/// Downloads IBM Cloud's Virtual Server for VPC pricing data: on-demand, Spot, burstable and reserved prices
+/// per region, for each profile. Caching and the offline fallback work as for
+/// [`download_aws_pricing_data`].
+///
+/// This blocks on network and disk I/O. From async code, run it on a blocking thread, e.g.
+/// with `tokio::task::spawn_blocking`.
+pub fn download_ibm_pricing_data(options: &Options) -> Result<IbmPricingData, Error> {
+    load_bundle("ibm", options).map(IbmPricingData::new)
 }
 
 /// Downloads (or reads from the cache) one platform's bundle.

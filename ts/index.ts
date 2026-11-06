@@ -172,6 +172,121 @@ export async function downloadGcpPricingData(options: GCPPricingDataOptions = {}
   return new GCPPricingData(await loadBundleAs("gcp", options, GCPPricingDataError));
 }
 
+/** Options for {@link downloadHetznerPricingData}: the same as for the AWS platforms. */
+export type HetznerPricingDataOptions = AWSPricingDataOptions;
+
+/** Thrown when Hetzner's cloud server pricing data cannot be downloaded. `status` is the HTTP status, if there was a response. */
+export class HetznerPricingDataError extends AWSPricingDataError {
+  constructor(message: string, status?: number) {
+    super(message, status);
+    this.name = "HetznerPricingDataError";
+  }
+}
+
+/**
+ * Downloads Hetzner's cloud server pricing data: hourly prices and monthly caps per location, for each server
+ * type. Caching and the offline fallback work as for {@link downloadAwsPricingData}.
+ */
+export async function downloadHetznerPricingData(options: HetznerPricingDataOptions = {}): Promise<HetznerPricingData> {
+  return new HetznerPricingData(await loadBundleAs("hetzner", options, HetznerPricingDataError));
+}
+
+/** Options for {@link downloadHetznerAuctionPricingData}: the same as for the AWS platforms. */
+export type HetznerAuctionPricingDataOptions = AWSPricingDataOptions;
+
+/** Thrown when Hetzner's Server Auction pricing data cannot be downloaded. `status` is the HTTP status, if there was a response. */
+export class HetznerAuctionPricingDataError extends AWSPricingDataError {
+  constructor(message: string, status?: number) {
+    super(message, status);
+    this.name = "HetznerAuctionPricingDataError";
+  }
+}
+
+/**
+ * Downloads Hetzner's Server Auction pricing data: the hourly price and monthly cap of each server for sale,
+ * by listing id. Caching and the offline fallback work as for {@link downloadAwsPricingData}.
+ */
+export async function downloadHetznerAuctionPricingData(options: HetznerAuctionPricingDataOptions = {}): Promise<HetznerAuctionPricingData> {
+  return new HetznerAuctionPricingData(await loadBundleAs("hetznerauction", options, HetznerAuctionPricingDataError));
+}
+
+/** Options for {@link downloadOvhPricingData}: the same as for the AWS platforms. */
+export type OVHPricingDataOptions = AWSPricingDataOptions;
+
+/** Thrown when OVHcloud's Public Cloud pricing data cannot be downloaded. `status` is the HTTP status, if there was a response. */
+export class OVHPricingDataError extends AWSPricingDataError {
+  constructor(message: string, status?: number) {
+    super(message, status);
+    this.name = "OVHPricingDataError";
+  }
+}
+
+/**
+ * Downloads OVHcloud's Public Cloud pricing data: hourly and monthly prices per pricing zone, for each
+ * instance flavor. Caching and the offline fallback work as for {@link downloadAwsPricingData}.
+ */
+export async function downloadOvhPricingData(options: OVHPricingDataOptions = {}): Promise<OVHPricingData> {
+  return new OVHPricingData(await loadBundleAs("ovh", options, OVHPricingDataError));
+}
+
+/** Options for {@link downloadOvhEcoPricingData}: the same as for the AWS platforms. */
+export type OVHEcoPricingDataOptions = AWSPricingDataOptions;
+
+/** Thrown when OVHcloud's eco dedicated server pricing data cannot be downloaded. `status` is the HTTP status, if there was a response. */
+export class OVHEcoPricingDataError extends AWSPricingDataError {
+  constructor(message: string, status?: number) {
+    super(message, status);
+    this.name = "OVHEcoPricingDataError";
+  }
+}
+
+/**
+ * Downloads OVHcloud's eco dedicated server pricing data: monthly rent and prepaid prices per data center and
+ * configuration, for Kimsufi, So you Start, Rise and Advance servers. Caching and the offline fallback work as
+ * for {@link downloadAwsPricingData}.
+ */
+export async function downloadOvhEcoPricingData(options: OVHEcoPricingDataOptions = {}): Promise<OVHEcoPricingData> {
+  return new OVHEcoPricingData(await loadBundleAs("ovheco", options, OVHEcoPricingDataError));
+}
+
+/** Options for {@link downloadOraclePricingData}: the same as for the AWS platforms. */
+export type OraclePricingDataOptions = AWSPricingDataOptions;
+
+/** Thrown when Oracle Cloud's compute pricing data cannot be downloaded. `status` is the HTTP status, if there was a response. */
+export class OraclePricingDataError extends AWSPricingDataError {
+  constructor(message: string, status?: number) {
+    super(message, status);
+    this.name = "OraclePricingDataError";
+  }
+}
+
+/**
+ * Downloads Oracle Cloud's compute pricing data: hourly prices for each VM and bare metal shape, the same in
+ * every commercial region. Caching and the offline fallback work as for {@link downloadAwsPricingData}.
+ */
+export async function downloadOraclePricingData(options: OraclePricingDataOptions = {}): Promise<OraclePricingData> {
+  return new OraclePricingData(await loadBundleAs("oracle", options, OraclePricingDataError));
+}
+
+/** Options for {@link downloadIbmPricingData}: the same as for the AWS platforms. */
+export type IBMPricingDataOptions = AWSPricingDataOptions;
+
+/** Thrown when IBM Cloud's Virtual Server for VPC pricing data cannot be downloaded. `status` is the HTTP status, if there was a response. */
+export class IBMPricingDataError extends AWSPricingDataError {
+  constructor(message: string, status?: number) {
+    super(message, status);
+    this.name = "IBMPricingDataError";
+  }
+}
+
+/**
+ * Downloads IBM Cloud's Virtual Server for VPC pricing data: on-demand, Spot, burstable and reserved prices
+ * per region, for each profile. Caching and the offline fallback work as for {@link downloadAwsPricingData}.
+ */
+export async function downloadIbmPricingData(options: IBMPricingDataOptions = {}): Promise<IBMPricingData> {
+  return new IBMPricingData(await loadBundleAs("ibm", options, IBMPricingDataError));
+}
+
 type ProviderErrorClass = new (message: string, status?: number) => AWSPricingDataError;
 
 /** loadBundle, failing with the provider's own error class. */
@@ -777,3 +892,111 @@ export class GCPPricingData extends AWSPricingData {
 
 /** One Google Cloud Compute Engine machine type. */
 export class GCPInstance extends AWSInstance {}
+
+/**
+ * Hetzner's cloud server pricing data, keyed by server type (`cx23`).
+ * It decodes the same way as {@link AWSPricingData}; see the README for what Hetzner's data holds.
+ */
+export class HetznerPricingData extends AWSPricingData {
+  /** The server type with this name, or `undefined` if the bundle has never listed it. */
+  override get(serverType: string): HetznerInstance | undefined {
+    return super.get(serverType) as HetznerInstance | undefined;
+  }
+
+  protected override newInstance(name: string, raw: RawInstance): HetznerInstance {
+    return new HetznerInstance(name, raw, this);
+  }
+}
+
+/** One Hetzner cloud server type. */
+export class HetznerInstance extends AWSInstance {}
+
+/**
+ * Hetzner's Server Auction pricing data, keyed by listing (`3107671`).
+ * It decodes the same way as {@link AWSPricingData}; see the README for what Hetzner's data holds.
+ */
+export class HetznerAuctionPricingData extends AWSPricingData {
+  /** The listing with this name, or `undefined` if the bundle has never listed it. */
+  override get(listingId: string): HetznerAuctionInstance | undefined {
+    return super.get(listingId) as HetznerAuctionInstance | undefined;
+  }
+
+  protected override newInstance(name: string, raw: RawInstance): HetznerAuctionInstance {
+    return new HetznerAuctionInstance(name, raw, this);
+  }
+}
+
+/** One Hetzner Server Auction listing. */
+export class HetznerAuctionInstance extends AWSInstance {}
+
+/**
+ * OVHcloud's Public Cloud pricing data, keyed by flavor (`b3-8`).
+ * It decodes the same way as {@link AWSPricingData}; see the README for what OVHcloud's data holds.
+ */
+export class OVHPricingData extends AWSPricingData {
+  /** The flavor with this name, or `undefined` if the bundle has never listed it. */
+  override get(flavor: string): OVHInstance | undefined {
+    return super.get(flavor) as OVHInstance | undefined;
+  }
+
+  protected override newInstance(name: string, raw: RawInstance): OVHInstance {
+    return new OVHInstance(name, raw, this);
+  }
+}
+
+/** One OVHcloud Public Cloud flavor. */
+export class OVHInstance extends AWSInstance {}
+
+/**
+ * OVHcloud's eco dedicated server pricing data, keyed by server (`24sys01`).
+ * It decodes the same way as {@link AWSPricingData}; see the README for what OVHcloud's data holds.
+ */
+export class OVHEcoPricingData extends AWSPricingData {
+  /** The server with this name, or `undefined` if the bundle has never listed it. */
+  override get(server: string): OVHEcoInstance | undefined {
+    return super.get(server) as OVHEcoInstance | undefined;
+  }
+
+  protected override newInstance(name: string, raw: RawInstance): OVHEcoInstance {
+    return new OVHEcoInstance(name, raw, this);
+  }
+}
+
+/** One OVHcloud eco dedicated server. */
+export class OVHEcoInstance extends AWSInstance {}
+
+/**
+ * Oracle Cloud's compute pricing data, keyed by shape (`VM.Standard.E5.Flex-2-16`).
+ * It decodes the same way as {@link AWSPricingData}; see the README for what Oracle Cloud's data holds.
+ */
+export class OraclePricingData extends AWSPricingData {
+  /** The shape with this name, or `undefined` if the bundle has never listed it. */
+  override get(shape: string): OracleInstance | undefined {
+    return super.get(shape) as OracleInstance | undefined;
+  }
+
+  protected override newInstance(name: string, raw: RawInstance): OracleInstance {
+    return new OracleInstance(name, raw, this);
+  }
+}
+
+/** One Oracle Cloud compute shape. */
+export class OracleInstance extends AWSInstance {}
+
+/**
+ * IBM Cloud's Virtual Server for VPC pricing data, keyed by profile (`bx3d-2x10`).
+ * It decodes the same way as {@link AWSPricingData}; see the README for what IBM Cloud's data holds.
+ */
+export class IBMPricingData extends AWSPricingData {
+  /** The profile with this name, or `undefined` if the bundle has never listed it. */
+  override get(profile: string): IBMInstance | undefined {
+    return super.get(profile) as IBMInstance | undefined;
+  }
+
+  protected override newInstance(name: string, raw: RawInstance): IBMInstance {
+    return new IBMInstance(name, raw, this);
+  }
+}
+
+/** One IBM Cloud Virtual Server for VPC profile. */
+export class IBMInstance extends AWSInstance {}

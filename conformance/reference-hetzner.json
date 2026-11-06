@@ -1,0 +1,337 @@
+{
+ "offer": "HetznerCloud",
+ "variantKeys": [
+  "ipv4"
+ ],
+ "snapshots": [
+  1700000000,
+  1710000000
+ ],
+ "regions": {
+  "ash": {
+   "country": "us",
+   "locationType": "Hetzner Location",
+   "name": "Ashburn, VA",
+   "regionCode": "ash"
+  },
+  "fsn1": {
+   "country": "de",
+   "locationType": "Hetzner Location",
+   "name": "Falkenstein",
+   "regionCode": "fsn1"
+  }
+ },
+ "keys": [
+  "cx23"
+ ],
+ "has": {
+  "m5.large": false,
+  "nope": false
+ },
+ "getMissing": null,
+ "instances": {
+  "cx23": {
+   "name": "cx23",
+   "createdAt": 1700000000,
+   "deletedAt": null,
+   "attributes": {
+    "architecture": "x86_64",
+    "category": "Cost-Optimized",
+    "cores": "2",
+    "memoryInGb": "4",
+    "name": "CX23",
+    "productFamily": "Cloud Server"
+   },
+   "attributesIn": {
+    "ash": {
+     "architecture": "x86_64",
+     "category": "Cost-Optimized",
+     "cores": "2",
+     "memoryInGb": "4",
+     "name": "CX23",
+     "productFamily": "Cloud Server"
+    },
+    "fsn1": {
+     "architecture": "x86_64",
+     "category": "Cost-Optimized",
+     "cores": "2",
+     "memoryInGb": "4",
+     "name": "CX23",
+     "productFamily": "Cloud Server"
+    },
+    "Mystery": {
+     "architecture": "x86_64",
+     "category": "Cost-Optimized",
+     "cores": "2",
+     "memoryInGb": "4",
+     "name": "CX23",
+     "productFamily": "Cloud Server"
+    },
+    "Nowhere": {
+     "architecture": "x86_64",
+     "category": "Cost-Optimized",
+     "cores": "2",
+     "memoryInGb": "4",
+     "name": "CX23",
+     "productFamily": "Cloud Server"
+    }
+   },
+   "attributesHistory": [
+    {
+     "at": 1700000000,
+     "key": "architecture",
+     "value": "x86_64",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "category",
+     "value": "Cost-Optimized",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "cores",
+     "value": "2",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "memoryInGb",
+     "value": "4",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "name",
+     "value": "CX23",
+     "region": null
+    },
+    {
+     "at": 1700000000,
+     "key": "productFamily",
+     "value": "Cloud Server",
+     "region": null
+    }
+   ],
+   "pricing": {
+    "onDemand": [
+     {
+      "region": "fsn1",
+      "regionCode": "fsn1",
+      "variant": {
+       "ipv4": "IPv6 only"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.0104,
+      "since": 1700000000
+     },
+     {
+      "region": "fsn1",
+      "regionCode": "fsn1",
+      "variant": {
+       "ipv4": "Primary IPv4"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.012,
+      "since": 1710000000
+     },
+     {
+      "region": "ash",
+      "regionCode": "ash",
+      "variant": {
+       "ipv4": "IPv6 only"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.0129,
+      "since": 1700000000
+     }
+    ],
+    "reserved": [
+     {
+      "region": "fsn1",
+      "regionCode": "fsn1",
+      "variant": {
+       "ipv4": "IPv6 only"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1mo",
+      "offeringClass": "Monthly Cap",
+      "purchaseOption": "Postpaid",
+      "hourly": 0,
+      "upfront": 6.49,
+      "since": 1700000000
+     },
+     {
+      "region": "fsn1",
+      "regionCode": "fsn1",
+      "variant": {
+       "ipv4": "Primary IPv4"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1mo",
+      "offeringClass": "Monthly Cap",
+      "purchaseOption": "Postpaid",
+      "hourly": 0,
+      "upfront": 7.09,
+      "since": 1700000000
+     },
+     {
+      "region": "ash",
+      "regionCode": "ash",
+      "variant": {
+       "ipv4": "IPv6 only"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1mo",
+      "offeringClass": "Monthly Cap",
+      "purchaseOption": "Postpaid",
+      "hourly": 0,
+      "upfront": 8.09,
+      "since": 1700000000
+     }
+    ]
+   },
+   "pricingHistory": {
+    "onDemand": [
+     {
+      "at": 1700000000,
+      "region": "fsn1",
+      "regionCode": "fsn1",
+      "variant": {
+       "ipv4": "IPv6 only"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.0104
+     },
+     {
+      "at": 1700000000,
+      "region": "fsn1",
+      "regionCode": "fsn1",
+      "variant": {
+       "ipv4": "Primary IPv4"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.0114
+     },
+     {
+      "at": 1700000000,
+      "region": "ash",
+      "regionCode": "ash",
+      "variant": {
+       "ipv4": "IPv6 only"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.0129
+     },
+     {
+      "at": 1710000000,
+      "region": "fsn1",
+      "regionCode": "fsn1",
+      "variant": {
+       "ipv4": "Primary IPv4"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "hourly": 0.012
+     }
+    ],
+    "reserved": [
+     {
+      "at": 1700000000,
+      "region": "fsn1",
+      "regionCode": "fsn1",
+      "variant": {
+       "ipv4": "IPv6 only"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1mo",
+      "offeringClass": "Monthly Cap",
+      "purchaseOption": "Postpaid",
+      "hourly": 0,
+      "upfront": 6.49
+     },
+     {
+      "at": 1700000000,
+      "region": "fsn1",
+      "regionCode": "fsn1",
+      "variant": {
+       "ipv4": "Primary IPv4"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1mo",
+      "offeringClass": "Monthly Cap",
+      "purchaseOption": "Postpaid",
+      "hourly": 0,
+      "upfront": 7.09
+     },
+     {
+      "at": 1700000000,
+      "region": "ash",
+      "regionCode": "ash",
+      "variant": {
+       "ipv4": "IPv6 only"
+      },
+      "operatingSystem": "",
+      "tenancy": "",
+      "licenseModel": "",
+      "preInstalledSw": "",
+      "capacitystatus": "",
+      "leaseContractLength": "1mo",
+      "offeringClass": "Monthly Cap",
+      "purchaseOption": "Postpaid",
+      "hourly": 0,
+      "upfront": 8.09
+     }
+    ]
+   }
+  }
+ }
+}

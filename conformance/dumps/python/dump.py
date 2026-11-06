@@ -18,6 +18,24 @@ from infrawrench_bulk_instances import (
     GCPInstance,
     GCPPricingData,
     GCPPricingDataError,
+    HetznerInstance,
+    HetznerPricingData,
+    HetznerPricingDataError,
+    HetznerAuctionInstance,
+    HetznerAuctionPricingData,
+    HetznerAuctionPricingDataError,
+    OVHInstance,
+    OVHPricingData,
+    OVHPricingDataError,
+    OVHEcoInstance,
+    OVHEcoPricingData,
+    OVHEcoPricingDataError,
+    OracleInstance,
+    OraclePricingData,
+    OraclePricingDataError,
+    IBMInstance,
+    IBMPricingData,
+    IBMPricingDataError,
     RunpodInstance,
     RunpodPricingData,
     RunpodPricingDataError,
@@ -26,6 +44,12 @@ from infrawrench_bulk_instances import (
     download_aws_pricing_data,
     download_azure_pricing_data,
     download_gcp_pricing_data,
+    download_hetzner_pricing_data,
+    download_hetzner_auction_pricing_data,
+    download_ovh_pricing_data,
+    download_ovh_eco_pricing_data,
+    download_oracle_pricing_data,
+    download_ibm_pricing_data,
     download_runpod_pricing_data,
     fetch_alibaba_instance,
     fetch_aws_instance,
@@ -130,7 +154,7 @@ try:
         "cache_pricing_data": cache == "1",
         "token": None if token == "-" else token,
     }
-    # RunPod, Alibaba, Azure and GCP have their own functions and types, and their own errors.
+    # Clouds other than AWS have their own functions and types, and their own errors.
     data: AWSPricingData
     if platform == "runpod":
         try:
@@ -160,6 +184,48 @@ try:
             expect_error(e, GCPPricingDataError)
             raise
         expect_types(data, GCPPricingData, GCPInstance)
+    elif platform == "hetzner":
+        try:
+            data = download_hetzner_pricing_data(**options)
+        except AWSPricingDataError as e:
+            expect_error(e, HetznerPricingDataError)
+            raise
+        expect_types(data, HetznerPricingData, HetznerInstance)
+    elif platform == "hetznerauction":
+        try:
+            data = download_hetzner_auction_pricing_data(**options)
+        except AWSPricingDataError as e:
+            expect_error(e, HetznerAuctionPricingDataError)
+            raise
+        expect_types(data, HetznerAuctionPricingData, HetznerAuctionInstance)
+    elif platform == "ovh":
+        try:
+            data = download_ovh_pricing_data(**options)
+        except AWSPricingDataError as e:
+            expect_error(e, OVHPricingDataError)
+            raise
+        expect_types(data, OVHPricingData, OVHInstance)
+    elif platform == "ovheco":
+        try:
+            data = download_ovh_eco_pricing_data(**options)
+        except AWSPricingDataError as e:
+            expect_error(e, OVHEcoPricingDataError)
+            raise
+        expect_types(data, OVHEcoPricingData, OVHEcoInstance)
+    elif platform == "oracle":
+        try:
+            data = download_oracle_pricing_data(**options)
+        except AWSPricingDataError as e:
+            expect_error(e, OraclePricingDataError)
+            raise
+        expect_types(data, OraclePricingData, OracleInstance)
+    elif platform == "ibm":
+        try:
+            data = download_ibm_pricing_data(**options)
+        except AWSPricingDataError as e:
+            expect_error(e, IBMPricingDataError)
+            raise
+        expect_types(data, IBMPricingData, IBMInstance)
     else:
         data = download_aws_ec2_pricing_data(**options) if platform is None else download_aws_pricing_data(platform, **options)
 except AWSPricingDataError as e:

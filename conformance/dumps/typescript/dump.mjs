@@ -4,6 +4,12 @@ import {
   downloadAlibabaPricingData, fetchAlibabaInstance, AlibabaPricingData, AlibabaInstance, AlibabaPricingDataError,
   downloadAzurePricingData, AzurePricingData, AzureInstance, AzurePricingDataError,
   downloadGcpPricingData, GCPPricingData, GCPInstance, GCPPricingDataError,
+  downloadHetznerPricingData, HetznerPricingData, HetznerInstance, HetznerPricingDataError,
+  downloadHetznerAuctionPricingData, HetznerAuctionPricingData, HetznerAuctionInstance, HetznerAuctionPricingDataError,
+  downloadOvhPricingData, OVHPricingData, OVHInstance, OVHPricingDataError,
+  downloadOvhEcoPricingData, OVHEcoPricingData, OVHEcoInstance, OVHEcoPricingDataError,
+  downloadOraclePricingData, OraclePricingData, OracleInstance, OraclePricingDataError,
+  downloadIbmPricingData, IBMPricingData, IBMInstance, IBMPricingDataError,
 } from "../../../ts/dist/index.js";
 
 const [baseUrl, cachePath, token, cache, platform, instanceType] = process.argv.slice(2);
@@ -63,7 +69,7 @@ if (instanceType !== undefined) {
 
 let data;
 try {
-  // RunPod, Alibaba, Azure and GCP have their own functions and types, and their own errors.
+  // Clouds other than AWS have their own functions and types, and their own errors.
   if (platform === "runpod") {
     data = await downloadRunpodPricingData(options).catch((e) => providerError(e, RunpodPricingDataError));
     expectTypes(data, RunpodPricingData, RunpodInstance);
@@ -76,6 +82,24 @@ try {
   } else if (platform === "gcp") {
     data = await downloadGcpPricingData(options).catch((e) => providerError(e, GCPPricingDataError));
     expectTypes(data, GCPPricingData, GCPInstance);
+  } else if (platform === "hetzner") {
+    data = await downloadHetznerPricingData(options).catch((e) => providerError(e, HetznerPricingDataError));
+    expectTypes(data, HetznerPricingData, HetznerInstance);
+  } else if (platform === "hetznerauction") {
+    data = await downloadHetznerAuctionPricingData(options).catch((e) => providerError(e, HetznerAuctionPricingDataError));
+    expectTypes(data, HetznerAuctionPricingData, HetznerAuctionInstance);
+  } else if (platform === "ovh") {
+    data = await downloadOvhPricingData(options).catch((e) => providerError(e, OVHPricingDataError));
+    expectTypes(data, OVHPricingData, OVHInstance);
+  } else if (platform === "ovheco") {
+    data = await downloadOvhEcoPricingData(options).catch((e) => providerError(e, OVHEcoPricingDataError));
+    expectTypes(data, OVHEcoPricingData, OVHEcoInstance);
+  } else if (platform === "oracle") {
+    data = await downloadOraclePricingData(options).catch((e) => providerError(e, OraclePricingDataError));
+    expectTypes(data, OraclePricingData, OracleInstance);
+  } else if (platform === "ibm") {
+    data = await downloadIbmPricingData(options).catch((e) => providerError(e, IBMPricingDataError));
+    expectTypes(data, IBMPricingData, IBMInstance);
   } else {
     data = platform === undefined ? await downloadAwsEc2PricingData(options) : await downloadAwsPricingData(platform, options);
   }

@@ -2,7 +2,8 @@ namespace Infrawrench.BulkInstances;
 
 /// <summary>Options for <see cref="BulkInstances.DownloadAwsPricingDataAsync"/> and <see cref="BulkInstances.DownloadAwsEc2PricingDataAsync"/>.</summary>
 /// <remarks>
-/// RunPod's, Alibaba Cloud's, Azure's and Google Cloud's methods take the subclasses
+/// RunPod's, Alibaba Cloud's, Azure's, Google Cloud's, Hetzner's, OVHcloud's, Oracle Cloud's and IBM Cloud's
+/// methods take the subclasses
 /// <see cref="RunpodPricingDataOptions"/>, <see cref="AlibabaPricingDataOptions"/>, <see cref="AzurePricingDataOptions"/>
 /// and <see cref="GcpPricingDataOptions"/>, which have the same options.
 /// </remarks>

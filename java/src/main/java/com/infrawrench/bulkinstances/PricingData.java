@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @param <I> the instance class {@link #get} returns
  */
 public abstract sealed class PricingData<I extends AWSInstance>
-        permits AWSPricingData, RunpodPricingData, AlibabaPricingData, AzurePricingData, GCPPricingData {
+        permits AWSPricingData, RunpodPricingData, AlibabaPricingData, AzurePricingData, GCPPricingData, HetznerPricingData, HetznerAuctionPricingData, OVHPricingData, OVHEcoPricingData, OraclePricingData, IBMPricingData {
     private final String offer;
     private final String[] table;
     private final double[] snapshots;

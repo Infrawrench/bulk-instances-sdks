@@ -205,7 +205,40 @@ Engine API (`guestCpus`, `memoryMb`, `description`, `isSharedCpu`, ...), `accele
 `acceleratorCount` for its GPUs, and `zones`, the zones in each region that have it, which differ by region
 (see `attributesIn($region)`). The history starts in November 2026.
 
-There is no single-instance fetch for Azure or Google Cloud yet; download their bundles instead.
+## Hetzner, OVHcloud, Oracle Cloud and IBM Cloud
+
+These load the same way as Google Cloud's, with the same options, caching and failures. Each returns its own data and
+instance types, which have the same members as the AWS ones.
+
+| Method of `BulkInstances` | Data | Instance | Error |
+| --- | --- | --- | --- |
+| `downloadHetznerPricingData` | `HetznerPricingData` | `HetznerInstance` | `HetznerPricingDataException` |
+| `downloadHetznerAuctionPricingData` | `HetznerAuctionPricingData` | `HetznerAuctionInstance` | `HetznerAuctionPricingDataException` |
+| `downloadOvhPricingData` | `OVHPricingData` | `OVHInstance` | `OVHPricingDataException` |
+| `downloadOvhEcoPricingData` | `OVHEcoPricingData` | `OVHEcoInstance` | `OVHEcoPricingDataException` |
+| `downloadOraclePricingData` | `OraclePricingData` | `OracleInstance` | `OraclePricingDataException` |
+| `downloadIbmPricingData` | `IBMPricingData` | `IBMInstance` | `IBMPricingDataException` |
+
+```php
+$hetzner = BulkInstances::downloadHetznerPricingData();
+foreach ($hetzner->get('cx23')?->pricing()->onDemand ?? [] as $p) {
+    if ($p->regionCode === 'fsn1' && $p->variant['ipv4'] === 'Primary IPv4') {
+        echo $p->hourly;
+    }
+}
+```
+
+- **`hetzner`**, Hetzner cloud servers, by Cloud API name (`cx23`), per hour. Locations are Cloud API location names (`fsn1`, `ash`). The only variant key is `ipv4`, `IPv6 only` or `Primary IPv4`, since a primary IPv4 is optional and billed apart. `pricing()->reserved` has the monthly cap, with the term `1mo`, `Monthly Cap`, `Postpaid`, `hourly` 0 and `upfront` the cap. Attributes include `cores`, `cpu`, `memoryInGb`, `diskInGb` and `architecture`.
+- **`hetznerauction`**, Hetzner Server Auction listings, by listing id (`3107671`). Each is one physical server, so its history runs from when it is listed until it is sold, and it has the same variant key and term as `hetzner`. Attributes are the listing's hardware and details (`CPU.Name`, `RAM.Size`, `datacenter`, `fixedPrice`, `setupFee`, ...). The bundle is read hourly, so a price drop is dated by the read that saw it.
+- **`ovh`**, OVHcloud Public Cloud flavors (`b3-8`), per hour, from the World and US catalogs, in USD. Locations are pricing zones, not regions: `world`, `3az`, `lz-eu`, `lz-eurozone`, `lz-af`, `us` and `us-east-lz-dal-a`. The only variant key is `operatingSystem`. `pricing()->reserved` has monthly plans where a flavor has them, with the term `1mo`, `Monthly`, `Postpaid` or `All Upfront`, `hourly` 0 and `upfront` the month's price.
+- **`ovheco`**, OVHcloud's Kimsufi, So you Start, Rise and Advance servers (`24sys01`), by data center (`gra`, `sgp`); the `range` attribute says which. **These have no on-demand prices**, because they are only rented by the month. The rent is in `pricing()->reserved`, with the term `1mo`, `Rental`, `All Upfront`, `hourly` 0 and `upfront` the rent, beside prepaying (`1yr` or `2yr`, `Prepaid`). The variant keys are `memory`, `storage` and `systemStorage`, which is often empty.
+- **`oracle`**, Oracle Cloud VM and bare metal shapes, per hour, the same in every commercial region, so every price is in `global`. The only variant key is `operatingSystem`. Flexible shapes have no one price, so they are priced at a set of sizes named `<shape>-<ocpus>-<GB>` (`VM.Standard.E5.Flex-2-16`), which aren't names Oracle uses: the `shape` attribute is, and `ocpuPrice` and `memoryGbPrice` give any other size.
+- **`ibm`**, IBM Cloud Virtual Server for VPC profiles (`bx3d-2x10`), per hour, by region. The only variant key is `capacityType`, `On-Demand`, `Spot` or `Burstable 50%`, `25%` or `10%`. `pricing()->reserved` has reservations, with the term `1yr` or `3yr`, `Reserved`, `No Upfront`, and `hourly` the reservation's rate. About 90 older profiles (`bx2`, `cx2`, `mx2`, `gx2`, ...) have no public on-demand price of their own, so theirs is IBM's rate for an hourly reservation, which is an approximation.
+
+All of their histories start in November 2026.
+
+There is no single-instance fetch for Azure, Google Cloud, Hetzner, OVHcloud, Oracle Cloud or IBM Cloud yet; download their
+bundles instead.
 
 ## One instance
 
