@@ -7,7 +7,7 @@ history, from the bundles Infrawrench publishes at `instances-bundles.infrawrenc
 <dependency>
   <groupId>com.infrawrench</groupId>
   <artifactId>bulk-instances</artifactId>
-  <version>1.6.0</version>
+  <version>1.7.0</version>
 </dependency>
 ```
 
